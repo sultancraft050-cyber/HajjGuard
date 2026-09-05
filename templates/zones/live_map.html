@@ -1,0 +1,334 @@
+﻿{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Live Crowd Map" %} | HajjGuard{% endblock %}
+
+{% block extra_css %}
+<style>
+    #map-container {
+        height: calc(100vh - 62px);
+        width: 100%;
+        position: relative;
+    }
+
+    #hajj-map {
+        height: 100%;
+        width: 100%;
+        z-index: 1;
+    }
+
+    .map-floating-controls {
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        border-radius: 30px;
+        padding: 6px 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        display: flex;
+        gap: 6px;
+        max-width: 95vw;
+        overflow-x: auto;
+    }
+
+    .btn-site-pill {
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 5px 14px;
+        white-space: nowrap;
+        border: none;
+        background: #f1f5f9;
+        color: #334155;
+        transition: all 0.2s ease;
+    }
+
+    .btn-site-pill:hover, .btn-site-pill.active {
+        background: var(--hajj-green);
+        color: white;
+    }
+
+    .map-legend {
+        position: absolute;
+        bottom: 24px;
+        right: 16px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(6px);
+        border-radius: 12px;
+        padding: 10px 14px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        font-size: 0.8rem;
+    }
+
+    .legend-dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-inline-end: 6px;
+    }
+
+    .btn-locate-me {
+        position: absolute;
+        bottom: 24px;
+        left: 16px;
+        z-index: 1000;
+        background: white;
+        border-radius: 50px;
+        padding: 10px 18px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        font-weight: 700;
+        font-size: 0.9rem;
+        border: 2px solid var(--hajj-green);
+        color: var(--hajj-green);
+    }
+
+    .btn-locate-me:hover {
+        background: var(--hajj-green);
+        color: white;
+    }
+
+    .pulse-marker {
+        width: 20px;
+        height: 20px;
+        background: #0284c7;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="map-container">
+    <!-- Floating Site Filter Pills -->
+    <div class="map-floating-controls">
+        <button class="btn-site-pill active" onclick="flyToLocation(21.4225, 39.8262, 14, this)">🕋 {% trans "All Sites" %}</button>
+        <button class="btn-site-pill" onclick="flyToLocation(21.4225, 39.8262, 17, this)">🕋 {% trans "Grand Mosque (Haram)" %}</button>
+        <button class="btn-site-pill" onclick="flyToLocation(21.4198, 39.8715, 17, this)">⛰️ {% trans "Jamarat Bridge" %}</button>
+        <button class="btn-site-pill" onclick="flyToLocation(21.4160, 39.8920, 16, this)">⛺ {% trans "Mina Camps" %}</button>
+        <button class="btn-site-pill" onclick="flyToLocation(21.3910, 39.9070, 15, this)">🌌 {% trans "Muzdalifah" %}</button>
+        <button class="btn-site-pill" onclick="flyToLocation(21.3548, 39.9840, 15, this)">🏔️ {% trans "Arafat" %}</button>
+    </div>
+
+    <!-- Live Map Canvas -->
+    <div id="hajj-map"></div>
+
+    <!-- "Locate My Position" Button -->
+    <button class="btn btn-locate-me d-flex align-items-center gap-2" onclick="locatePilgrimDevice()">
+        <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
+        <span>{% trans "Locate Me & Send Ping" %}</span>
+    </button>
+
+    <!-- Map Color Legend -->
+    <div class="map-legend">
+        <div class="fw-bold mb-1">{% trans "Crowd Density Status" %}</div>
+        <div class="d-flex align-items-center mb-1">
+            <span class="legend-dot" style="background:#198754;"></span>
+            <span>{% trans "Comfortable (< 70%)" %}</span>
+        </div>
+        <div class="d-flex align-items-center mb-1">
+            <span class="legend-dot" style="background:#ffc107;"></span>
+            <span>{% trans "Busy (70% - 99%)" %}</span>
+        </div>
+        <div class="d-flex align-items-center">
+            <span class="legend-dot" style="background:#dc3545;"></span>
+            <span>{% trans "Congested (>= 100%)" %}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Instant Emergency SOS Modal -->
+<div class="modal fade" id="sos-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header bg-danger text-white py-3">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-fill-exclamation fs-4"></i>
+                    <span>{% trans "Hajj Emergency Dispatch (طوارئ الحج)" %}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="alert alert-warning py-2 mb-3 text-start">
+                    <div class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {% trans "Your Detected Location (Tell this to operator):" %}</div>
+                    <div id="sos-location-text" class="fs-6 fw-bold text-primary mt-1">
+                        {% trans "Detecting location..." %}
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="tel:911" class="btn btn-danger btn-lg py-3 fw-bold shadow-sm d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-telephone-fill fs-4"></i> {% trans "Unified Security (طوارئ مكة)" %}</span>
+                        <span class="badge bg-white text-danger fs-5 px-3 py-1">911</span>
+                    </a>
+                    <a href="tel:997" class="btn btn-outline-danger btn-lg py-3 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-heart-pulse-fill fs-4"></i> {% trans "Red Crescent Ambulance (الهلال الأحمر)" %}</span>
+                        <span class="badge bg-danger text-white fs-5 px-3 py-1">997</span>
+                    </a>
+                    <a href="tel:998" class="btn btn-outline-warning text-dark btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-fire fs-4 text-danger"></i> {% trans "Civil Defense (الدفاع المدني)" %}</span>
+                        <span class="badge bg-dark text-white fs-6 px-3 py-1">998</span>
+                    </a>
+                    <a href="tel:1966" class="btn btn-outline-success btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-building-check fs-4"></i> {% trans "Ministry of Hajj Care (رعاية التائهين)" %}</span>
+                        <span class="badge bg-success text-white fs-6 px-3 py-1">1966</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let map;
+    let zoneLayers = {};
+    let userMarker = null;
+
+    // Initialize Leaflet Map centered between Haram & Jamarat
+    function initMap() {
+        map = L.map('hajj-map', {
+            zoomControl: false
+        }).setView([21.4225, 39.8262], 14);
+
+        // Add bottom-right zoom control
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        // CartoDB Positron clean map tiles
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Load zone data and start polling
+        refreshZoneData();
+        setInterval(refreshZoneData, 8000); // 8-second live telemetry refresh
+    }
+
+    // Fetch live zone status from API
+    async function refreshZoneData() {
+        try {
+            const response = await fetch("{% url 'zones:api_status' %}");
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                data.zones.forEach(zone => {
+                    updateOrAddZoneCircle(zone);
+                });
+            }
+        } catch (error) {
+            console.error("Error fetching live zone status:", error);
+        }
+    }
+
+    // Draw or update circular zone
+    function updateOrAddZoneCircle(z) {
+        const popupContent = `
+            <div style="min-width: 220px; font-family: inherit;">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
+                    <span class="fw-bold text-dark">${z.name_en}</span>
+                    <span class="badge" style="background:${z.color}; color:white;">${z.status_label}</span>
+                </div>
+                <div class="small text-muted mb-1">${z.name_ar}</div>
+                <div class="small mb-1"><b>Site:</b> ${z.site_display} | <b>Floor:</b> ${z.floor_level}</div>
+                <div class="small mb-2"><b>Headcount:</b> ${z.current_people.toLocaleString()} / ${z.safe_capacity.toLocaleString()}</div>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar" style="width: ${Math.min(z.capacity_pct, 100)}%; background-color: ${z.color};"></div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted">
+                    <span><b>Utilization:</b> ${z.capacity_pct}%</span>
+                    <span><b>20m Forecast:</b> ${z.predicted_density_20m} p/m²</span>
+                </div>
+            </div>
+        `;
+
+        if (zoneLayers[z.code]) {
+            // Update existing circle
+            zoneLayers[z.code].setStyle({
+                color: z.color,
+                fillColor: z.color
+            });
+            zoneLayers[z.code].setPopupContent(popupContent);
+        } else {
+            // Create new circle
+            const circle = L.circle([z.lat, z.lng], {
+                color: z.color,
+                fillColor: z.color,
+                fillOpacity: 0.35,
+                weight: 2,
+                radius: z.radius
+            }).addTo(map);
+
+            circle.bindPopup(popupContent);
+            zoneLayers[z.code] = circle;
+        }
+    }
+
+    // Smooth fly-to navigation
+    function flyToLocation(lat, lng, zoom, btnElement) {
+        map.flyTo([lat, lng], zoom, { duration: 1.5 });
+        document.querySelectorAll('.btn-site-pill').forEach(b => b.classList.remove('active'));
+        if (btnElement) btnElement.classList.add('active');
+    }
+
+    // Geolocation locate pilgrim device & send telemetry ping
+    function locatePilgrimDevice() {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            // Fly map to user location
+            map.flyTo([lat, lng], 17);
+
+            // Draw or move user marker
+            if (userMarker) {
+                userMarker.setLatLng([lat, lng]);
+            } else {
+                userMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'pulse-marker',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    })
+                }).addTo(map);
+            }
+
+            // Send ping to server
+            try {
+                const res = await fetch("{% url 'zones:api_ping' %}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: lat, lng: lng })
+                });
+                const result = await res.json();
+
+                const locText = `${result.zone_name_en} (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                document.getElementById('sos-location-text').innerText = locText;
+                userMarker.bindPopup(`<b>You are here:</b><br>${result.zone_name_en}`).openPopup();
+            } catch (e) {
+                console.error("Ping error:", e);
+            }
+        }, (err) => {
+            // Default fallback to Jamarat for demo testing if GPS permission denied in desktop browser
+            const demoLat = 21.41980;
+            const demoLng = 39.87150;
+            document.getElementById('sos-location-text').innerText = `Jamarat Bridge Level 2 (Demo GPS: 21.41980, 39.87150)`;
+            map.flyTo([demoLat, demoLng], 17);
+        });
+    }
+
+    // Auto-init on load
+    document.addEventListener('DOMContentLoaded', initMap);
+</script>
+{% endblock %}
