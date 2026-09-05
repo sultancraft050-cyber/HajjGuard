@@ -23,8 +23,10 @@ from django.views.generic import RedirectView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
+    path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('safety/', include('safety.urls', namespace='safety')),
     path('zones/', include('zones.urls', namespace='zones')),
-    path('', RedirectView.as_view(url='/zones/map/', permanent=False), name='home_redirect'),
+    path('', RedirectView.as_view(url='/accounts/pilgrim/', permanent=False), name='home_redirect'),
 ]
 
 if settings.DEBUG:

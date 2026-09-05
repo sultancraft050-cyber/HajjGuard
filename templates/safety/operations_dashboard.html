@@ -1,0 +1,323 @@
+﻿{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Operations Command Center" %} | HajjGuard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kpi-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+        transition: transform 0.2s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+    }
+    .table-incident tbody tr {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+
+    <!-- Top Command Center Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-shield-check text-success me-2"></i>
+                <span>{% trans "Central Operations Command Center (غرفة القيادة والسيطرة)" %}</span>
+            </h4>
+            <small class="text-muted">{% trans "Live Situational Awareness, Multi-Zone Crowd Risk & Emergency Dispatch" %}</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{% url 'zones:live_map' %}" class="btn btn-outline-success fw-bold rounded-pill px-3">
+                <i class="bi bi-map-fill me-1"></i> {% trans "Open Full Tactical Map" %}
+            </a>
+            <a href="{% url 'accounts:pilgrim_portal' %}" class="btn btn-outline-dark fw-bold rounded-pill px-3">
+                <i class="bi bi-phone me-1"></i> {% trans "Pilgrim View" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 High-Level Tactical KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card kpi-card p-3 bg-white border-start border-4 border-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">{% trans "MONITORED PILGRIMS" %}</div>
+                        <h3 class="fw-bold mb-0 text-dark">{{ total_pilgrims|default:2 }}</h3>
+                        <small class="text-success fw-bold"><i class="bi bi-broadcast"></i> {% trans "Active Telemetry" %}</small>
+                    </div>
+                    <div class="fs-1 text-success opacity-75"><i class="bi bi-people-fill"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card kpi-card p-3 bg-white border-start border-4 border-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">{% trans "ACTIVE SOS CALLS" %}</div>
+                        <h3 class="fw-bold mb-0 text-danger" id="active-incidents-counter">{{ active_incidents_count }}</h3>
+                        <small class="text-danger fw-bold"><i class="bi bi-bell-fill"></i> {% trans "Emergency Hotlines" %}</small>
+                    </div>
+                    <div class="fs-1 text-danger opacity-75"><i class="bi bi-shield-fill-exclamation"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card kpi-card p-3 bg-white border-start border-4 border-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">{% trans "HIGHEST RISK ZONE" %}</div>
+                        <h5 class="fw-bold mb-0 text-dark text-truncate" style="max-width: 170px;">
+                            {{ highest_risk_zone.name_en|default:"Jamarat Floor 2" }}
+                        </h5>
+                        <small class="text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> {% trans "High Density Flow" %}</small>
+                    </div>
+                    <div class="fs-1 text-warning opacity-75"><i class="bi bi-speedometer2"></i></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-3">
+            <div class="card kpi-card p-3 bg-white border-start border-4 border-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-muted small fw-bold">{% trans "MAKKAH WEATHER HEAT" %}</div>
+                        <h3 class="fw-bold mb-0 text-dark">43°C</h3>
+                        <small class="text-info fw-bold"><i class="bi bi-sun-fill"></i> {% trans "Extreme Heat Index" %}</small>
+                    </div>
+                    <div class="fs-1 text-info opacity-75"><i class="bi bi-thermometer-sun"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Operations Grid: SOS Queue + Zone Risk Ranking -->
+    <div class="row g-4 mb-4">
+        
+        <!-- Left: Real-time Emergency SOS Queue -->
+        <div class="col-12 col-xl-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-danger">
+                        <i class="bi bi-telephone-inbound-fill"></i>
+                        <span>{% trans "Active Distress & SOS Queue" %}</span>
+                    </h5>
+                    <span class="badge bg-danger rounded-pill px-3 py-2">{% trans "Live Feed" %}</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover table-incident align-middle small" id="sos-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>{% trans "Pilgrim" %}</th>
+                                <th>{% trans "Category" %}</th>
+                                <th>{% trans "Zone" %}</th>
+                                <th>{% trans "Dialed" %}</th>
+                                <th>{% trans "Action" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inc in incidents %}
+                            <tr id="row-incident-{{ inc.id }}" class="table-danger border-bottom">
+                                <td class="fw-bold">#{{ inc.id }}</td>
+                                <td>
+                                    <div class="fw-bold">{{ inc.pilgrim.user.get_full_name|default:inc.pilgrim.user.username }}</div>
+                                    <small class="text-muted">{{ inc.pilgrim.phone|default:"+96650XXXXXXX" }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">{{ inc.get_category_display }}</span>
+                                    {% if inc.pilgrim.is_vulnerable %}
+                                    <span class="badge bg-warning text-dark ms-1">⚠️ Vulnerable</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ inc.zone.name_en|default:"Holy Sites Corridor" }}</td>
+                                <td><span class="badge bg-dark">{{ inc.called_number }}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="resolveIncident({{ inc.id }})">
+                                        <i class="bi bi-check-circle-fill me-1"></i> {% trans "Resolve" %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr id="no-incidents-row">
+                                <td colspan="6" class="text-center py-4 text-muted">
+                                    <i class="bi bi-shield-check fs-2 text-success d-block mb-1"></i>
+                                    {% trans "No open emergencies at this moment. All zones secure." %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Holy Sites Risk Score Ranking Board -->
+        <div class="col-12 col-xl-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100 p-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
+                        <i class="bi bi-bar-chart-steps text-success"></i>
+                        <span>{% trans "Holy Sites Risk & Capacity Board" %}</span>
+                    </h5>
+                    <small class="text-muted">{% trans "Auto-ranked by congestion formula" %}</small>
+                </div>
+
+                <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-hover align-middle small">
+                        <thead class="table-light sticky-top">
+                            <tr>
+                                <th>{% trans "Zone Name" %}</th>
+                                <th>{% trans "Site" %}</th>
+                                <th>{% trans "Headcount / Cap" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Risk Score" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in ranked_zones %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ item.zone.name_en }}</div>
+                                    <small class="text-muted">{{ item.zone.name_ar }}</small>
+                                </td>
+                                <td><span class="badge bg-light text-dark">{{ item.zone.get_site_type_display }}</span></td>
+                                <td>
+                                    <div>{{ item.record.total_people|default:150 }} / {{ item.zone.safe_capacity }}</div>
+                                    <div class="progress" style="height: 6px; width: 100px;">
+                                        <div class="progress-bar" style="width: 35%; background-color: {{ item.color }};"></div>
+                                    </div>
+                                </td>
+                                <td><span class="badge" style="background-color: {{ item.color }}; color: white;">{{ item.status_label }}</span></td>
+                                <td><span class="fw-bold fs-6">{{ item.risk }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bottom: Lost Pilgrim Rapid Lookup & QR Decoder -->
+    <div class="card border-0 shadow-sm rounded-4 p-4">
+        <h5 class="fw-bold mb-3 d-flex align-items-center gap-2 text-primary">
+            <i class="bi bi-qr-code-scan"></i>
+            <span>{% trans "Lost Pilgrim Instant Identification & Group Recovery" %}</span>
+        </h5>
+        
+        <div class="row g-3 align-items-center mb-3">
+            <div class="col-12 col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                    <input type="text" id="pilgrim-query-input" class="form-control form-control-lg" 
+                           placeholder="{% trans "Scan QR code text or enter Passport / National ID (e.g. 1082390192)" %}">
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <button class="btn btn-primary btn-lg w-100 fw-bold rounded-3" onclick="searchLostPilgrim()">
+                    <i class="bi bi-search me-1"></i> {% trans "Find Group & Leader" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Result Box (Hidden by default) -->
+        <div id="lookup-result-box" class="d-none"></div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Resolve an emergency ticket
+    async function resolveIncident(incidentId) {
+        if (!confirm(`Mark Incident #${incidentId} as resolved?`)) return;
+
+        try {
+            const res = await fetch(`/safety/api/resolve/${incidentId}/`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                const row = document.getElementById(`row-incident-${incidentId}`);
+                if (row) row.remove();
+
+                const counter = document.getElementById('active-incidents-counter');
+                let count = parseInt(counter.innerText) || 1;
+                counter.innerText = Math.max(0, count - 1);
+            }
+        } catch (e) {
+            console.error("Resolve error:", e);
+        }
+    }
+
+    // Lost Pilgrim Search
+    async function searchLostPilgrim() {
+        const query = document.getElementById('pilgrim-query-input').value.trim();
+        if (!query) {
+            alert("Please enter a query or scan a QR code");
+            return;
+        }
+
+        const resultBox = document.getElementById('lookup-result-box');
+        resultBox.classList.remove('d-none');
+        resultBox.innerHTML = `<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>`;
+
+        try {
+            const res = await fetch(`/safety/api/lookup-pilgrim/?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+
+            if (data.status === 'found') {
+                const p = data.pilgrim;
+                const c = data.campaign;
+
+                resultBox.innerHTML = `
+                    <div class="card bg-light border-0 p-3 mt-3">
+                        <div class="row g-3">
+                            <div class="col-md-6 border-end">
+                                <h6 class="fw-bold text-success border-bottom pb-2"><i class="bi bi-person-check-fill me-1"></i> Pilgrim Information</h6>
+                                <div><b>Name:</b> <span class="fs-5 fw-bold text-dark">${p.name}</span></div>
+                                <div><b>National / Border ID:</b> ${p.id}</div>
+                                <div><b>Permit (Tasreeh):</b> ${p.tasreeh}</div>
+                                <div><b>Age:</b> ${p.age} years | <b>Blood:</b> <span class="badge bg-danger">${p.blood_type}</span></div>
+                                <div><b>Vulnerability:</b> ${p.is_vulnerable ? '<span class="badge bg-warning text-dark">Vulnerable (Needs Care)</span>' : '<span class="badge bg-secondary">Normal</span>'}</div>
+                                <div><b>Emergency Contact:</b> ${p.emergency_contact}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-primary border-bottom pb-2"><i class="bi bi-building-check me-1"></i> Campaign & Leader Details</h6>
+                                <div><b>Campaign:</b> ${c.name}</div>
+                                <div><b>Mina Tent:</b> <span class="badge bg-success">${c.mina_tent}</span></div>
+                                <div><b>Makkah Hotel:</b> ${c.hotel}</div>
+                                <div class="mt-2 p-2 bg-white rounded border">
+                                    <div class="small text-muted">Group Leader:</div>
+                                    <div class="fw-bold fs-6 text-dark">${c.leader_name}</div>
+                                    <a href="tel:${c.leader_phone}" class="btn btn-sm btn-primary mt-1 fw-bold">
+                                        <i class="bi bi-telephone-fill me-1"></i> Call Leader (${c.leader_phone})
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                resultBox.innerHTML = `
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i> ${data.message}
+                    </div>
+                `;
+            }
+        } catch (e) {
+            resultBox.innerHTML = `<div class="alert alert-danger mt-3">Search failed: ${e}</div>`;
+        }
+    }
+</script>
+{% endblock %}

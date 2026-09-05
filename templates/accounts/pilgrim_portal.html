@@ -1,0 +1,285 @@
+﻿{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "My Hajj Portal" %} | HajjGuard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .nusuk-smart-card {
+        background: linear-gradient(135deg, #0d5c3a 0%, #157347 100%);
+        color: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(13, 92, 58, 0.3);
+        border: 2px solid #c5a059;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nusuk-watermark {
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        font-size: 8rem;
+        opacity: 0.08;
+        pointer-events: none;
+    }
+
+    .btn-giant-action {
+        border-radius: 16px;
+        padding: 16px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        transition: transform 0.15s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .btn-giant-action:hover {
+        transform: translateY(-2px);
+    }
+
+    .ritual-card {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        margin-bottom: 14px;
+        transition: all 0.2s ease;
+    }
+
+    .ritual-card.active-ritual {
+        border-inline-start: 6px solid var(--hajj-green);
+        background: #f0fdf4;
+    }
+
+    .demo-bar {
+        background: #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3" style="max-width: 600px;">
+
+    <!-- Demo Tester User Switcher Bar -->
+    <div class="demo-bar mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+        <span class="text-muted fw-bold"><i class="bi bi-person-badge"></i> {% trans "Active Profile:" %}</span>
+        <div class="btn-group btn-group-sm">
+            <a href="{% url 'accounts:demo_switch' 'rashid' %}" class="btn btn-outline-success {% if profile.user.username == 'rashid' %}active{% endif %}">
+                👴 {% trans "Uncle Rashid (72y)" %}
+            </a>
+            <a href="{% url 'accounts:demo_switch' 'fatima' %}" class="btn btn-outline-success {% if profile.user.username == 'fatima' %}active{% endif %}">
+                🧕 {% trans "Fatima (32y)" %}
+            </a>
+            <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-outline-dark">
+                🖥️ {% trans "Command Center" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Official Nusuk Smart Card Badge -->
+    <div class="nusuk-smart-card p-4 mb-4">
+        <div class="nusuk-watermark">🕋</div>
+        
+        <div class="d-flex justify-content-between align-items-start border-bottom border-white border-opacity-25 pb-2 mb-3">
+            <div>
+                <span class="badge bg-warning text-dark fw-bold px-2 py-1 mb-1">
+                    <i class="bi bi-patch-check-fill"></i> {% trans "OFFICIAL NUSUK CARD" %}
+                </span>
+                <h4 class="fw-bold mb-0">{{ profile.user.get_full_name|default:profile.user.username }}</h4>
+                <div class="small text-white-50">{% trans "Passport / National ID:" %} {{ card.border_or_national_id|default:"1082390192" }}</div>
+            </div>
+            {% if card and card.qr_code_image %}
+            <div class="bg-white p-1 rounded-3 shadow-sm text-center">
+                <img src="{{ card.qr_code_image.url }}" alt="Nusuk QR" style="width: 75px; height: 75px; object-fit: contain;">
+                <div class="text-dark" style="font-size: 0.55rem; font-weight: 800;">{% trans "SCAN ID" %}</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="row g-2 small">
+            <div class="col-6">
+                <div class="text-white-50">{% trans "Campaign:" %}</div>
+                <div class="fw-bold">{{ card.campaign.name_en }}</div>
+            </div>
+            <div class="col-6">
+                <div class="text-white-50">{% trans "Mina Camp:" %}</div>
+                <div class="fw-bold">{{ card.campaign.assigned_mina_sector }} ({{ card.campaign.mina_camp_no }})</div>
+            </div>
+            <div class="col-6">
+                <div class="text-white-50">{% trans "Assigned Jamarat Floor:" %}</div>
+                <div class="fw-bold text-warning"><i class="bi bi-layers-fill"></i> {% trans "Level" %} {{ card.assigned_jamarat_floor|default:2 }}</div>
+            </div>
+            <div class="col-6">
+                <div class="text-white-50">{% trans "Health & Blood:" %}</div>
+                <div class="fw-bold">
+                    {{ profile.blood_type }} 
+                    {% if profile.is_wheelchair_user %}<span class="badge bg-light text-dark ms-1">♿ {% trans "Wheelchair" %}</span>{% endif %}
+                    {% if profile.chronic_condition != 'NONE' %}<span class="badge bg-danger ms-1">❤️ {{ profile.get_chronic_condition_display }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Giant Accessible Primary Action Buttons -->
+    <div class="d-grid gap-3 mb-4">
+        <a href="{% url 'zones:live_map' %}" class="btn btn-success btn-giant-action bg-gradient text-white">
+            <i class="bi bi-map-fill fs-3"></i>
+            <span>{% trans "View Holy Sites Live Crowd Map" %}</span>
+        </a>
+
+        <div class="row g-2">
+            <div class="col-6">
+                <a href="#sos-modal" data-bs-toggle="modal" class="btn btn-danger btn-giant-action w-100 text-white">
+                    <i class="bi bi-shield-fill-exclamation fs-3"></i>
+                    <span>{% trans "EMERGENCY SOS" %}</span>
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="tel:{{ card.campaign.leader_phone }}" class="btn btn-primary btn-giant-action w-100 text-white">
+                    <i class="bi bi-telephone-outbound-fill fs-3"></i>
+                    <span>{% trans "Call Leader" %}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day-by-Day Hajj Ritual Journey Assistant -->
+    <div class="mb-4">
+        <h5 class="fw-bold d-flex align-items-center justify-content-between mb-3">
+            <span><i class="bi bi-calendar2-check text-success me-1"></i> {% trans "My Hajj Ritual Journey" %}</span>
+            <span class="badge bg-success text-white">{% trans "Day 9 (Active)" %}</span>
+        </h5>
+
+        {% for r in rituals %}
+        <div class="card ritual-card p-3 {% if r.status == 'active' %}active-ritual shadow-sm{% endif %}">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h6 class="fw-bold mb-1 {% if r.status == 'active' %}text-success{% endif %}">
+                        {% if LANGUAGE_CODE == 'ar' %}{{ r.title_ar }}{% else %}{{ r.title_en }}{% endif %}
+                    </h6>
+                    <p class="small text-muted mb-0">
+                        {% if LANGUAGE_CODE == 'ar' %}{{ r.desc_ar }}{% else %}{{ r.desc_en }}{% endif %}
+                    </p>
+                </div>
+                {% if r.status == 'completed' %}
+                <span class="badge bg-secondary">{% trans "Completed" %}</span>
+                {% elif r.status == 'active' %}
+                <span class="badge bg-success">{% trans "Current Ritual" %}</span>
+                {% else %}
+                <span class="badge bg-light text-muted">{% trans "Upcoming" %}</span>
+                {% endif %}
+            </div>
+
+            <!-- Audio Readout for the Elderly / Illiterate -->
+            <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-2">
+                <small class="text-muted fst-italic">"{{ r.audio_text }}"</small>
+                <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="speakDua('{{ r.audio_text }}')">
+                    <i class="bi bi-volume-up-fill me-1"></i> {% trans "Listen" %}
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+
+<!-- Emergency SOS Modal with Auto-Logging -->
+<div class="modal fade" id="sos-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header bg-danger text-white py-3">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-fill-exclamation fs-4"></i>
+                    <span>{% trans "Immediate Emergency Dispatch (طوارئ الحج)" %}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="alert alert-warning py-2 mb-3 text-start small">
+                    <i class="bi bi-info-circle-fill text-danger me-1"></i>
+                    {% trans "Tapping any emergency number dials immediately and logs your coordinates to the command center." %}
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button onclick="triggerEmergencyCall('911', 'GENERAL')" class="btn btn-danger btn-lg py-3 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-shield-shaded fs-4"></i> {% trans "Unified Police & Security (911)" %}</span>
+                        <span class="badge bg-white text-danger fs-5 px-3 py-1">911</span>
+                    </button>
+                    <button onclick="triggerEmergencyCall('997', 'MEDICAL')" class="btn btn-outline-danger btn-lg py-3 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-heart-pulse-fill fs-4"></i> {% trans "Red Crescent Ambulance (997)" %}</span>
+                        <span class="badge bg-danger text-white fs-5 px-3 py-1">997</span>
+                    </button>
+                    <button onclick="triggerEmergencyCall('998', 'CRUSH')" class="btn btn-outline-warning text-dark btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-fire fs-4 text-danger"></i> {% trans "Civil Defense (998)" %}</span>
+                        <span class="badge bg-dark text-white fs-6 px-3 py-1">998</span>
+                    </button>
+                    <button onclick="triggerEmergencyCall('1966', 'LOST')" class="btn btn-outline-success btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
+                        <span class="d-flex align-items-center gap-2"><i class="bi bi-building-check fs-4"></i> {% trans "Ministry of Hajj Care (1966)" %}</span>
+                        <span class="badge bg-success text-white fs-6 px-3 py-1">1966</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Browser Speech Synthesis for Elderly / Illiterate Pilgrims
+    function speakDua(text) {
+        if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.85; // Slightly slower for clear understanding
+            window.speechSynthesis.speak(utterance);
+        } else {
+            alert(text);
+        }
+    }
+
+    // Trigger Emergency Call + Log to Database
+    async function triggerEmergencyCall(number, category) {
+        // Fallback coordinates (Jamarat) if navigator.geolocation not immediately ready
+        let lat = 21.41980;
+        let lng = 39.87150;
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                await sendSosLog(number, category, lat, lng);
+            }, async () => {
+                await sendSosLog(number, category, lat, lng);
+            });
+        } else {
+            await sendSosLog(number, category, lat, lng);
+        }
+
+        // Open phone dialer
+        window.location.href = `tel:${number}`;
+    }
+
+    async function sendSosLog(number, category, lat, lng) {
+        try {
+            await fetch("{% url 'safety:api_trigger_sos' %}", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: category,
+                    called_number: number,
+                    lat: lat,
+                    lng: lng
+                })
+            });
+        } catch (e) {
+            console.error("SOS log error:", e);
+        }
+    }
+</script>
+{% endblock %}
