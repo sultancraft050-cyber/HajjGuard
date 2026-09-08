@@ -26,6 +26,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('safety/', include('safety.urls', namespace='safety')),
     path('zones/', include('zones.urls', namespace='zones')),
+    path('analytics/', include('analytics.urls', namespace='analytics')),
     path('', RedirectView.as_view(url='/accounts/pilgrim/', permanent=False), name='home_redirect'),
 ]
 

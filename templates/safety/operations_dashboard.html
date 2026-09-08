@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load i18n static %}
 
 {% block title %}{% trans "Operations Command Center" %} | HajjGuard{% endblock %}
@@ -94,6 +94,64 @@
                         <small class="text-info fw-bold"><i class="bi bi-sun-fill"></i> {% trans "Extreme Heat Index" %}</small>
                     </div>
                     <div class="fs-1 text-info opacity-75"><i class="bi bi-thermometer-sun"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Crowd Surge Simulation & Dynamic Routing Studio -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div>
+                <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                    <i class="bi bi-cpu-fill text-primary"></i>
+                    <span>{% trans "Crowd Surge Simulation & Dynamic Rerouting Engine (NetworkX)" %}</span>
+                </h5>
+                <small class="text-muted">{% trans "Simulate sudden morning rush to Jamarat and test AI congestion-aware detour routing in real time" %}</small>
+            </div>
+            <div class="d-flex gap-2 mt-2 mt-md-0">
+                <button class="btn btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="triggerJamaratSurge()">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> {% trans "Trigger Jamarat Surge (RED)" %}
+                </button>
+                <button class="btn btn-outline-success fw-bold rounded-pill px-3" onclick="resetCrowdSimulation()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> {% trans "Reset Baseline (GREEN)" %}
+                </button>
+                <button class="btn btn-primary fw-bold rounded-pill px-3" onclick="calculateDynamicRoute()">
+                    <i class="bi bi-signpost-split-fill me-1"></i> {% trans "Calculate Route" %}
+                </button>
+            </div>
+        </div>
+
+        <!-- Simulation Notification Alert -->
+        <div id="sim-alert-banner" class="alert alert-secondary py-2 mb-3 d-flex align-items-center justify-content-between">
+            <div>
+                <span class="fw-bold" id="sim-status-title">{% trans "Simulation Ready:" %}</span>
+                <span id="sim-status-msg">{% trans "All 12 Holy Sites zones are operating under normal safe capacity." %}</span>
+            </div>
+            <span class="badge bg-success fs-6" id="sim-badge">{% trans "Status: NORMAL (GREEN)" %}</span>
+        </div>
+
+        <!-- Side-by-Side Dynamic Route Comparison -->
+        <div class="row g-3" id="route-comparison-section">
+            <div class="col-12 col-md-6">
+                <div class="p-3 border rounded-3 bg-light h-100" id="baseline-route-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-secondary">{% trans "TRADITIONAL APP (NORMAL)" %}</span>
+                        <span class="fw-bold text-muted" id="baseline-time">25.0 {% trans "mins" %}</span>
+                    </div>
+                    <h6 class="fw-bold mb-1" id="baseline-title">Mina Sector 3 ➔ King Fahd Way ➔ Jamarat Ground Floor</h6>
+                    <p class="small text-muted mb-0" id="baseline-desc">Standard shortest path algorithm without crowd awareness. Directs all pilgrims onto the congested corridor.</p>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <div class="p-3 border rounded-3 bg-light h-100 border-success" id="aware-route-card">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge bg-success" id="aware-badge">{% trans "HAJJGUARD AI DETOUR" %}</span>
+                        <span class="fw-bold text-success" id="aware-time">20.0 {% trans "mins" %}</span>
+                    </div>
+                    <h6 class="fw-bold mb-1 text-success" id="aware-title">Mina Sector 3 ➔ Al-Muaisem Tunnel ➔ Jamarat 3rd Floor</h6>
+                    <p class="small text-dark mb-0" id="aware-desc">NetworkX dynamic weight penalty activated. Bypasses overloaded King Fahd choke point, saving transit time and preventing stampede.</p>
                 </div>
             </div>
         </div>
@@ -319,5 +377,83 @@
             resultBox.innerHTML = `<div class="alert alert-danger mt-3">Search failed: ${e}</div>`;
         }
     }
+
+    // Trigger Morning Jamarat Surge (Pushes to RED status)
+    async function triggerJamaratSurge() {
+        try {
+            const res = await fetch("{% url 'analytics:api_trigger_surge' %}", { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('sim-status-title').innerText = "⚠️ CROWD SURGE ALERT:";
+                document.getElementById('sim-status-msg').innerText = "Jamarat Ground Level has surged to 34,500 pilgrims (115% capacity). Extreme congestion!";
+                const badge = document.getElementById('sim-badge');
+                badge.className = "badge bg-danger fs-6";
+                badge.innerText = "CRITICAL CHOKEPOINT (RED)";
+
+                // Automatically re-calculate route to show detour in action
+                calculateDynamicRoute();
+            }
+        } catch (e) {
+            console.error("Surge error:", e);
+        }
+    }
+
+    // Reset all zones back to normal safe baseline (GREEN)
+    async function resetCrowdSimulation() {
+        try {
+            const res = await fetch("{% url 'analytics:api_reset_crowd' %}", { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('sim-status-title').innerText = "Simulation Status:";
+                document.getElementById('sim-status-msg').innerText = "All zones restored to normal safe capacity (GREEN).";
+                const badge = document.getElementById('sim-badge');
+                badge.className = "badge bg-success fs-6";
+                badge.innerText = "Status: NORMAL (GREEN)";
+
+                // Re-calculate route
+                calculateDynamicRoute();
+            }
+        } catch (e) {
+            console.error("Reset error:", e);
+        }
+    }
+
+    // Calculate dynamic route comparison
+    async function calculateDynamicRoute() {
+        try {
+            const res = await fetch("{% url 'analytics:api_calculate_route' %}?from=Z-MINA-SEC3&to=Z-JAMARAT-F0");
+            const data = await res.json();
+            if (data.status === 'success') {
+                const cmp = data.route_comparison;
+
+                // Update baseline
+                document.getElementById('baseline-time').innerText = `${cmp.baseline.estimated_minutes} mins`;
+                document.getElementById('baseline-title').innerText = cmp.baseline.path.join(' ➔ ');
+
+                // Update congestion aware
+                const awareTime = document.getElementById('aware-time');
+                const awareTitle = document.getElementById('aware-title');
+                const awareDesc = document.getElementById('aware-desc');
+                const awareBadge = document.getElementById('aware-badge');
+
+                awareTime.innerText = `${cmp.congestion_aware.estimated_minutes} mins`;
+                awareTitle.innerText = cmp.congestion_aware.path.join(' ➔ ');
+                awareDesc.innerText = cmp.congestion_aware.reason;
+
+                if (cmp.is_rerouted) {
+                    awareBadge.className = "badge bg-warning text-dark";
+                    awareBadge.innerText = "⚠️ DYNAMIC DETOUR ACTIVATED";
+                } else {
+                    awareBadge.className = "badge bg-success";
+                    awareBadge.innerText = "OPTIMAL DIRECT ROUTE";
+                }
+            }
+        } catch (e) {
+            console.error("Route calc error:", e);
+        }
+    }
+
+    // Initial route check on page load
+    document.addEventListener('DOMContentLoaded', calculateDynamicRoute);
 </script>
 {% endblock %}
