@@ -83,3 +83,94 @@ def demo_switch_user(request, username):
         return redirect('safety:operations_dashboard')
     return redirect('accounts:pilgrim_portal')
 
+
+def register_view(request):
+    """
+    KSU Specification Section 7.1 (Screen 1) & Section 16 (PDPL):
+    Register and login: Form, language choice, age band, mobility status, consent agreement.
+    """
+    from django.utils import timezone
+    if request.method == 'POST':
+        username = request.POST.get('username', '').strip()
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+        email = request.POST.get('email', '').strip()
+        phone = request.POST.get('phone', '').strip()
+        language = request.POST.get('language', 'ar')
+        nationality = request.POST.get('nationality', 'Saudi Arabia')
+        age = int(request.POST.get('age', 35))
+        gender = request.POST.get('gender', 'M')
+        is_wheelchair = request.POST.get('is_wheelchair_user') == 'on'
+        chronic = request.POST.get('chronic_condition', 'NONE')
+        blood_type = request.POST.get('blood_type', 'O+')
+        em_name = request.POST.get('emergency_contact_name', '').strip()
+        em_phone = request.POST.get('emergency_contact_phone', '').strip()
+        consent = request.POST.get('consent_given') == 'on'
+
+        if not username:
+            username = f"pilgrim_{phone[-4:] if len(phone)>=4 else timezone.now().strftime('%M%S')}"
+
+        user, created = User.objects.get_or_create(username=username, defaults={
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email,
+        })
+        if not created and not hasattr(user, 'profile'):
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save()
+
+        profile, p_created = PilgrimProfile.objects.update_or_create(user=user, defaults={
+            'role': 'pilgrim',
+            'phone': phone,
+            'language': language,
+            'nationality': nationality,
+            'age': age,
+            'gender': gender,
+            'is_wheelchair_user': is_wheelchair,
+            'chronic_condition': chronic,
+            'blood_type': blood_type,
+            'emergency_contact_name': em_name,
+            'emergency_contact_phone': em_phone,
+            'consent_given': consent,
+            'consent_timestamp': timezone.now(),
+        })
+
+        login(request, user)
+        return redirect('accounts:pilgrim_portal')
+
+    return render(request, 'accounts/register.html', {
+        'chronic_choices': PilgrimProfile.CHRONIC_CHOICES,
+        'language_choices': PilgrimProfile.LANGUAGE_CHOICES,
+    })
+
+
+def profile_view(request):
+    """
+    KSU Specification Section 7.1 (Screen 9) & Section 16:
+    Profile: Edit details, language, consent settings.
+    """
+    if request.user.is_authenticated and hasattr(request.user, 'profile'):
+        profile = request.user.profile
+    else:
+        profile = PilgrimProfile.objects.filter(role='pilgrim').first()
+
+    if request.method == 'POST':
+        profile.language = request.POST.get('language', profile.language)
+        profile.phone = request.POST.get('phone', profile.phone)
+        profile.age = int(request.POST.get('age', profile.age))
+        profile.is_wheelchair_user = request.POST.get('is_wheelchair_user') == 'on'
+        profile.chronic_condition = request.POST.get('chronic_condition', profile.chronic_condition)
+        profile.emergency_contact_name = request.POST.get('emergency_contact_name', profile.emergency_contact_name)
+        profile.emergency_contact_phone = request.POST.get('emergency_contact_phone', profile.emergency_contact_phone)
+        profile.consent_given = request.POST.get('consent_given') == 'on'
+        profile.save()
+        return redirect('accounts:profile')
+
+    return render(request, 'accounts/profile.html', {
+        'profile': profile,
+        'chronic_choices': PilgrimProfile.CHRONIC_CHOICES,
+        'language_choices': PilgrimProfile.LANGUAGE_CHOICES,
+    })
+
+

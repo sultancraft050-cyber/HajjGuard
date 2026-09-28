@@ -6,6 +6,7 @@ from accounts.models import PilgrimProfile
 from nusuk.models import HajjCampaign, NusukCard
 from safety.models import SosIncident, EmergencyContact
 from zones.models import Zone, DensityRecord
+from tests.test_system_integrity import HajjGuardSystemIntegrityTests
 
 class SafetyAndPortalTestCase(TestCase):
     def setUp(self):

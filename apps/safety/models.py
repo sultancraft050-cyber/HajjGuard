@@ -28,7 +28,36 @@ class EmergencyContact(models.Model):
     def __str__(self):
         return f"{self.name_en} ({self.number})"
 
+
+class FieldUnit(models.Model):
+    """
+    KSU Specification Section 6:
+    FieldUnit: name, type (medical, security or civil defence), current_zone, available
+    """
+    UNIT_TYPE_CHOICES = [
+        ('MEDICAL', _('Red Crescent / Field Hospital Ambulance')),
+        ('SECURITY', _('Haram / Hajj Security Forces')),
+        ('CIVIL_DEFENSE', _('Civil Defense Rescue Unit')),
+    ]
+
+    name = models.CharField(max_length=150)
+    unit_type = models.CharField(max_length=20, choices=UNIT_TYPE_CHOICES, default='MEDICAL')
+    current_zone = models.ForeignKey(Zone, on_delete=models.SET_NULL, null=True, blank=True, related_name='field_units')
+    available = models.BooleanField(default=True)
+    phone = models.CharField(max_length=25, blank=True)
+    radio_callsign = models.CharField(max_length=50, blank=True)
+
+    def __str__(self):
+        zone_name = self.current_zone.code if self.current_zone else "Roaming"
+        status_str = "Available" if self.available else "Dispatched"
+        return f"{self.name} [{self.get_unit_type_display()}] - {zone_name} ({status_str})"
+
+
 class SosIncident(models.Model):
+    """
+    KSU Specification Section 6 & 7:
+    SosReport: pilgrim, category, latitude, longitude, zone, status, assigned_unit, created, closed
+    """
     CATEGORY_CHOICES = [
         ('MEDICAL', _('Medical Emergency / Heart / Fainting')),
         ('HEAT', _('Heat Stroke / Dehydration')),
@@ -39,7 +68,7 @@ class SosIncident(models.Model):
 
     STATUS_CHOICES = [
         ('OPEN', _('Active / Help Requested')),
-        ('RESPONDING', _('Emergency Services Contacted')),
+        ('RESPONDING', _('Dispatched / Unit En Route')),
         ('RESOLVED', _('Resolved / Safe')),
     ]
 
@@ -48,6 +77,9 @@ class SosIncident(models.Model):
     lat = models.FloatField()
     lng = models.FloatField()
     zone = models.ForeignKey(Zone, on_delete=models.SET_NULL, null=True, blank=True, related_name='sos_incidents')
+    
+    # Unit assignment (Section 6 & 7.2: Incident queue)
+    assigned_unit = models.ForeignKey(FieldUnit, on_delete=models.SET_NULL, null=True, blank=True, related_name='incidents')
     
     battery_level = models.PositiveIntegerField(null=True, blank=True, help_text="Phone battery % at time of SOS")
     called_number = models.CharField(max_length=15, blank=True, help_text="Direct emergency number dialed (e.g. 911, 997)")
@@ -61,5 +93,40 @@ class SosIncident(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"SOS #{self.id} - {self.pilgrim.user.get_full_name() or self.pilgrim.user.username} ({self.category}) - {self.status}"
+        unit_str = f"-> {self.assigned_unit.name}" if self.assigned_unit else "Unassigned"
+        return f"SOS #{self.id} - {self.pilgrim.user.get_full_name() or self.pilgrim.user.username} ({self.category}) [{self.status}] {unit_str}"
 
+
+class Alert(models.Model):
+    """
+    KSU Specification Section 6 & 7:
+    Alert: zone, type, severity, message Arabic, message English, created, acknowledged
+    Feeds both the dashboard and the pilgrim page
+    """
+    ALERT_TYPE_CHOICES = [
+        ('CROWD_SURGE', _('Severe Crowd Surge')),
+        ('CHOKEPOINT', _('Corridor Chokepoint Detected')),
+        ('HEAT_STRESS', _('High Radiant Heat Advisory')),
+        ('GATE_RESTRICTION', _('Gate Ingress Diverted')),
+    ]
+
+    SEVERITY_CHOICES = [
+        ('LOW', _('Advisory (Green/Yellow)')),
+        ('MEDIUM', _('Caution (Orange)')),
+        ('HIGH', _('High Risk (Red)')),
+        ('CRITICAL', _('Life-Safety Emergency (Flashing Red)')),
+    ]
+
+    zone = models.ForeignKey(Zone, on_delete=models.CASCADE, related_name='alerts')
+    alert_type = models.CharField(max_length=30, choices=ALERT_TYPE_CHOICES, default='CROWD_SURGE')
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default='HIGH')
+    message_ar = models.CharField(max_length=255)
+    message_en = models.CharField(max_length=255)
+    acknowledged = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.severity}] {self.zone.code}: {self.message_en}"

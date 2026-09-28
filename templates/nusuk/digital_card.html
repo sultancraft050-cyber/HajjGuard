@@ -1,0 +1,383 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Digital Nusuk Smart Card" %} - HajjGuard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .wallet-container {
+        max-width: 440px;
+        margin: 0 auto;
+        perspective: 1200px;
+    }
+
+    .flip-card {
+        background-color: transparent;
+        width: 100%;
+        min-height: 560px;
+        perspective: 1200px;
+        cursor: pointer;
+    }
+
+    .flip-card-inner {
+        position: relative;
+        width: 100%;
+        min-height: 560px;
+        text-align: right;
+        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transform-style: preserve-3d;
+    }
+
+    .flip-card.flipped .flip-card-inner {
+        transform: rotateY(180deg);
+    }
+
+    .card-face {
+        position: absolute;
+        width: 100%;
+        min-height: 560px;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 215, 0, 0.3);
+        overflow: hidden;
+    }
+
+    /* FRONT SIDE: Saudi Emerald & Deep Gold Hologram */
+    .card-front {
+        background: linear-gradient(145deg, #0b3d26 0%, #062b1a 45%, #021a0f 100%);
+        color: white;
+        border: 2px solid #dfb15b;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* BACK SIDE: Midnight Obsidian & Security Matrix */
+    .card-back {
+        background: linear-gradient(145deg, #111a14 0%, #0d1510 50%, #060b08 100%);
+        color: white;
+        border: 2px solid #a88434;
+        padding: 24px;
+        transform: rotateY(180deg);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Hologram & Gold accents */
+    .hologram-strip {
+        background: linear-gradient(90deg, rgba(223, 177, 91, 0.15), rgba(255, 255, 255, 0.4), rgba(223, 177, 91, 0.15));
+        height: 4px;
+        border-radius: 2px;
+        margin-bottom: 16px;
+    }
+
+    .smart-chip {
+        width: 48px;
+        height: 38px;
+        background: linear-gradient(135deg, #f7d58b 0%, #d4a046 50%, #b88628 100%);
+        border-radius: 8px;
+        position: relative;
+        box-shadow: inset 0 1px 2px rgba(255,255,255,0.6), 0 2px 4px rgba(0,0,0,0.3);
+        border: 1px solid #ffe8b3;
+    }
+    .smart-chip::after {
+        content: '';
+        position: absolute;
+        top: 9px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(0,0,0,0.3);
+        box-shadow: 0 10px 0 rgba(0,0,0,0.3), 0 19px 0 rgba(0,0,0,0.3);
+    }
+    .smart-chip::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 23px;
+        width: 1px;
+        background: rgba(0,0,0,0.3);
+    }
+
+    .nfc-badge {
+        font-size: 0.65rem;
+        background: rgba(255, 215, 0, 0.15);
+        color: #f7d58b;
+        border: 1px solid rgba(255, 215, 0, 0.3);
+        border-radius: 6px;
+        padding: 2px 6px;
+    }
+
+    .pilgrim-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 16px;
+        object-fit: cover;
+        border: 2px solid #dfb15b;
+        background: #1e3325;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.2rem;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+
+    .code128-barcode {
+        background: white;
+        padding: 8px 12px;
+        border-radius: 10px;
+        text-align: center;
+    }
+
+    .barcode-lines {
+        font-family: 'Courier New', Courier, monospace;
+        letter-spacing: 3px;
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: #111;
+        user-select: none;
+        line-height: 1;
+    }
+
+    .apple-wallet-btn {
+        background: #000;
+        color: #fff;
+        border: 1px solid #333;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    .apple-wallet-btn:hover {
+        background: #1a1a1a;
+        color: #f7d58b;
+        border-color: #dfb15b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <!-- Header bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <a href="{% url 'accounts:pilgrim_portal' %}" class="btn btn-outline-secondary btn-sm mb-1">
+                <i class="bi bi-arrow-right"></i> {% trans "Back to Portal" %}
+            </a>
+            <h3 class="fw-bold mb-0">
+                <i class="bi bi-person-vcard text-success"></i> {% trans "Digital Nusuk Smart Card" %}
+            </h3>
+            <span class="text-muted small">{% trans "Official Digital Identity for Hajj & Umrah Checkpoints (1447H / 2026)" %}</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="flipCard()" class="btn btn-warning fw-bold shadow-sm">
+                <i class="bi bi-arrow-repeat"></i> {% trans "Flip Card" %}
+            </button>
+            <button onclick="window.print()" class="btn btn-outline-dark shadow-sm">
+                <i class="bi bi-printer"></i> {% trans "Print Pass" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- 3D Flip Card Container -->
+    <div class="wallet-container mb-4">
+        <div id="smartCard" class="flip-card" onclick="flipCard()">
+            <div class="flip-card-inner">
+                
+                <!-- FRONT SIDE -->
+                <div class="card-face card-front">
+                    <!-- Card Header -->
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="smart-chip"></div>
+                                <span class="nfc-badge"><i class="bi bi-broadcast"></i> NFC 2026</span>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold" style="font-size: 0.78rem; color: #f7d58b;">المملكة العربية السعودية</div>
+                                <div style="font-size: 0.65rem; color: #cfd8dc;">MINISTRY OF HAJJ & UMRAH</div>
+                            </div>
+                        </div>
+                        <div class="hologram-strip"></div>
+                    </div>
+
+                    <!-- Pilgrim Main Credentials -->
+                    <div class="d-flex align-items-center gap-3 my-2">
+                        <div class="pilgrim-avatar">
+                            {% if profile.gender == 'F' %}🧕{% else %}👴{% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <span class="badge bg-warning text-dark fw-bold px-2 py-1 mb-1" style="font-size: 0.68rem;">
+                                <i class="bi bi-shield-fill-check"></i> {% trans "AUTHORIZED PILGRIM" %}
+                            </span>
+                            <h4 class="fw-bold mb-0 text-white" style="letter-spacing: 0.5px;">
+                                {{ profile.user.get_full_name|default:profile.user.username }}
+                            </h4>
+                            <div class="text-white-50" style="font-size: 0.8rem;">
+                                {% trans "Nationality:" %} <strong class="text-white">{{ profile.nationality|default:"Saudi Arabia" }}</strong>
+                            </div>
+                            <div class="text-white-50" style="font-size: 0.78rem;">
+                                {% trans "ID / Border:" %} <strong class="text-white">{{ card.border_or_national_id|default:"1082390192" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logistics & Camp Grid -->
+                    <div class="p-3 rounded-3 my-2" style="background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(223, 177, 91, 0.25);">
+                        <div class="row g-2" style="font-size: 0.82rem;">
+                            <div class="col-7">
+                                <span class="text-white-50">{% trans "Permit (Tasreeh):" %}</span>
+                                <div class="fw-bold text-warning text-truncate">{{ card.tasreeh_no }}</div>
+                            </div>
+                            <div class="col-5">
+                                <span class="text-white-50">{% trans "Blood Type:" %}</span>
+                                <div class="fw-bold text-danger"><i class="bi bi-droplet-fill"></i> {{ profile.blood_type|default:"O+" }}</div>
+                            </div>
+                            <div class="col-7">
+                                <span class="text-white-50">{% trans "Mina Camp & Street:" %}</span>
+                                <div class="fw-bold text-white text-truncate">{{ card.campaign.assigned_mina_sector }} ({{ card.tent_street_no|default:"St 204" }})</div>
+                            </div>
+                            <div class="col-5">
+                                <span class="text-white-50">{% trans "Jamarat Tier:" %}</span>
+                                <div class="fw-bold text-warning"><i class="bi bi-layers-fill"></i> {% trans "Level" %} {{ card.assigned_jamarat_floor|default:2 }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Laser Barcode & Verification QR -->
+                    <div class="d-flex justify-content-between align-items-center gap-2 mt-2">
+                        <div class="code128-barcode flex-grow-1 text-center">
+                            <div class="barcode-lines">||| | |||| | || | |||</div>
+                            <div class="text-muted fw-bold" style="font-size: 0.72rem; letter-spacing: 2px;">
+                                *{{ barcode_code }}*
+                            </div>
+                        </div>
+                        {% if card and card.qr_code_image %}
+                        <div class="bg-white p-1 rounded-3 shadow text-center" style="width: 78px; height: 78px;">
+                            <img src="{{ card.qr_code_image.url }}" alt="Nusuk QR" style="width: 100%; height: 100%; object-fit: contain;">
+                        </div>
+                        {% else %}
+                        <div class="bg-white p-1 rounded-3 text-center d-flex flex-column align-items-center justify-content-center" style="width: 78px; height: 78px;">
+                            <i class="bi bi-qr-code text-dark fs-1"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tap Hint -->
+                    <div class="text-center text-white-50 small mt-2" style="font-size: 0.7rem;">
+                        <i class="bi bi-hand-index-thumb"></i> {% trans "Tap anywhere to flip card & view emergency details" %}
+                    </div>
+                </div>
+
+                <!-- BACK SIDE -->
+                <div class="card-face card-back">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-secondary text-light fw-bold px-2 py-1" style="font-size: 0.7rem;">
+                                <i class="bi bi-lock-fill"></i> {% trans "SECURITY & EMERGENCY RECORD" %}
+                            </span>
+                            <span class="text-warning small fw-bold">PIN: {{ card.emergency_pin|default:"992144" }}</span>
+                        </div>
+                        <div class="hologram-strip"></div>
+                    </div>
+
+                    <!-- Emergency Contact & Group Leader -->
+                    <div class="my-auto">
+                        <div class="card bg-dark border-secondary p-3 mb-2 text-white text-start">
+                            <div class="text-white-50 small">{% trans "Assigned Hajj Campaign:" %}</div>
+                            <div class="fw-bold fs-6 text-warning">{{ card.campaign.name_en }}</div>
+                            <div class="small text-muted">{{ card.campaign.name_ar }}</div>
+                            <hr class="my-2 border-secondary">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="text-white-50 small">{% trans "Camp Leader:" %}</div>
+                                    <div class="fw-bold">{{ card.campaign.leader_name }}</div>
+                                </div>
+                                <a href="https://wa.me/{{ card.campaign.leader_phone|cut:'+'|cut:' ' }}" target="_blank" class="btn btn-sm btn-success fw-bold">
+                                    <i class="bi bi-whatsapp"></i> WhatsApp
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark border-secondary p-3 mb-2 text-white text-start">
+                            <div class="text-white-50 small">{% trans "Family Emergency Contact:" %}</div>
+                            <div class="fw-bold">{{ profile.emergency_contact_name|default:"Eng. Faisal (Son)" }}</div>
+                            <div class="text-warning small"><i class="bi bi-telephone-fill"></i> {{ profile.emergency_contact_phone|default:"+966554433221" }}</div>
+                        </div>
+
+                        <!-- Medical Flags -->
+                        <div class="p-2 rounded-2 bg-black bg-opacity-50 border border-secondary text-start" style="font-size: 0.78rem;">
+                            <div class="text-white-50">{% trans "Medical & Accessibility Alerts:" %}</div>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                <span class="badge bg-danger"><i class="bi bi-droplet-fill"></i> Blood {{ profile.blood_type }}</span>
+                                {% if profile.is_wheelchair_user %}
+                                <span class="badge bg-info text-dark"><i class="bi bi-person-wheelchair"></i> Wheelchair Access</span>
+                                {% endif %}
+                                {% if profile.chronic_condition != 'NONE' %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-heart-pulse-fill"></i> {{ profile.get_chronic_condition_display }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Saudi Government Hotlines -->
+                    <div>
+                        <div class="d-flex justify-content-around text-center py-2 border-top border-secondary small text-white-50">
+                            <div><strong class="text-white d-block">911</strong> Security / EMS</div>
+                            <div><strong class="text-white d-block">937</strong> Health Hotline</div>
+                            <div><strong class="text-white d-block">8001222444</strong> Ifta Rulings</div>
+                        </div>
+                        <div class="text-center text-white-50 mt-1" style="font-size: 0.65rem;">
+                            {% trans "Property of the Kingdom of Saudi Arabia. Fraudulent duplication is punishable by law." %}
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Apple & Google Wallet Integration Buttons -->
+    <div class="wallet-container text-center">
+        <div class="row g-2 justify-content-center">
+            <div class="col-sm-6">
+                <button onclick="simulateWalletAdd('Apple Wallet')" class="btn apple-wallet-btn w-100 py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-apple fs-5"></i>
+                    <span>{% trans "Add to Apple Wallet" %}</span>
+                </button>
+            </div>
+            <div class="col-sm-6">
+                <button onclick="simulateWalletAdd('Google Wallet')" class="btn btn-outline-dark bg-white text-dark w-100 py-2 shadow-sm d-flex align-items-center justify-content-center gap-2">
+                    <i class="bi bi-google fs-5"></i>
+                    <span>{% trans "Add to Google Wallet" %}</span>
+                </button>
+            </div>
+        </div>
+        <div id="walletAlert" class="alert alert-success mt-3 d-none">
+            <i class="bi bi-check-circle-fill"></i> <span id="walletAlertMsg"></span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function flipCard() {
+        const card = document.getElementById('smartCard');
+        card.classList.toggle('flipped');
+    }
+
+    function simulateWalletAdd(walletName) {
+        const alertBox = document.getElementById('walletAlert');
+        const alertMsg = document.getElementById('walletAlertMsg');
+        alertMsg.innerText = `{% trans "Official Nusuk Pass successfully linked to" %} ${walletName}! {% trans "Pass is offline-cached and available on your lock screen." %}`;
+        alertBox.classList.remove('d-none');
+        setTimeout(() => {
+            alertBox.classList.add('d-none');
+        }, 5000);
+    }
+</script>
+{% endblock %}

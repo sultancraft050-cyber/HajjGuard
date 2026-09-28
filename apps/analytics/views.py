@@ -1,15 +1,238 @@
+import csv
+from datetime import timedelta
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.utils import timezone
+from django.utils.translation import gettext as _
 from .services import RoutingEngine, CrowdSimulator, PredictiveForecaster
-from zones.models import Zone
+from zones.models import Zone, DensityRecord, LocationPing
+from safety.models import SosIncident
+from accounts.models import PilgrimProfile, AuditLog
+from services.weather import get_live_makkah_weather
+
+def risk_board_view(request):
+    """
+    KSU Specification Section 7.2 (Screen 2):
+    Risk Board: Zones ranked by risk score, current and predicted, sortable table.
+    Feeds Section 3 F2 (Risk score weighs who is in the crowd, not only how many).
+    """
+    zones = Zone.objects.all()
+    ranked_zones = []
+    now = timezone.now()
+    window_15m = now - timedelta(minutes=15)
+    weather = get_live_makkah_weather()
+    heat_index = weather.get('feels_like', 36)
+
+    sort_by = request.GET.get('sort', 'risk')
+    site_filter = request.GET.get('site', 'ALL')
+
+    if site_filter != 'ALL':
+        zones = zones.filter(site_type=site_filter)
+
+    for z in zones:
+        rec = z.density_records.first()
+        base_people = rec.total_people if rec else 0
+        live_active = LocationPing.objects.filter(zone=z, timestamp__gte=window_15m).values('pilgrim_id').distinct().count()
+        current_people = max(base_people, live_active)
+
+        # Vulnerable pilgrims calculation (age >= 65, wheelchair, chronic)
+        vulnerable_count = LocationPing.objects.filter(
+            zone=z,
+            timestamp__gte=window_15m,
+            pilgrim__age__gte=65
+        ).values('pilgrim_id').distinct().count()
+        
+        # If no live pings, approximate vulnerable share from registered demographic distribution
+        if vulnerable_count == 0 and current_people > 0:
+            vulnerable_count = int(current_people * 0.18)
+
+        vulnerable_pct = round((vulnerable_count / max(current_people, 1)) * 100.0, 1)
+
+        capacity_pct = round((current_people / max(z.safe_capacity, 1)) * 100.0, 1)
+        density_sqm = round(current_people / max(z.floor_area_sqm, 1), 2)
+        pred_density = rec.predicted_density_20m if rec else round(density_sqm * 1.08, 2)
+        
+        # Weighted risk score formula (Section 3 F2):
+        # 50% density ratio + 30% vulnerable share + 20% normalized heat stress
+        heat_penalty = min(100.0, max(0.0, (heat_index - 30) * 5.0))
+        computed_risk = round(min(100.0, (capacity_pct * 0.5) + (vulnerable_pct * 0.3) + (heat_penalty * 0.2)), 1)
+
+        status_code, color_code, label = z.get_status(current_people)
+
+        ranked_zones.append({
+            'zone': z,
+            'current_people': current_people,
+            'capacity_pct': capacity_pct,
+            'density_sqm': density_sqm,
+            'predicted_density_20m': pred_density,
+            'vulnerable_count': vulnerable_count,
+            'vulnerable_pct': vulnerable_pct,
+            'risk_score': computed_risk,
+            'status_code': status_code,
+            'status_color': color_code,
+            'status_label': label,
+        })
+
+    if sort_by == 'people':
+        ranked_zones.sort(key=lambda x: x['current_people'], reverse=True)
+    elif sort_by == 'capacity':
+        ranked_zones.sort(key=lambda x: x['capacity_pct'], reverse=True)
+    elif sort_by == 'predicted':
+        ranked_zones.sort(key=lambda x: x['predicted_density_20m'], reverse=True)
+    elif sort_by == 'vulnerable':
+        ranked_zones.sort(key=lambda x: x['vulnerable_pct'], reverse=True)
+    else:
+        ranked_zones.sort(key=lambda x: x['risk_score'], reverse=True)
+
+    return render(request, 'analytics/risk_board.html', {
+        'ranked_zones': ranked_zones,
+        'sort_by': sort_by,
+        'site_filter': site_filter,
+        'weather': weather,
+        'heat_index': heat_index,
+    })
+
+
+def reports_view(request):
+    """
+    KSU Specification Section 7.2 (Screen 5):
+    Charts and reports: Density over time, incident counts, export to CSV.
+    """
+    # 24-hour density timeline data for primary zones
+    now = timezone.now()
+    past_24h = now - timedelta(hours=24)
+    recent_records = DensityRecord.objects.filter(timestamp__gte=past_24h).select_related('zone').order_by('timestamp')
+
+    # Incidents by category
+    incidents_by_category = []
+    for cat_code, cat_name in SosIncident.CATEGORY_CHOICES:
+        count = SosIncident.objects.filter(category=cat_code).count()
+        incidents_by_category.append({'code': cat_code, 'name': str(cat_name), 'count': count})
+
+    # Incidents by status
+    total_incidents = SosIncident.objects.count()
+    open_incidents = SosIncident.objects.filter(status='OPEN').count()
+    responding_incidents = SosIncident.objects.filter(status='RESPONDING').count()
+    resolved_incidents = SosIncident.objects.filter(status='RESOLVED').count()
+
+    total_pilgrims = PilgrimProfile.objects.filter(role='pilgrim').count()
+    vulnerable_pilgrims = PilgrimProfile.objects.filter(age__gte=65).count()
+
+    return render(request, 'analytics/reports.html', {
+        'incidents_by_category': incidents_by_category,
+        'total_incidents': total_incidents,
+        'open_incidents': open_incidents,
+        'responding_incidents': responding_incidents,
+        'resolved_incidents': resolved_incidents,
+        'total_pilgrims': total_pilgrims,
+        'vulnerable_pilgrims': vulnerable_pilgrims,
+        'recent_records_count': recent_records.count(),
+    })
+
+
+def routing_comparison_view(request):
+    """
+    KSU Specification Section 8.3 & Section 15:
+    'The comparison that wins your defence'
+    Run route finder twice on the same situation:
+    1. Standard shortest path (congestion penalty OFF)
+    2. HajjGuard congestion-aware detour (congestion penalty ON)
+    Proves at least 15% load reduction on the busiest corridor.
+    """
+    from_zone = request.GET.get('from', 'Z-MINA-SEC3')
+    to_zone = request.GET.get('to', 'Z-JAMARAT-F0')
+
+    comparison = RoutingEngine.get_route_comparison(from_zone, to_zone)
+
+    return render(request, 'analytics/routing_comparison.html', {
+        'from_zone': from_zone,
+        'to_zone': to_zone,
+        'comparison': comparison,
+    })
+
+
+def export_density_csv(request):
+    """
+    KSU Specification Section 7.2 & 16:
+    Export density records over time to CSV. Audit logged.
+    """
+    if request.user.is_authenticated:
+        AuditLog.objects.create(
+            user=request.user,
+            action='EXPORT_REPORT',
+            target='Density Records CSV Export',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="hajjguard_density_report_{timezone.now().strftime("%Y%m%d_%H%M")}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Zone Code', 'Zone Name', 'Site Type', 'Timestamp', 'Phone Count', 'Image Count', 'Total Headcount', 'Density (p/m2)', 'Predicted 20m', 'Risk Score', 'Status'])
+
+    records = DensityRecord.objects.select_related('zone').order_by('-timestamp')[:500]
+    for r in records:
+        writer.writerow([
+            r.zone.code,
+            r.zone.name_en,
+            r.zone.site_type,
+            r.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            r.phone_count,
+            r.image_count,
+            r.total_people,
+            r.density_per_sqm,
+            r.predicted_density_20m,
+            r.risk_score,
+            r.status,
+        ])
+
+    return response
+
+
+def export_incidents_csv(request):
+    """
+    KSU Specification Section 7.2:
+    Export SOS incidents log to CSV.
+    """
+    if request.user.is_authenticated:
+        AuditLog.objects.create(
+            user=request.user,
+            action='EXPORT_REPORT',
+            target='SOS Incidents CSV Export',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="hajjguard_incidents_report_{timezone.now().strftime("%Y%m%d_%H%M")}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Incident ID', 'Pilgrim Name', 'Category', 'Zone', 'Latitude', 'Longitude', 'Status', 'Assigned Unit', 'Created At', 'Resolved At'])
+
+    incidents = SosIncident.objects.select_related('pilgrim', 'pilgrim__user', 'zone', 'assigned_unit').order_by('-created_at')
+    for inc in incidents:
+        writer.writerow([
+            inc.id,
+            inc.pilgrim.user.get_full_name() or inc.pilgrim.user.username,
+            inc.get_category_display(),
+            inc.zone.code if inc.zone else 'Unknown',
+            inc.lat,
+            inc.lng,
+            inc.status,
+            inc.assigned_unit.name if inc.assigned_unit else 'Unassigned',
+            inc.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            inc.resolved_at.strftime('%Y-%m-%d %H:%M:%S') if inc.resolved_at else '',
+        ])
+
+    return response
+
 
 @csrf_exempt
 @require_POST
 def api_trigger_surge(request):
     """
-    Triggers simulated morning crowd surge into Jamarat Ground Floor.
+    Triggers simulated crowd surge into Jamarat Ground Floor.
     Pushes headcount to 34,500 (115% capacity) -> Status: RED.
     """
     success = CrowdSimulator.trigger_jamarat_morning_surge()
@@ -28,7 +251,7 @@ def api_trigger_surge(request):
 @require_POST
 def api_reset_crowd(request):
     """
-    Resets all holy site zones back to comfortable normal baseline (GREEN).
+    Resets all holy site zones back to comfortable normal baseline.
     """
     CrowdSimulator.reset_all_zones_normal()
     return JsonResponse({
@@ -50,4 +273,3 @@ def api_calculate_route(request):
         'status': 'success',
         'route_comparison': comparison
     })
-

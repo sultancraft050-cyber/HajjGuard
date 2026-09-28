@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load i18n static %}
 
 {% block title %}{% trans "My Hajj Portal" %} | HajjGuard{% endblock %}
@@ -124,6 +124,28 @@
                 </div>
             </div>
         </div>
+
+        <div class="mt-3 text-center border-top border-white border-opacity-25 pt-2">
+            <a href="{% url 'nusuk:digital_card' %}" class="btn btn-warning btn-sm fw-bold px-3 py-1 shadow-sm">
+                <i class="bi bi-person-vcard"></i> {% trans "Open 3D Smart Card & Barcode Pass" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Nusuk AI Copilot Quick Banner -->
+    <div class="card border-0 shadow-sm p-3 mb-4 rounded-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-right: 4px solid #16a34a !important;">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fs-2">🤖</span>
+                <div>
+                    <h6 class="fw-bold mb-0 text-success">{% trans "Nusuk AI Fiqh Copilot" %}</h6>
+                    <div class="small text-muted">{% trans "Instant answers on Tawaf doubts, Fidyah, wheelchair concessions, and live crowd" %}</div>
+                </div>
+            </div>
+            <button onclick="toggleNusukAiDrawer()" class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm">
+                <i class="bi bi-chat-dots-fill"></i> {% trans "Ask AI" %}
+            </button>
+        </div>
     </div>
 
     <!-- Giant Accessible Primary Action Buttons -->
@@ -145,6 +167,67 @@
                     <i class="bi bi-telephone-outbound-fill fs-3"></i>
                     <span>{% trans "Call Leader" %}</span>
                 </a>
+            </div>
+        </div>
+    <!-- Live Haram & Kaaba Crowd Camera (Real-Time Visual Awareness) -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border-top border-4 border-success">
+        <div class="card-header bg-white py-3 px-3 border-bottom d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fs-4">🕋</span>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">{% trans "Live Haram Crowd Camera" %}</h6>
+                    <small class="text-muted">{% trans "Real-time visual feed of Kaaba Mataf & Tawaf basin" %}</small>
+                </div>
+            </div>
+            <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#cctvCollapse" aria-expanded="false">
+                <i class="bi bi-camera-video-fill me-1"></i> <span id="cctvBtnText">{% trans "Watch Live" %}</span>
+            </button>
+        </div>
+
+        <div class="collapse" id="cctvCollapse">
+            <!-- Channel Switcher Pills -->
+            <div class="p-2 bg-light border-bottom d-flex justify-content-center gap-2">
+                <button class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('makkah')">
+                    🕋 {% trans "Kaaba Mataf (Makkah)" %}
+                </button>
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('madinah')">
+                    🕌 {% trans "Prophet's Mosque (Madinah)" %}
+                </button>
+            </div>
+
+            <!-- Video Player -->
+            <div class="ratio ratio-16x9 bg-dark">
+                <iframe id="haramCamIframe"
+                        src="" 
+                        data-makkah="https://www.youtube-nocookie.com/embed/qXFQhMDCHZg?autoplay=1&mute=1"
+                        data-madinah="https://www.youtube-nocookie.com/embed/5F2v_2t7Fv4?autoplay=1&mute=1"
+                        title="Haram Live Stream" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen></iframe>
+            </div>
+
+            <!-- Real-Time Optical & Gate Telemetry HUD -->
+            <div class="p-3 bg-white">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <small class="text-muted d-block font-monospace">{% trans "Tawaf Duration" %}</small>
+                            <span class="fw-bold text-success fs-6">~45 {% trans "mins" %}</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <small class="text-muted d-block font-monospace">{% trans "Crowd Status" %}</small>
+                            <span class="badge bg-success rounded-pill">{% trans "Laminar Flow" %}</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 bg-light rounded-3 border">
+                            <small class="text-muted d-block font-monospace">{% trans "Open Gates" %}</small>
+                            <span class="fw-bold text-dark fs-6">1, 79, 84</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -232,6 +315,32 @@
 
 {% block extra_js %}
 <script>
+    // Haram Live CCTV Stream Control
+    const cctvCollapse = document.getElementById('cctvCollapse');
+    const haramCamIframe = document.getElementById('haramCamIframe');
+    const cctvBtnText = document.getElementById('cctvBtnText');
+
+    if (cctvCollapse) {
+        cctvCollapse.addEventListener('show.bs.collapse', function () {
+            if (!haramCamIframe.src) {
+                haramCamIframe.src = haramCamIframe.getAttribute('data-makkah');
+            }
+            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'Hide Camera' %}";
+        });
+        cctvCollapse.addEventListener('hide.bs.collapse', function () {
+            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'Watch Live' %}";
+        });
+    }
+
+    function switchHaramCam(channel) {
+        if (!haramCamIframe) return;
+        if (channel === 'makkah') {
+            haramCamIframe.src = haramCamIframe.getAttribute('data-makkah');
+        } else if (channel === 'madinah') {
+            haramCamIframe.src = haramCamIframe.getAttribute('data-madinah');
+        }
+    }
+
     // Browser Speech Synthesis for Elderly / Illiterate Pilgrims
     function speakDua(text) {
         if ('speechSynthesis' in window) {

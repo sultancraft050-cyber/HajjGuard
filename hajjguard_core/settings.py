@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'zones.apps.ZonesConfig',
     'safety.apps.SafetyConfig',
     'analytics.apps.AnalyticsConfig',
+    'groups.apps.GroupsConfig',
 ]
 
 MIDDLEWARE = [

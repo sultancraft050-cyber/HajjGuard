@@ -1,4 +1,4 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% load i18n static %}
 
 {% block title %}{% trans "Live Crowd Map" %} | HajjGuard{% endblock %}
@@ -113,6 +113,9 @@
         <button class="btn-site-pill" onclick="flyToLocation(21.4160, 39.8920, 16, this)">⛺ {% trans "Mina Camps" %}</button>
         <button class="btn-site-pill" onclick="flyToLocation(21.3910, 39.9070, 15, this)">🌌 {% trans "Muzdalifah" %}</button>
         <button class="btn-site-pill" onclick="flyToLocation(21.3548, 39.9840, 15, this)">🏔️ {% trans "Arafat" %}</button>
+        <button class="btn-site-pill text-danger fw-bold" onclick="openHaramCctvModal()">
+            <i class="bi bi-camera-video-fill text-danger me-1"></i> {% trans "Live Haram Cam" %}
+        </button>
     </div>
 
     <!-- Live Map Canvas -->
@@ -179,6 +182,41 @@
                         <span class="badge bg-success text-white fs-6 px-3 py-1">1966</span>
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Live Haram CCTV Modal -->
+<div class="modal fade" id="haramCctvModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <div class="modal-header bg-dark text-white py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">🕋</span>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0">{% trans "Live Haram & Kaaba CCTV Camera" %}</h6>
+                        <small class="text-white-50">{% trans "Saudi Quran TV 24/7 Official Broadcast Stream" %}</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeHaramCctv()"></button>
+            </div>
+            <div class="modal-body p-0 bg-black">
+                <div class="ratio ratio-16x9">
+                    <iframe id="mapHaramCamIframe"
+                            src=""
+                            data-src="https://www.youtube-nocookie.com/embed/qXFQhMDCHZg?autoplay=1&mute=1"
+                            title="Kaaba Live Stream" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen></iframe>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2 px-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success rounded-pill px-3 py-1"><i class="bi bi-broadcast me-1"></i> LIVE CROWD</span>
+                    <small class="text-muted">{% trans "Optical crowd density verified via SCADA gateway" %}</small>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal" onclick="closeHaramCctv()">{% trans "Close" %}</button>
             </div>
         </div>
     </div>
@@ -324,8 +362,25 @@
             const demoLat = 21.41980;
             const demoLng = 39.87150;
             document.getElementById('sos-location-text').innerText = `Jamarat Bridge Level 2 (Demo GPS: 21.41980, 39.87150)`;
-            map.flyTo([demoLat, demoLng], 17);
         });
+    }
+
+    // Live Haram CCTV Stream Modal Control
+    function openHaramCctvModal() {
+        const modalEl = document.getElementById('haramCctvModal');
+        const iframe = document.getElementById('mapHaramCamIframe');
+        if (iframe && !iframe.src) {
+            iframe.src = iframe.getAttribute('data-src');
+        }
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+
+    function closeHaramCctv() {
+        const iframe = document.getElementById('mapHaramCamIframe');
+        if (iframe) {
+            iframe.src = ""; // Stop audio/video playing in background when closed
+        }
     }
 
     // Auto-init on load

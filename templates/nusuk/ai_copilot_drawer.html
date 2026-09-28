@@ -1,0 +1,187 @@
+{% load i18n %}
+
+<!-- Floating Nusuk AI Launcher Button -->
+<div id="nusukAiLauncher" style="position: fixed; bottom: 25px; left: 25px; z-index: 1050;">
+    <button onclick="toggleNusukAiDrawer()" class="btn shadow-lg d-flex align-items-center gap-2 px-3 py-2 text-white" 
+            style="background: linear-gradient(135deg, #0b3d26 0%, #198754 100%); border: 2px solid #dfb15b; border-radius: 30px; font-weight: 700; box-shadow: 0 8px 25px rgba(11, 61, 38, 0.45);">
+        <span class="fs-5">🤖</span>
+        <span class="d-none d-sm-inline">{% trans "Ask Nusuk AI" %}</span>
+        <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.65rem;">{% trans "Fiqh Copilot" %}</span>
+    </button>
+</div>
+
+<!-- Slide-Over Nusuk AI Chat Drawer -->
+<div id="nusukAiDrawer" class="shadow-lg d-none" 
+     style="position: fixed; bottom: 85px; left: 20px; width: 380px; max-width: calc(100vw - 40px); height: 550px; max-height: 80vh; background: #ffffff; border-radius: 20px; z-index: 1055; border: 2px solid #0b3d26; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.3) !important;">
+    
+    <!-- Drawer Header -->
+    <div class="p-3 text-white d-flex justify-content-between align-items-center" 
+         style="background: linear-gradient(135deg, #0b3d26 0%, #062b1a 100%); border-bottom: 2px solid #dfb15b;">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fs-4">🕋</span>
+            <div>
+                <h6 class="fw-bold mb-0 text-white" style="font-size: 0.95rem;">
+                    {% trans "Nusuk AI Fiqh Copilot" %}
+                </h6>
+                <div style="font-size: 0.68rem; color: #f7d58b;">
+                    <i class="bi bi-patch-check-fill"></i> {% trans "Official Senior Scholars Ifta Guidance" %}
+                </div>
+            </div>
+        </div>
+        <button onclick="toggleNusukAiDrawer()" class="btn btn-sm btn-link text-white-50 text-decoration-none fs-5 p-0">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <!-- Quick Prompt Chips -->
+    <div class="p-2 border-bottom bg-light d-flex gap-1 overflow-auto text-nowrap" style="scrollbar-width: thin;">
+        <button onclick="askPromptChip('نسيت هل طفت 3 أو 4 أشواط؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            🕋 الشك في الطواف
+        </button>
+        <button onclick="askPromptChip('هل صحن المطاف مزدحم الآن؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            🟢 زحام المطاف الآن
+        </button>
+        <button onclick="askPromptChip('قصصت شعري قبل ذبح الهدي فما الحكم؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            ✂️ الحلق قبل الهدي
+        </button>
+        <button onclick="askPromptChip('هل يجوز التوكيل في رمي الجمرات لمريض أو كبير سن؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            ♿ توكيل رمي الجمرات
+        </button>
+        <button onclick="askPromptChip('بدأت السعي من المروة بالخطأ')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            ⛰️ البدء بالمروة
+        </button>
+    </div>
+
+    <!-- Chat Message Log -->
+    <div id="nusukAiChatLog" class="p-3 flex-grow-1 overflow-y-auto" style="background: #f8f9fa; font-size: 0.85rem; scroll-behavior: smooth;">
+        <!-- Welcome Message -->
+        <div class="d-flex align-items-start gap-2 mb-3">
+            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                🤖
+            </div>
+            <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 85%;">
+                <div class="fw-bold text-success mb-1" style="font-size: 0.78rem;">
+                    {% trans "Nusuk AI Copilot" %}
+                </div>
+                <div>
+                    {% trans "Peace be upon you! I am your official Nusuk Fiqh Copilot. Ask me any question regarding your Umrah or Hajj rites, missed circuits, concessions for the elderly, or real-time crowd conditions at the Kaaba." %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Typing Indicator -->
+    <div id="nusukAiTyping" class="px-3 py-2 bg-light text-muted small d-none" style="font-size: 0.75rem;">
+        <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
+        <span class="ms-1">{% trans "Consulting official Ifta knowledge base..." %}</span>
+    </div>
+
+    <!-- Chat Input Form -->
+    <div class="p-2 border-top bg-white">
+        <form id="nusukAiForm" onsubmit="handleNusukAiSubmit(event)" class="d-flex gap-2">
+            <input type="text" id="nusukAiInput" class="form-control form-control-sm rounded-pill px-3" 
+                   placeholder="{% trans 'Ask about Tawaf, Sa\'i, Fidyah, or crowd...' %}" required autocomplete="off">
+            <button type="submit" class="btn btn-success btn-sm rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; flex-shrink: 0;">
+                <i class="bi bi-send-fill"></i>
+            </button>
+        </form>
+    </div>
+
+</div>
+
+<script>
+    function toggleNusukAiDrawer() {
+        const drawer = document.getElementById('nusukAiDrawer');
+        drawer.classList.toggle('d-none');
+        if (!drawer.classList.contains('d-none')) {
+            document.getElementById('nusukAiInput').focus();
+        }
+    }
+
+    function askPromptChip(question) {
+        document.getElementById('nusukAiInput').value = question;
+        handleNusukAiSubmit(new Event('submit'));
+    }
+
+    async function handleNusukAiSubmit(e) {
+        if (e) e.preventDefault();
+        const input = document.getElementById('nusukAiInput');
+        const question = input.value.trim();
+        if (!question) return;
+
+        input.value = '';
+        const log = document.getElementById('nusukAiChatLog');
+        const typing = document.getElementById('nusukAiTyping');
+
+        // Append user message
+        const userMsg = document.createElement('div');
+        userMsg.className = 'd-flex justify-content-end mb-3';
+        userMsg.innerHTML = `
+            <div class="bg-success text-white p-3 rounded-4 shadow-sm" style="max-width: 85%;">
+                ${escapeHtml(question)}
+            </div>
+        `;
+        log.appendChild(userMsg);
+        log.scrollTop = log.scrollHeight;
+
+        typing.classList.remove('d-none');
+
+        try {
+            const res = await fetch('/nusuk/api/ai/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question, language: 'ar' })
+            });
+            const data = await res.json();
+            typing.classList.add('d-none');
+
+            // Format markdown text with simple bold/newline replacements
+            let formattedAns = (data.answer || '')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+
+            let actionHtml = '';
+            if (data.action_label && data.action_url) {
+                actionHtml = `
+                    <div class="mt-2 pt-2 border-top">
+                        <a href="${data.action_url}" class="btn btn-outline-success btn-sm w-100 fw-bold py-1" style="font-size: 0.75rem;">
+                            <i class="bi bi-box-arrow-up-right"></i> ${escapeHtml(data.action_label)}
+                        </a>
+                    </div>
+                `;
+            }
+
+            const botMsg = document.createElement('div');
+            botMsg.className = 'd-flex align-items-start gap-2 mb-3';
+            botMsg.innerHTML = `
+                <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; font-size: 0.9rem;">
+                    🤖
+                </div>
+                <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 85%;">
+                    <div class="fw-bold text-success mb-1" style="font-size: 0.8rem;">
+                        ${escapeHtml(data.title || '{% trans "Ruling" %}')}
+                    </div>
+                    <div style="line-height: 1.5;">${formattedAns}</div>
+                    ${actionHtml}
+                    <div class="text-muted mt-2 pt-1 border-top" style="font-size: 0.65rem;">
+                        <i class="bi bi-info-circle"></i> ${escapeHtml(data.source || '{% trans "Official Ifta Guidance" %}')}
+                    </div>
+                </div>
+            `;
+            log.appendChild(botMsg);
+            log.scrollTop = log.scrollHeight;
+        } catch (err) {
+            typing.classList.add('d-none');
+            const errMsg = document.createElement('div');
+            errMsg.className = 'text-center text-danger small my-2';
+            errMsg.innerText = '{% trans "Failed to retrieve guidance. Please check network connection." %}';
+            log.appendChild(errMsg);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.innerText = text;
+        return div.innerHTML;
+    }
+</script>

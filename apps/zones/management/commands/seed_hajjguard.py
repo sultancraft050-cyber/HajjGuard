@@ -80,35 +80,95 @@ class Command(BaseCommand):
 
         # 2. HOLY SITES ZONES (Accurate GPS coordinates & capacities)
         zones_data = [
-            # Haram
+            # 7 Official Architectural Sections of Masjid Al-Haram
             {
                 'code': 'Z-HARAM-MATAF',
-                'name_ar': 'صحن المطاف الأرضي (الكعبة المشرفة)',
-                'name_en': 'Kaaba Mataf (Ground Floor)',
+                'name_ar': 'صحن المطاف الأوسط (الكعبة المشرفة)',
+                'name_en': 'Kaaba Mataf Central Basin',
                 'site_type': 'HARAM',
                 'center_lat': 21.42250,
                 'center_lng': 39.82620,
-                'radius_meters': 65.0,
+                'radius_meters': 45.0,
                 'floor_level': 0,
                 'safe_capacity': 18000,
                 'floor_area_sqm': 5000,
             },
             {
-                'code': 'Z-HARAM-F1',
-                'name_ar': 'مطاف الدور الأول المعلق',
-                'name_en': 'Mataf (First Floor)',
+                'code': 'Z-HARAM-GF-PER',
+                'name_ar': 'أروقة المطاف الأرضي المحيطة',
+                'name_en': 'Mataf Ground Perimeter Colonnades',
                 'site_type': 'HARAM',
                 'center_lat': 21.42250,
                 'center_lng': 39.82620,
-                'radius_meters': 80.0,
+                'radius_meters': 65.0,
+                'floor_level': 0,
+                'safe_capacity': 15000,
+                'floor_area_sqm': 4500,
+            },
+            {
+                'code': 'Z-HARAM-F1',
+                'name_ar': 'مطاف الدور الأول المعلق (العربات والمشاة)',
+                'name_en': 'Mataf First Floor (Rounds/Wheelchairs)',
+                'site_type': 'HARAM',
+                'center_lat': 21.42250,
+                'center_lng': 39.82620,
+                'radius_meters': 75.0,
                 'floor_level': 1,
                 'safe_capacity': 12000,
                 'floor_area_sqm': 4000,
             },
             {
+                'code': 'Z-HARAM-ROOF',
+                'name_ar': 'سطح المطاف المفتوح',
+                'name_en': 'Mataf Roof Tier',
+                'site_type': 'HARAM',
+                'center_lat': 21.42250,
+                'center_lng': 39.82620,
+                'radius_meters': 85.0,
+                'floor_level': 2,
+                'safe_capacity': 15000,
+                'floor_area_sqm': 6000,
+            },
+            {
+                'code': 'Z-HARAM-MASA-GF',
+                'name_ar': 'المسعى - الدور الأرضي (الصفا والمروة)',
+                'name_en': "Masa'a Ground Floor (Safa & Marwah)",
+                'site_type': 'HARAM',
+                'center_lat': 21.42360,
+                'center_lng': 39.82770,
+                'radius_meters': 110.0,
+                'floor_level': 0,
+                'safe_capacity': 25000,
+                'floor_area_sqm': 10000,
+            },
+            {
+                'code': 'Z-HARAM-MASA-F1',
+                'name_ar': 'المسعى - الدور الأول العلوي',
+                'name_en': "Masa'a First Floor",
+                'site_type': 'HARAM',
+                'center_lat': 21.42360,
+                'center_lng': 39.82770,
+                'radius_meters': 110.0,
+                'floor_level': 1,
+                'safe_capacity': 25000,
+                'floor_area_sqm': 10000,
+            },
+            {
+                'code': 'Z-HARAM-EXT-KFA',
+                'name_ar': 'توسعة الملك فهد والملك عبد الله',
+                'name_en': 'King Fahd & King Abdullah Expansions',
+                'site_type': 'HARAM',
+                'center_lat': 21.42180,
+                'center_lng': 39.82480,
+                'radius_meters': 140.0,
+                'floor_level': 0,
+                'safe_capacity': 80000,
+                'floor_area_sqm': 35000,
+            },
+            {
                 'code': 'Z-HARAM-MASA',
-                'name_ar': 'المسعى (الصفا والمروة)',
-                'name_en': "Masa'a (Safa & Marwa)",
+                'name_ar': 'المسعى العام (الصفا والمروة)',
+                'name_en': "Masa'a General Gallery",
                 'site_type': 'HARAM',
                 'center_lat': 21.42360,
                 'center_lng': 39.82770,
@@ -235,19 +295,18 @@ class Command(BaseCommand):
             zone_obj, _ = Zone.objects.update_or_create(code=z['code'], defaults=z)
             zone_instances[z['code']] = zone_obj
 
-            # Create initial normal density record
-            DensityRecord.objects.get_or_create(
-                zone=zone_obj,
-                defaults={
-                    'phone_count': 150,
-                    'image_count': 200,
-                    'total_people': 350,
-                    'density_per_sqm': 0.35,
-                    'predicted_density_20m': 0.40,
-                    'risk_score': 15.0,
-                    'status': 'GREEN'
-                }
-            )
+            # Create initial normal density record if none exists
+            if not DensityRecord.objects.filter(zone=zone_obj).exists():
+                DensityRecord.objects.create(
+                    zone=zone_obj,
+                    phone_count=150,
+                    image_count=200,
+                    total_people=350,
+                    density_per_sqm=0.35,
+                    predicted_density_20m=0.40,
+                    risk_score=15.0,
+                    status='GREEN'
+                )
         self.stdout.write(self.style.SUCCESS(f'Successfully loaded {len(zones_data)} accurate Holy Sites zones.'))
 
         # 3. CORRIDORS (Pedestrian paths between camps & Jamarat / Haram)
@@ -277,12 +336,60 @@ class Command(BaseCommand):
                 'base_walking_minutes': 20.0,
                 'width_meters': 22.0,
             },
-            # Haram Corridors
+            # Haram Inter-Tier & Inter-Section Corridors
+            {
+                'from': 'Z-HARAM-GF-PER',
+                'to': 'Z-HARAM-MATAF',
+                'name_ar': 'بوابات النزول من الأروقة إلى صحن المطاف',
+                'name_en': 'Colonnade Descent Portals to Mataf Basin',
+                'base_walking_minutes': 2.0,
+                'width_meters': 18.0,
+            },
+            {
+                'from': 'Z-HARAM-GF-PER',
+                'to': 'Z-HARAM-F1',
+                'name_ar': 'منحدرات وسلالم الصعود للدور الأول (مسار العربات البديل)',
+                'name_en': 'Ascent Ramps to 1st Floor (Wheelchair Alternate Route)',
+                'base_walking_minutes': 4.0,
+                'width_meters': 12.0,
+            },
+            {
+                'from': 'Z-HARAM-F1',
+                'to': 'Z-HARAM-ROOF',
+                'name_ar': 'الجسور والسلالم الكهربائية إلى سطح المطاف',
+                'name_en': 'Escalators & Skybridges to Mataf Roof Tier',
+                'base_walking_minutes': 5.0,
+                'width_meters': 14.0,
+            },
+            {
+                'from': 'Z-HARAM-MATAF',
+                'to': 'Z-HARAM-MASA-GF',
+                'name_ar': 'الممر الأرضي المباشر إلى الصفا (المسعى الأرضي)',
+                'name_en': 'Direct Ground Corridor to Safa (Masaa Level 0)',
+                'base_walking_minutes': 3.0,
+                'width_meters': 20.0,
+            },
+            {
+                'from': 'Z-HARAM-F1',
+                'to': 'Z-HARAM-MASA-F1',
+                'name_ar': 'الجسر المعلق من مطاف الدور الأول إلى مسعى الدور الأول',
+                'name_en': 'Level 1 Elevated Skybridge to Upper Masaa',
+                'base_walking_minutes': 4.0,
+                'width_meters': 16.0,
+            },
+            {
+                'from': 'Z-HARAM-EXT-KFA',
+                'to': 'Z-HARAM-GF-PER',
+                'name_ar': 'مداخل توسعة الملك فهد والملك عبد الله إلى أروقة المطاف',
+                'name_en': 'King Fahd Expansion Gates to Mataf Colonnades',
+                'base_walking_minutes': 5.0,
+                'width_meters': 30.0,
+            },
             {
                 'from': 'Z-HARAM-MATAF',
                 'to': 'Z-HARAM-MASA',
-                'name_ar': 'الممر المباشر من المطاف إلى الصفا (المسعى)',
-                'name_en': 'Direct Corridor Mataf to Safa (Masaa)',
+                'name_ar': 'الممر المباشر من المطاف إلى الصفا (المسعى العام)',
+                'name_en': 'Direct Corridor Mataf to Safa (General)',
                 'base_walking_minutes': 5.0,
                 'width_meters': 15.0,
             },

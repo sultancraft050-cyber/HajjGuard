@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
+import zones.views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,7 +27,10 @@ urlpatterns = [
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('safety/', include('safety.urls', namespace='safety')),
     path('zones/', include('zones.urls', namespace='zones')),
+    path('groups/', include('groups.urls', namespace='groups')),
     path('analytics/', include('analytics.urls', namespace='analytics')),
+    path('nusuk/', include('nusuk.urls', namespace='nusuk')),
+    path('api/telemetry/ping/', zones.views.api_location_ping, name='api_telemetry_ping'),
     path('', RedirectView.as_view(url='/accounts/pilgrim/', permanent=False), name='home_redirect'),
 ]
 

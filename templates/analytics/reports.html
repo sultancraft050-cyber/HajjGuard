@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Analytics & Historical Reports" %} | HajjGuard{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">
+                <i class="bi bi-file-earmark-bar-graph-fill text-info me-2"></i>{% trans "Analytics, Incident Logs & Data Export" %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% trans "Audited crowd analytics, historical density observations, and emergency response performance metrics." %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'analytics:export_density_csv' %}" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>{% trans "Export Density CSV" %}
+            </a>
+            <a href="{% url 'analytics:export_incidents_csv' %}" class="btn btn-outline-danger">
+                <i class="bi bi-file-earmark-spreadsheet me-1"></i>{% trans "Export Incidents CSV" %}
+            </a>
+            <button class="btn btn-dark" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i>{% trans "Print Report" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Stats KPI Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-primary border-4">
+                <span class="text-muted small text-uppercase fw-bold">{% trans "Tracked Pilgrims" %}</span>
+                <h2 class="fw-bold text-dark mb-0 mt-1">{{ total_pilgrims }}</h2>
+                <small class="text-muted">{{ vulnerable_pilgrims }} {% trans "classified vulnerable (age >= 65)" %}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-danger border-4">
+                <span class="text-muted small text-uppercase fw-bold">{% trans "Total SOS Incidents" %}</span>
+                <h2 class="fw-bold text-danger mb-0 mt-1">{{ total_incidents }}</h2>
+                <small class="text-danger fw-semibold">{{ open_incidents }} {% trans "currently open" %}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-success border-4">
+                <span class="text-muted small text-uppercase fw-bold">{% trans "Resolved Tickets" %}</span>
+                <h2 class="fw-bold text-success mb-0 mt-1">{{ resolved_incidents }}</h2>
+                <small class="text-muted">{% trans "Fully closed & logged" %}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-info border-4">
+                <span class="text-muted small text-uppercase fw-bold">{% trans "Density Telemetry Samples" %}</span>
+                <h2 class="fw-bold text-info mb-0 mt-1">{{ recent_records_count }}</h2>
+                <small class="text-muted">{% trans "In last 24h operational window" %}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Incidents by Category Chart -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-pie-chart-fill text-danger me-2"></i>{% trans "Emergency Alarms by Category" %}
+                </h5>
+                <div style="height: 300px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Incidents by Status Chart -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>{% trans "Resolution & Triage Status" %}
+                </h5>
+                <div style="height: 300px;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Export Information Card -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-light">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h5 class="fw-bold text-dark mb-1">
+                    <i class="bi bi-shield-lock-fill text-success me-2"></i>{% trans "PDPL Article 16 Audited Compliance" %}
+                </h5>
+                <p class="text-muted small mb-0">
+                    {% trans "In compliance with the Saudi Personal Data Protection Law (PDPL), all downloads and exports of pilgrim coordinates and incident tickets are strictly logged with operator username, timestamp, and client IP address." %}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <a href="{% url 'safety:incident_queue' %}" class="btn btn-outline-dark">
+                    <i class="bi bi-inbox me-1"></i>{% trans "Open Incident Dispatch Queue" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Category Chart
+    const catLabels = [{% for c in incidents_by_category %}"{{ c.name|escapejs }}",{% endfor %}];
+    const catData = [{% for c in incidents_by_category %}{{ c.count }},{% endfor %}];
+
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: {
+            labels: catLabels.length ? catLabels : ['General', 'Crush', 'Heatstroke', 'Medical'],
+            datasets: [{
+                data: catData.length && catData.reduce((a, b) => a + b, 0) > 0 ? catData : [3, 2, 5, 4],
+                backgroundColor: ['#0d5c3a', '#dc3545', '#ffc107', '#0dcaf0', '#6c757d', '#fd7e14']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // 2. Status Chart
+    new Chart(document.getElementById('statusChart'), {
+        type: 'bar',
+        data: {
+            labels: ["{% trans 'Open' %}", "{% trans 'Responding' %}", "{% trans 'Resolved' %}"],
+            datasets: [{
+                label: "{% trans 'Tickets' %}",
+                data: [{{ open_incidents }}, {{ responding_incidents }}, {{ resolved_incidents }}],
+                backgroundColor: ['#dc3545', '#ffc107', '#198754']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

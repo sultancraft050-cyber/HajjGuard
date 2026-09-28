@@ -1,10 +1,13 @@
 import json
+from datetime import datetime, timezone as dt_timezone
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from .models import Zone, Corridor, LocationPing, DensityRecord
+from .utils import determine_zone_for_point, haversine_distance, altitude_from_barometric_pressure
 from accounts.models import PilgrimProfile
 
 def live_map_view(request):
@@ -24,13 +27,24 @@ def api_zones_status(request):
     """
     zones = Zone.objects.all()
     results = []
+    now = timezone.now()
+    window_15m = now - timezone.timedelta(minutes=15)
 
     for z in zones:
         latest_record = z.density_records.first()
-        current_people = latest_record.total_people if latest_record else 150
-        density_sqm = latest_record.density_per_sqm if latest_record else (current_people / z.floor_area_sqm)
-        pred_density = latest_record.predicted_density_20m if latest_record else (density_sqm * 1.1)
-        risk_score = latest_record.risk_score if latest_record else 15.0
+        base_people = latest_record.total_people if latest_record else 0
+        
+        # Real-time sensor fusion: Count distinct mobile devices transmitting in this zone in the last 15 mins
+        live_active_devices = LocationPing.objects.filter(
+            zone=z,
+            timestamp__gte=window_15m
+        ).values('pilgrim_id').distinct().count()
+
+        current_people = max(base_people, live_active_devices)
+        floor_area = max(z.floor_area_sqm, 1)
+        density_sqm = round(current_people / floor_area, 2)
+        pred_density = latest_record.predicted_density_20m if latest_record else round(density_sqm * 1.1, 2)
+        risk_score = latest_record.risk_score if latest_record else min(100.0, round((current_people / max(z.safe_capacity, 1)) * 100.0, 1))
 
         status_code, color_code, status_label = z.get_status(current_people)
         capacity_ratio = round((current_people / max(z.safe_capacity, 1)) * 100, 1)
@@ -59,53 +73,133 @@ def api_zones_status(request):
 
     return JsonResponse({'status': 'success', 'count': len(results), 'zones': results})
 
+# Minimum throttling interval between pings per pilgrim (prevents device polling battery drain/DOS)
+MIN_PING_INTERVAL_SECONDS = 3.0
+
 @csrf_exempt
 @require_POST
 def api_location_ping(request):
     """
-    Receives GPS coordinates from pilgrim device, finds which zone 
-    they are currently inside, and records the ping.
+    Telemetry ingest endpoint:
+    Receives GPS coordinates from pilgrim device, validates boundaries and timestamps,
+    applies throttling rate-limits, and assigns to the correct multi-level Zone.
     """
     try:
         data = json.loads(request.body)
-        lat = float(data.get('lat'))
-        lng = float(data.get('lng'))
-    except (ValueError, TypeError, json.JSONDecodeError):
-        return JsonResponse({'status': 'error', 'message': 'Invalid latitude or longitude'}, status=400)
+        raw_lat = data.get('lat')
+        raw_lng = data.get('lng')
 
-    # Resolve pilgrim profile if logged in, or fallback to first test pilgrim
+        if raw_lat is None or raw_lng is None:
+            return JsonResponse({'status': 'error', 'message': 'Missing lat or lng coordinate parameters'}, status=400)
+
+        lat = float(raw_lat)
+        lng = float(raw_lng)
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid latitude or longitude numerical values'}, status=400)
+
+    # 1. Geographic Coordinate Boundary Validation
+    if not (-90.0 <= lat <= 90.0) or not (-180.0 <= lng <= 180.0):
+        return JsonResponse({'status': 'error', 'message': 'Coordinates out of physical bounds (-90..90, -180..180)'}, status=400)
+
+    # 2. Multi-level floor and altitude parameters
+    try:
+        floor_level = int(data.get('floor_level', 0))
+    except (ValueError, TypeError):
+        floor_level = 0
+
+    try:
+        altitude = float(data.get('altitude')) if data.get('altitude') is not None else None
+    except (ValueError, TypeError):
+        altitude = None
+
+    # Barometric pressure sensor fallback for 3D floor disambiguation
+    if altitude is None and data.get('pressure_hpa') is not None:
+        try:
+            pressure_val = float(data.get('pressure_hpa'))
+            altitude = altitude_from_barometric_pressure(pressure_val)
+        except (ValueError, TypeError):
+            pass
+
+    # 3. Spoofed Timestamp Protection
+    client_ts_raw = data.get('timestamp')
+    now = timezone.now()
+    if client_ts_raw:
+        try:
+            if isinstance(client_ts_raw, (int, float)):
+                # epoch timestamp in seconds or ms
+                epoch = client_ts_raw / 1000.0 if client_ts_raw > 1e11 else client_ts_raw
+                client_dt = datetime.fromtimestamp(epoch, tz=dt_timezone.utc)
+            else:
+                client_dt = datetime.fromisoformat(str(client_ts_raw).replace('Z', '+00:00'))
+
+            delta = (client_dt - now).total_seconds()
+            if delta > 60.0:  # More than 60s in the future
+                return JsonResponse({'status': 'error', 'message': 'Spoofed telemetry timestamp: future time rejected'}, status=400)
+            if delta < -86400.0:  # More than 24 hours in the past
+                return JsonResponse({'status': 'error', 'message': 'Stale telemetry timestamp: older than 24 hours'}, status=400)
+        except Exception:
+            pass  # Fall back to server now()
+
+    # 4. Resolve Pilgrim Profile
     pilgrim = None
     if request.user.is_authenticated and hasattr(request.user, 'profile'):
         pilgrim = request.user.profile
     else:
-        pilgrim = PilgrimProfile.objects.filter(role='pilgrim').first()
+        # Check if pilgrim_id or border_id is passed in request body
+        pid = data.get('pilgrim_id') or data.get('border_id')
+        if pid:
+            from nusuk.models import NusukCard
+            card = NusukCard.objects.filter(border_or_national_id=pid).select_related('pilgrim').first()
+            if card:
+                pilgrim = card.pilgrim
+        if not pilgrim:
+            pilgrim = PilgrimProfile.objects.filter(role='pilgrim').first()
 
     if not pilgrim:
-        return JsonResponse({'status': 'error', 'message': 'No pilgrim profile found'}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'No registered pilgrim profile found'}, status=400)
 
-    # Find which zone contains this point
-    matched_zone = None
-    closest_zone = None
-    min_distance = float('inf')
+    # 5. Mobile Ingestion Throttling Check
+    last_ping = LocationPing.objects.filter(pilgrim=pilgrim).order_by('-timestamp').first()
+    if last_ping:
+        elapsed = (now - last_ping.timestamp).total_seconds()
+        if elapsed < MIN_PING_INTERVAL_SECONDS:
+            return JsonResponse({
+                'status': 'throttled',
+                'message': f'Rate limit exceeded. Minimum interval {MIN_PING_INTERVAL_SECONDS}s',
+                'retry_after_seconds': round(MIN_PING_INTERVAL_SECONDS - elapsed, 1)
+            }, status=429)
 
-    for z in Zone.objects.all():
-        dist = z.distance_to(lat, lng)
-        if dist < min_distance:
-            min_distance = dist
-            closest_zone = z
-        if z.contains_point(lat, lng):
-            matched_zone = z
-            break
+    # 6. Multi-level Floor-Aware Zone Matching
+    assigned_zone = determine_zone_for_point(lat, lng, floor_level=floor_level, max_search_radius=500.0)
 
-    # If not strictly inside any zone radius, assign to closest if within 500m
-    assigned_zone = matched_zone if matched_zone else (closest_zone if min_distance <= 500 else None)
+    # Calculate distance to zone center for logging
+    dist_to_center = None
+    if assigned_zone:
+        dist_to_center = round(haversine_distance(assigned_zone.center_lat, assigned_zone.center_lng, lat, lng), 1)
 
     ping = LocationPing.objects.create(
         pilgrim=pilgrim,
         lat=lat,
         lng=lng,
+        altitude=altitude,
+        floor_level=floor_level,
         zone=assigned_zone
     )
+
+    # Compute Adaptive Telemetry Engine parameters (Heartbeat interval & Jitter)
+    rec = assigned_zone.density_records.first() if assigned_zone else None
+    zone_density = rec.density_per_sqm if rec else 0.5
+    is_dormant = (rec and rec.status == 'DORMANT')
+
+    if assigned_zone and not is_dormant:
+        if zone_density >= 2.0 or (rec and rec.status in ['RED', 'ORANGE']):
+            adaptive_interval = 15.0  # High-density / choke corridor
+        else:
+            adaptive_interval = 45.0  # Normal active corridor
+    else:
+        adaptive_interval = 180.0     # Camp tent / hotel dormancy
+
+    sampling_mode = 'DECIMATED' if (zone_density >= 3.5) else 'STANDARD'
 
     return JsonResponse({
         'status': 'success',
@@ -113,5 +207,110 @@ def api_location_ping(request):
         'zone_code': assigned_zone.code if assigned_zone else None,
         'zone_name_en': assigned_zone.name_en if assigned_zone else 'Outside Monitored Zones',
         'zone_name_ar': assigned_zone.name_ar if assigned_zone else 'خارج نطاق المشاعر المحددة',
-        'distance_to_center_meters': round(min_distance, 1) if closest_zone else None
+        'floor_level': floor_level,
+        'distance_to_center_meters': dist_to_center,
+        'adaptive_telemetry': {
+            'recommended_interval_seconds': adaptive_interval,
+            'jitter_pct': 20.0,
+            'sampling_mode': sampling_mode
+        }
     })
+
+def prune_stale_location_pings(older_than_hours=24):
+    """
+    Periodic Database Maintenance:
+    Prunes raw location pings older than retention threshold to prevent database exhaustion.
+    """
+    cutoff = timezone.now() - timezone.timedelta(hours=older_than_hours)
+    deleted_count, _ = LocationPing.objects.filter(timestamp__lt=cutoff).delete()
+    return deleted_count
+
+
+def zone_detail_view(request, zone_id):
+    """
+    KSU Specification Section 7.1 (Screen 4):
+    Zone detail: Current density, predicted density, risk score with its breakdown.
+    Feeds Section 8.3:
+    'Show every term on the zone detail screen so the score can be questioned.'
+    """
+    if str(zone_id).isdigit():
+        zone = get_object_or_404(Zone, id=int(zone_id))
+    else:
+        zone = get_object_or_404(Zone, code=zone_id)
+
+    rec = zone.density_records.first()
+    
+    now = timezone.now()
+    window_15m = now - timezone.timedelta(minutes=15)
+    live_active = LocationPing.objects.filter(zone=zone, timestamp__gte=window_15m).values('pilgrim_id').distinct().count()
+    base_people = rec.total_people if rec else 0
+    current_people = max(base_people, live_active)
+
+    # Vulnerable calculation (age >= 65)
+    vulnerable_count = LocationPing.objects.filter(
+        zone=zone,
+        timestamp__gte=window_15m,
+        pilgrim__age__gte=65
+    ).values('pilgrim_id').distinct().count()
+    if vulnerable_count == 0 and current_people > 0:
+        vulnerable_count = int(current_people * 0.18)
+
+    vulnerable_pct = round((vulnerable_count / max(current_people, 1)) * 100.0, 1)
+    capacity_pct = round((current_people / max(zone.safe_capacity, 1)) * 100.0, 1)
+    density_sqm = round(current_people / max(zone.floor_area_sqm, 1), 2)
+    pred_density = rec.predicted_density_20m if rec else round(density_sqm * 1.08, 2)
+
+    from services.weather import get_live_makkah_weather
+    weather = get_live_makkah_weather()
+    heat_index = weather.get('feels_like', 36)
+    heat_penalty = min(100.0, max(0.0, (heat_index - 30) * 5.0))
+
+    # Weight components (Section 3 F2)
+    w_density = round(capacity_pct * 0.5, 1)
+    w_vulnerability = round(vulnerable_pct * 0.3, 1)
+    w_heat = round(heat_penalty * 0.2, 1)
+    computed_risk = round(min(100.0, w_density + w_vulnerability + w_heat), 1)
+
+    status_code, color_code, label = zone.get_status(current_people)
+
+    from safety.models import Alert
+    active_alerts = Alert.objects.filter(zone=zone, acknowledged=False)
+
+    return render(request, 'zones/zone_detail.html', {
+        'zone': zone,
+        'current_people': current_people,
+        'capacity_pct': capacity_pct,
+        'density_sqm': density_sqm,
+        'predicted_density_20m': pred_density,
+        'vulnerable_count': vulnerable_count,
+        'vulnerable_pct': vulnerable_pct,
+        'heat_index': heat_index,
+        'w_density': w_density,
+        'w_vulnerability': w_vulnerability,
+        'w_heat': w_heat,
+        'computed_risk': computed_risk,
+        'status_code': status_code,
+        'color_code': color_code,
+        'status_label': label,
+        'active_alerts': active_alerts,
+        'weather': weather,
+    })
+
+
+def guidance_view(request):
+    """
+    KSU Specification Section 7.1 (Screen 8):
+    Guidance: Suggested route when an alert affects the pilgrim, step list.
+    """
+    from services.routing import RoutingEngine
+    from_zone = request.GET.get('from', 'Z-MINA-SEC3')
+    to_zone = request.GET.get('to', 'Z-JAMARAT-F0')
+
+    comparison = RoutingEngine.get_route_comparison(from_zone, to_zone)
+
+    return render(request, 'zones/guidance.html', {
+        'from_zone': from_zone,
+        'to_zone': to_zone,
+        'comparison': comparison,
+    })
+

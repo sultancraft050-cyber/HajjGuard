@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Emergency Incident Queue" %} | HajjGuard{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-md-4">
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1 text-dark">
+                <i class="bi bi-inbox-fill text-danger me-2"></i>{% trans "Emergency Incident Dispatch Queue" %}
+            </h2>
+            <p class="text-muted mb-0">
+                {% trans "Manage live SOS alarms, dispatch emergency field units, and monitor response lifecycle." %}
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                <i class="bi bi-arrow-clockwise me-1"></i>{% trans "Refresh Queue" %}
+            </button>
+            <a href="{% url 'analytics:export_incidents_csv' %}" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-excel me-1"></i>{% trans "Export Incidents CSV" %}
+            </a>
+            <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-dark">
+                <i class="bi bi-speedometer2 me-1"></i>{% trans "Tactical Dashboard" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Status KPI Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-danger border-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold">{% trans "Active / Open Alarms" %}</span>
+                        <h2 class="fw-bold text-danger mb-0 mt-1">{{ open_count }}</h2>
+                    </div>
+                    <div class="bg-danger-subtle p-3 rounded-circle text-danger">
+                        <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-warning border-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold">{% trans "Responding Units" %}</span>
+                        <h2 class="fw-bold text-warning mb-0 mt-1">{{ responding_count }}</h2>
+                    </div>
+                    <div class="bg-warning-subtle p-3 rounded-circle text-warning">
+                        <i class="bi bi-person-walking fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-success border-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold">{% trans "Resolved Tickets" %}</span>
+                        <h2 class="fw-bold text-success mb-0 mt-1">{{ resolved_count }}</h2>
+                    </div>
+                    <div class="bg-success-subtle p-3 rounded-circle text-success">
+                        <i class="bi bi-check-circle-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-3 border-start border-primary border-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted small text-uppercase fw-bold">{% trans "Available Field Units" %}</span>
+                        <h2 class="fw-bold text-primary mb-0 mt-1">{{ field_units|length }}</h2>
+                    </div>
+                    <div class="bg-primary-subtle p-3 rounded-circle text-primary">
+                        <i class="bi bi-shield-check fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body py-3">
+            <form method="GET" class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">{% trans "Filter by Status" %}</label>
+                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="ALL" {% if status_filter == 'ALL' %}selected{% endif %}>{% trans "All Statuses" %}</option>
+                        <option value="OPEN" {% if status_filter == 'OPEN' %}selected{% endif %}>{% trans "Open / Pending Dispatch" %}</option>
+                        <option value="RESPONDING" {% if status_filter == 'RESPONDING' %}selected{% endif %}>{% trans "Responding Units" %}</option>
+                        <option value="RESOLVED" {% if status_filter == 'RESOLVED' %}selected{% endif %}>{% trans "Resolved & Closed" %}</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted mb-1">{% trans "Filter by Category" %}</label>
+                    <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="ALL" {% if category_filter == 'ALL' %}selected{% endif %}>{% trans "All Emergency Types" %}</option>
+                        <option value="CRUSH" {% if category_filter == 'CRUSH' %}selected{% endif %}>{% trans "Crowd Surge / Crush" %}</option>
+                        <option value="HEATSTROKE" {% if category_filter == 'HEATSTROKE' %}selected{% endif %}>{% trans "Severe Heatstroke" %}</option>
+                        <option value="MEDICAL" {% if category_filter == 'MEDICAL' %}selected{% endif %}>{% trans "Medical Emergency" %}</option>
+                        <option value="LOST" {% if category_filter == 'LOST' %}selected{% endif %}>{% trans "Lost Pilgrim / Separation" %}</option>
+                        <option value="GENERAL" {% if category_filter == 'GENERAL' %}selected{% endif %}>{% trans "General Emergency (911)" %}</option>
+                    </select>
+                </div>
+                <div class="col-md-4 text-md-end pt-3 pt-md-0">
+                    <a href="{% url 'safety:incident_queue' %}" class="btn btn-sm btn-light border">
+                        <i class="bi bi-x-circle me-1"></i>{% trans "Clear Filters" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Incident List Table -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light border-bottom">
+                    <tr class="text-uppercase small text-muted fw-bold">
+                        <th class="ps-4">{% trans "Ticket & Time" %}</th>
+                        <th>{% trans "Pilgrim Details" %}</th>
+                        <th>{% trans "Category" %}</th>
+                        <th>{% trans "Location & Zone" %}</th>
+                        <th>{% trans "Assigned Unit" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th class="pe-4 text-end">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inc in incidents %}
+                    <tr id="incident-row-{{ inc.id }}" class="{% if inc.status == 'OPEN' %}table-danger-subtle{% elif inc.status == 'RESPONDING' %}table-warning-subtle{% endif %}">
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-dark font-monospace">#INC-{{ inc.id }}</div>
+                            <small class="text-muted">{{ inc.created_at|date:"H:i:s" }} <br><span class="text-secondary small">{{ inc.created_at|timesince }} {% trans "ago" %}</span></small>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">
+                                {{ inc.pilgrim.user.get_full_name|default:inc.pilgrim.user.username }}
+                            </div>
+                            <small class="text-muted d-block">
+                                <i class="bi bi-telephone me-1"></i>{{ inc.pilgrim.phone|default:"N/A" }}
+                                {% if inc.pilgrim.is_wheelchair_user %}
+                                    <span class="badge bg-info-subtle text-info border ms-1"><i class="bi bi-person-wheelchair"></i></span>
+                                {% endif %}
+                                {% if inc.pilgrim.age >= 65 %}
+                                    <span class="badge bg-secondary-subtle text-secondary border ms-1">{{ inc.pilgrim.age }}y</span>
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            {% if inc.category == 'CRUSH' %}
+                                <span class="badge bg-danger p-2"><i class="bi bi-people-fill me-1"></i>{% trans "Crowd Surge" %}</span>
+                            {% elif inc.category == 'HEATSTROKE' %}
+                                <span class="badge bg-warning text-dark p-2"><i class="bi bi-sun-fill me-1"></i>{% trans "Heatstroke" %}</span>
+                            {% elif inc.category == 'MEDICAL' %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger p-2"><i class="bi bi-heart-pulse-fill me-1"></i>{% trans "Medical" %}</span>
+                            {% elif inc.category == 'LOST' %}
+                                <span class="badge bg-info p-2"><i class="bi bi-person-slash me-1"></i>{% trans "Lost Pilgrim" %}</span>
+                            {% else %}
+                                <span class="badge bg-secondary p-2"><i class="bi bi-shield-exclamation me-1"></i>{{ inc.get_category_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">
+                                {% if inc.zone %}
+                                    {{ inc.zone.name_en }}
+                                    <small class="badge bg-light text-dark border ms-1">{{ inc.zone.code }}</small>
+                                {% else %}
+                                    {% trans "Outside Monitored Zones" %}
+                                {% endif %}
+                            </div>
+                            <small class="text-muted font-monospace">
+                                Lat: {{ inc.lat|floatformat:4 }}, Lng: {{ inc.lng|floatformat:4 }}
+                            </small>
+                            {% if inc.battery_level is not None and inc.battery_level <= 10 %}
+                                <div class="badge bg-danger mt-1">
+                                    <i class="bi bi-battery-alert me-1"></i>{{ inc.battery_level }}% {% trans "Critical Battery" %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if inc.assigned_unit %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary p-2">
+                                    <i class="bi bi-shield-check me-1"></i>{{ inc.assigned_unit.name }} ({{ inc.assigned_unit.get_unit_type_display }})
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border p-2">
+                                    <i class="bi bi-hourglass-split me-1"></i>{% trans "Unassigned" %}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if inc.status == 'OPEN' %}
+                                <span class="badge bg-danger rounded-pill px-3 py-1">{% trans "OPEN" %}</span>
+                            {% elif inc.status == 'RESPONDING' %}
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">{% trans "RESPONDING" %}</span>
+                            {% else %}
+                                <span class="badge bg-success rounded-pill px-3 py-1">{% trans "RESOLVED" %}</span>
+                            {% endif %}
+                        </td>
+                        <td class="pe-4 text-end">
+                            <div class="btn-group btn-group-sm">
+                                {% if inc.status != 'RESOLVED' %}
+                                    <button class="btn btn-outline-primary" onclick="openAssignModal({{ inc.id }}, '{{ inc.pilgrim.user.get_full_name|default:inc.pilgrim.user.username|escapejs }}', '{{ inc.zone.name_en|default:'General'|escapejs }}')">
+                                        <i class="bi bi-person-plus-fill me-1"></i>{% trans "Dispatch" %}
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="resolveTicket({{ inc.id }})">
+                                        <i class="bi bi-check-lg me-1"></i>{% trans "Resolve" %}
+                                    </button>
+                                {% else %}
+                                    <span class="text-success small fw-semibold">
+                                        <i class="bi bi-check-circle me-1"></i>{% trans "Closed" %}
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-check2-circle text-success fs-2 d-block mb-2"></i>
+                            {% trans "No active emergency alarms found matching criteria." %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Assign Field Unit -->
+<div class="modal fade" id="assignModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-bottom-0 pb-0">
+                <h5 class="modal-title fw-bold text-dark">
+                    <i class="bi bi-send-fill text-primary me-2"></i>{% trans "Dispatch Emergency Field Unit" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body py-4">
+                <p class="text-muted small mb-3">
+                    {% trans "Assign an on-duty field responder unit to investigate ticket" %} <strong id="modal-ticket-id">#INC-</strong> ({% trans "Pilgrim:" %} <span id="modal-pilgrim-name"></span>).
+                </p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small">{% trans "Select On-Duty Unit" %}</label>
+                    <select id="select-field-unit" class="form-select">
+                        <option value="">{% trans "-- Choose field responder unit --" %}</option>
+                        {% for unit in field_units %}
+                            <option value="{{ unit.id }}" {% if not unit.available %}disabled class="text-muted"{% endif %}>
+                                {{ unit.name }} ({{ unit.get_unit_type_display }}) - {% if unit.available %}{% trans "Available" %}{% else %}{% trans "Busy" %}{% endif %} [{{ unit.current_zone.name_en|default:"Patrol" }}]
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary px-4 fw-bold" onclick="submitAssignment()">{% trans "Confirm Dispatch" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentIncidentId = null;
+const assignModal = new bootstrap.Modal(document.getElementById('assignModal'));
+
+function openAssignModal(incidentId, pilgrimName, zoneName) {
+    currentIncidentId = incidentId;
+    document.getElementById('modal-ticket-id').innerText = '#INC-' + incidentId;
+    document.getElementById('modal-pilgrim-name').innerText = pilgrimName + ' (' + zoneName + ')';
+    assignModal.show();
+}
+
+function submitAssignment() {
+    const unitId = document.getElementById('select-field-unit').value;
+    if (!unitId) {
+        alert("{% trans 'Please select a field unit.' %}");
+        return;
+    }
+
+    fetch("{% url 'safety:api_assign_incident' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            incident_id: currentIncidentId,
+            unit_id: parseInt(unitId)
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            assignModal.hide();
+            window.location.reload();
+        } else {
+            alert(data.message || "{% trans 'Failed to dispatch unit.' %}");
+        }
+    })
+    .catch(err => {
+        alert("{% trans 'Connection error. Please retry.' %}");
+    });
+}
+
+function resolveTicket(incidentId) {
+    if (!confirm("{% trans 'Are you sure you want to mark this incident as resolved?' %}")) return;
+
+    fetch("{% url 'safety:api_resolve_incident' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            incident_id: incidentId,
+            notes: "Resolved via incident queue dashboard."
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.reload();
+        } else {
+            alert(data.message || "{% trans 'Failed to resolve ticket.' %}");
+        }
+    })
+    .catch(err => {
+        alert("{% trans 'Connection error. Please retry.' %}");
+    });
+}
+</script>
+{% endblock %}

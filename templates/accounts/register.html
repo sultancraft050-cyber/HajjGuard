@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Register & Safety Enrollment" %} | HajjGuard{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden bg-white">
+                <div class="card-header bg-success text-white py-4 px-4 text-center">
+                    <h3 class="fw-bold mb-1">🕋 HajjGuard</h3>
+                    <p class="mb-0 text-white-50">{% trans "Pilgrim Registration & Crowd Safety Enrollment" %}</p>
+                </div>
+                <div class="card-body p-4 p-md-5">
+                    <form method="POST" action="{% url 'accounts:register' %}">
+                        {% csrf_token %}
+
+                        <!-- Basic Information -->
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-person-fill text-success me-2"></i>{% trans "1. Personal Information" %}
+                        </h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "First Name" %} *</label>
+                                <input type="text" name="first_name" class="form-control" required placeholder="e.g. Rashid">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Last Name" %} *</label>
+                                <input type="text" name="last_name" class="form-control" required placeholder="e.g. Al-Mansoor">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Mobile Phone Number" %} *</label>
+                                <input type="tel" name="phone" class="form-control" required placeholder="+966 5X XXX XXXX">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Nationality" %}</label>
+                                <input type="text" name="nationality" class="form-control" value="Saudi Arabia">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Age" %} *</label>
+                                <input type="number" name="age" class="form-control" min="5" max="110" value="68" required>
+                                <small class="text-muted">{% trans "Ages >= 65 marked vulnerable" %}</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Gender" %}</label>
+                                <select name="gender" class="form-select">
+                                    <option value="M">{% trans "Male" %}</option>
+                                    <option value="F">{% trans "Female" %}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Preferred Language" %}</label>
+                                <select name="language" class="form-select">
+                                    {% for code, name in language_choices %}
+                                        <option value="{{ code }}" {% if code == 'ar' %}selected{% endif %}>{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Health & Vulnerability Profile -->
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-heart-pulse-fill text-danger me-2"></i>{% trans "2. Health & Mobility Safety Profile" %}
+                        </h5>
+                        <p class="text-muted small mb-3">
+                            {% trans "Used strictly to protect you during extreme heat or stampede surges by computing demographic vulnerability indices." %}
+                        </p>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Blood Type" %}</label>
+                                <select name="blood_type" class="form-select font-monospace">
+                                    <option value="O+">O+ (Positive)</option>
+                                    <option value="O-">O- (Negative)</option>
+                                    <option value="A+">A+ (Positive)</option>
+                                    <option value="A-">A- (Negative)</option>
+                                    <option value="B+">B+ (Positive)</option>
+                                    <option value="B-">B- (Negative)</option>
+                                    <option value="AB+">AB+ (Positive)</option>
+                                    <option value="AB-">AB- (Negative)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Chronic Medical Condition" %}</label>
+                                <select name="chronic_condition" class="form-select">
+                                    {% for code, name in chronic_choices %}
+                                        <option value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch p-3 bg-light rounded-3 border">
+                                    <input class="form-check-input ms-0 me-3" type="checkbox" name="is_wheelchair_user" id="wheelchairCheck">
+                                    <label class="form-check-label fw-bold text-dark" for="wheelchairCheck">
+                                        <i class="bi bi-person-wheelchair text-primary me-1"></i>{% trans "I use a wheelchair or have restricted physical mobility" %}
+                                    </label>
+                                    <small class="text-muted d-block ms-5">{% trans "Helps routing engine divert your party to wheelchair-accessible ramps in Mina and Mataf." %}</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Contact -->
+                        <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
+                            <i class="bi bi-telephone-fill text-primary me-2"></i>{% trans "3. Emergency Contact" %}
+                        </h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Contact Person Name" %}</label>
+                                <input type="text" name="emergency_contact_name" class="form-control" placeholder="e.g. Tariq Al-Mansoor (Son)">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-dark">{% trans "Contact Phone Number" %}</label>
+                                <input type="tel" name="emergency_contact_phone" class="form-control" placeholder="+966 5X XXX XXXX">
+                            </div>
+                        </div>
+
+                        <!-- PDPL Statutory Consent (Section 16 Mandate) -->
+                        <div class="alert alert-light border rounded-3 p-3 mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="consent_given" id="consentCheck" required checked>
+                                <label class="form-check-label small fw-semibold text-dark" for="consentCheck">
+                                    <i class="bi bi-shield-check text-success me-1"></i>
+                                    {% trans "PDPL Consent Agreement (Saudi Personal Data Protection Law - Article 16):" %}
+                                    <span class="fw-normal text-muted d-block mt-1">
+                                        {% trans "I explicitly consent to the collection and operational processing of my telemetry and health information strictly for crowd management, stampede prevention, and emergency response during Hajj. I acknowledge that lookups by field officers are logged and audited." %}
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+                                <i class="bi bi-check-circle-fill me-2"></i>{% trans "Complete Safety Registration" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
