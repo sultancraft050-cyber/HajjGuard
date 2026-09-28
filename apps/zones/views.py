@@ -10,6 +10,33 @@ from .models import Zone, Corridor, LocationPing, DensityRecord
 from .utils import determine_zone_for_point, haversine_distance, altitude_from_barometric_pressure
 from accounts.models import PilgrimProfile
 
+def landing_home(request):
+    """
+    Renders the modern Burak-inspired Landing Page for HajjGuard.
+    Features the interactive aerial Al-Masjid Al-Haram visual explorer,
+    real-time 7-section crowd telemetry, live weather HUD, and dual-portal entry points.
+    """
+    from services.sectional_telemetry import HaramSectionalEngine
+    from services.weather import get_live_makkah_weather
+    from django.core.serializers.json import DjangoJSONEncoder
+
+    sections = HaramSectionalEngine.get_sectional_status_matrix()
+    weather = get_live_makkah_weather()
+
+    total_headcount = sum(s['headcount'] for s in sections)
+    total_capacity = sum(s['safe_capacity'] for s in sections)
+
+    context = {
+        'sections': sections,
+        'sections_json': json.dumps(sections, cls=DjangoJSONEncoder),
+        'weather': weather,
+        'total_headcount': total_headcount,
+        'total_capacity': total_capacity,
+        'mataf_section': next((s for s in sections if s['code'] == 'Z-HARAM-MATAF'), None),
+    }
+    return render(request, 'home.html', context)
+
+
 def live_map_view(request):
     """
     Renders the responsive full-screen Holy Sites Live Map

@@ -31,7 +31,8 @@ urlpatterns = [
     path('analytics/', include('analytics.urls', namespace='analytics')),
     path('nusuk/', include('nusuk.urls', namespace='nusuk')),
     path('api/telemetry/ping/', zones.views.api_location_ping, name='api_telemetry_ping'),
-    path('', RedirectView.as_view(url='/accounts/pilgrim/', permanent=False), name='home_redirect'),
+    path('', zones.views.landing_home, name='home'),
+    path('home/', zones.views.landing_home, name='home_explicit'),
 ]
 
 if settings.DEBUG:
