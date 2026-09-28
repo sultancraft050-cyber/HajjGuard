@@ -1,314 +1,323 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "My Hajj Portal" %} | HajjGuard{% endblock %}
+{% block title %}{% trans "بوابة ضيف الرحمن الذكية" %} | HajjGuard{% endblock %}
 
 {% block extra_css %}
 <style>
-    .nusuk-smart-card {
-        background: linear-gradient(135deg, #0d5c3a 0%, #157347 100%);
-        color: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(13, 92, 58, 0.3);
-        border: 2px solid #c5a059;
+    .portal-shell {
+        max-width: 780px;
+        margin: 0 auto;
+    }
+
+    /* DGA Citizen Card */
+    .dga-credential-card {
+        background: linear-gradient(135deg, var(--dga-green-dark) 0%, var(--dga-green) 100%);
+        color: #ffffff;
+        border-radius: var(--dga-radius-xl);
+        border: 2px solid var(--dga-gold);
+        box-shadow: 0 12px 28px rgba(0, 108, 53, 0.25);
         position: relative;
         overflow: hidden;
     }
-
-    .nusuk-watermark {
+    .credential-pattern {
         position: absolute;
-        top: -20px;
-        right: -20px;
+        top: -15px;
+        right: -15px;
         font-size: 8rem;
         opacity: 0.08;
         pointer-events: none;
     }
 
-    .btn-giant-action {
-        border-radius: 16px;
+    /* Interactive Big Action Buttons */
+    .btn-action-tile {
+        background: #ffffff;
+        border: 1px solid var(--dga-border);
+        border-radius: var(--dga-radius-lg);
         padding: 16px;
         font-weight: 700;
-        font-size: 1.1rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-        transition: transform 0.15s ease;
+        color: var(--dga-text-primary);
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.22s ease;
+        text-decoration: none;
+        box-shadow: var(--dga-shadow-sm);
+    }
+    .btn-action-tile:hover {
+        transform: translateY(-3px);
+        border-color: var(--dga-green);
+        box-shadow: var(--dga-shadow);
+        color: var(--dga-green);
+    }
+    .action-icon-disc {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 12px;
+        font-size: 1.4rem;
     }
 
-    .btn-giant-action:hover {
-        transform: translateY(-2px);
-    }
-
-    .ritual-card {
-        border-radius: 16px;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        margin-bottom: 14px;
+    /* Ritual Journey Steps */
+    .ritual-step-card {
+        background: #ffffff;
+        border: 1px solid var(--dga-border);
+        border-radius: var(--dga-radius-lg);
+        padding: 18px;
+        margin-bottom: 12px;
         transition: all 0.2s ease;
     }
-
-    .ritual-card.active-ritual {
-        border-inline-start: 6px solid var(--hajj-green);
-        background: #f0fdf4;
+    .ritual-step-card.active-step {
+        border-inline-start: 5px solid var(--dga-green);
+        background: var(--dga-green-mint);
+        border-color: rgba(0, 108, 53, 0.2);
     }
-
-    .demo-bar {
-        background: #e2e8f0;
-        border-radius: 10px;
-        padding: 8px 12px;
-        font-size: 0.85rem;
+    .ritual-step-card.completed-step {
+        opacity: 0.75;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-3" style="max-width: 600px;">
+<div class="container py-4">
+    <div class="portal-shell">
 
-    <!-- Demo Tester User Switcher Bar -->
-    <div class="demo-bar mb-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-        <span class="text-muted fw-bold"><i class="bi bi-person-badge"></i> {% trans "Active Profile:" %}</span>
-        <div class="btn-group btn-group-sm">
-            <a href="{% url 'accounts:demo_switch' 'rashid' %}" class="btn btn-outline-success {% if profile.user.username == 'rashid' %}active{% endif %}">
-                👴 {% trans "Uncle Rashid (72y)" %}
-            </a>
-            <a href="{% url 'accounts:demo_switch' 'fatima' %}" class="btn btn-outline-success {% if profile.user.username == 'fatima' %}active{% endif %}">
-                🧕 {% trans "Fatima (32y)" %}
-            </a>
-            <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-outline-dark">
-                🖥️ {% trans "Command Center" %}
-            </a>
-        </div>
-    </div>
-
-    <!-- Official Nusuk Smart Card Badge -->
-    <div class="nusuk-smart-card p-4 mb-4">
-        <div class="nusuk-watermark">🕋</div>
-        
-        <div class="d-flex justify-content-between align-items-start border-bottom border-white border-opacity-25 pb-2 mb-3">
-            <div>
-                <span class="badge bg-warning text-dark fw-bold px-2 py-1 mb-1">
-                    <i class="bi bi-patch-check-fill"></i> {% trans "OFFICIAL NUSUK CARD" %}
+        <!-- 1. Interactive Demo Persona Switcher Bar -->
+        <div class="dga-card p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div class="d-flex align-items-center gap-2 small">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-2 py-1">
+                    <i class="bi bi-person-check-fill"></i> {% trans "الحساب النشط" %}
                 </span>
-                <h4 class="fw-bold mb-0">{{ profile.user.get_full_name|default:profile.user.username }}</h4>
-                <div class="small text-white-50">{% trans "Passport / National ID:" %} {{ card.border_or_national_id|default:"1082390192" }}</div>
+                <span class="fw-bold text-dark">{{ profile.user.get_full_name|default:profile.user.username }}</span>
+                <span class="text-muted">({{ profile.age }} {% trans "سنة" %})</span>
             </div>
-            {% if card and card.qr_code_image %}
-            <div class="bg-white p-1 rounded-3 shadow-sm text-center">
-                <img src="{{ card.qr_code_image.url }}" alt="Nusuk QR" style="width: 75px; height: 75px; object-fit: contain;">
-                <div class="text-dark" style="font-size: 0.55rem; font-weight: 800;">{% trans "SCAN ID" %}</div>
-            </div>
-            {% endif %}
-        </div>
-
-        <div class="row g-2 small">
-            <div class="col-6">
-                <div class="text-white-50">{% trans "Campaign:" %}</div>
-                <div class="fw-bold">{{ card.campaign.name_en }}</div>
-            </div>
-            <div class="col-6">
-                <div class="text-white-50">{% trans "Mina Camp:" %}</div>
-                <div class="fw-bold">{{ card.campaign.assigned_mina_sector }} ({{ card.campaign.mina_camp_no }})</div>
-            </div>
-            <div class="col-6">
-                <div class="text-white-50">{% trans "Assigned Jamarat Floor:" %}</div>
-                <div class="fw-bold text-warning"><i class="bi bi-layers-fill"></i> {% trans "Level" %} {{ card.assigned_jamarat_floor|default:2 }}</div>
-            </div>
-            <div class="col-6">
-                <div class="text-white-50">{% trans "Health & Blood:" %}</div>
-                <div class="fw-bold">
-                    {{ profile.blood_type }} 
-                    {% if profile.is_wheelchair_user %}<span class="badge bg-light text-dark ms-1">♿ {% trans "Wheelchair" %}</span>{% endif %}
-                    {% if profile.chronic_condition != 'NONE' %}<span class="badge bg-danger ms-1">❤️ {{ profile.get_chronic_condition_display }}</span>{% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="mt-3 text-center border-top border-white border-opacity-25 pt-2">
-            <a href="{% url 'nusuk:digital_card' %}" class="btn btn-warning btn-sm fw-bold px-3 py-1 shadow-sm">
-                <i class="bi bi-person-vcard"></i> {% trans "Open 3D Smart Card & Barcode Pass" %}
-            </a>
-        </div>
-    </div>
-
-    <!-- Nusuk AI Copilot Quick Banner -->
-    <div class="card border-0 shadow-sm p-3 mb-4 rounded-4" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-right: 4px solid #16a34a !important;">
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fs-2">🤖</span>
-                <div>
-                    <h6 class="fw-bold mb-0 text-success">{% trans "Nusuk AI Fiqh Copilot" %}</h6>
-                    <div class="small text-muted">{% trans "Instant answers on Tawaf doubts, Fidyah, wheelchair concessions, and live crowd" %}</div>
-                </div>
-            </div>
-            <button onclick="toggleNusukAiDrawer()" class="btn btn-success btn-sm fw-bold rounded-pill px-3 shadow-sm">
-                <i class="bi bi-chat-dots-fill"></i> {% trans "Ask AI" %}
-            </button>
-        </div>
-    </div>
-
-    <!-- Giant Accessible Primary Action Buttons -->
-    <div class="d-grid gap-3 mb-4">
-        <a href="{% url 'zones:live_map' %}" class="btn btn-success btn-giant-action bg-gradient text-white">
-            <i class="bi bi-map-fill fs-3"></i>
-            <span>{% trans "View Holy Sites Live Crowd Map" %}</span>
-        </a>
-
-        <div class="row g-2">
-            <div class="col-6">
-                <a href="#sos-modal" data-bs-toggle="modal" class="btn btn-danger btn-giant-action w-100 text-white">
-                    <i class="bi bi-shield-fill-exclamation fs-3"></i>
-                    <span>{% trans "EMERGENCY SOS" %}</span>
+            <div class="btn-group btn-group-sm">
+                <a href="{% url 'accounts:demo_switch' 'rashid' %}" class="btn btn-outline-success {% if profile.user.username == 'rashid' %}active{% endif %}">
+                    👴 {% trans "العم رشيد (72س)" %}
                 </a>
-            </div>
-            <div class="col-6">
-                <a href="tel:{{ card.campaign.leader_phone }}" class="btn btn-primary btn-giant-action w-100 text-white">
-                    <i class="bi bi-telephone-outbound-fill fs-3"></i>
-                    <span>{% trans "Call Leader" %}</span>
+                <a href="{% url 'accounts:demo_switch' 'fatima' %}" class="btn btn-outline-success {% if profile.user.username == 'fatima' %}active{% endif %}">
+                    🧕 {% trans "فاطمة (32س)" %}
+                </a>
+                <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-outline-dark">
+                    🖥️ {% trans "غرفة العمليات" %}
                 </a>
             </div>
         </div>
-    <!-- Live Haram & Kaaba Crowd Camera (Real-Time Visual Awareness) -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4 bg-white border-top border-4 border-success">
-        <div class="card-header bg-white py-3 px-3 border-bottom d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fs-4">🕋</span>
+
+        <!-- 2. Official Smart Nusuk Card Widget -->
+        <div class="dga-credential-card p-4 mb-4">
+            <div class="credential-pattern">🕋</div>
+            
+            <div class="d-flex justify-content-between align-items-start border-bottom border-white border-opacity-25 pb-3 mb-3">
                 <div>
-                    <h6 class="fw-bold mb-0 text-dark">{% trans "Live Haram Crowd Camera" %}</h6>
-                    <small class="text-muted">{% trans "Real-time visual feed of Kaaba Mataf & Tawaf basin" %}</small>
-                </div>
-            </div>
-            <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#cctvCollapse" aria-expanded="false">
-                <i class="bi bi-camera-video-fill me-1"></i> <span id="cctvBtnText">{% trans "Watch Live" %}</span>
-            </button>
-        </div>
-
-        <div class="collapse" id="cctvCollapse">
-            <!-- Channel Switcher Pills -->
-            <div class="p-2 bg-light border-bottom d-flex justify-content-center gap-2">
-                <button class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('makkah')">
-                    🕋 {% trans "Kaaba Mataf (Makkah)" %}
-                </button>
-                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('madinah')">
-                    🕌 {% trans "Prophet's Mosque (Madinah)" %}
-                </button>
-            </div>
-
-            <!-- Video Player -->
-            <div class="ratio ratio-16x9 bg-dark">
-                <iframe id="haramCamIframe"
-                        src="" 
-                        data-makkah="https://www.youtube-nocookie.com/embed/qXFQhMDCHZg?autoplay=1&mute=1"
-                        data-madinah="https://www.youtube-nocookie.com/embed/5F2v_2t7Fv4?autoplay=1&mute=1"
-                        title="Haram Live Stream" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen></iframe>
-            </div>
-
-            <!-- Real-Time Optical & Gate Telemetry HUD -->
-            <div class="p-3 bg-white">
-                <div class="row g-2 text-center">
-                    <div class="col-4">
-                        <div class="p-2 bg-light rounded-3 border">
-                            <small class="text-muted d-block font-monospace">{% trans "Tawaf Duration" %}</small>
-                            <span class="fw-bold text-success fs-6">~45 {% trans "mins" %}</span>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="p-2 bg-light rounded-3 border">
-                            <small class="text-muted d-block font-monospace">{% trans "Crowd Status" %}</small>
-                            <span class="badge bg-success rounded-pill">{% trans "Laminar Flow" %}</span>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="p-2 bg-light rounded-3 border">
-                            <small class="text-muted d-block font-monospace">{% trans "Open Gates" %}</small>
-                            <span class="fw-bold text-dark fs-6">1, 79, 84</span>
-                        </div>
+                    <span class="badge bg-warning text-dark fw-bold px-2 py-1 mb-2">
+                        <i class="bi bi-patch-check-fill"></i> {% trans "بطاقة نسك الرقمية المعتمدة" %}
+                    </span>
+                    <h4 class="fw-bold mb-1">{{ profile.user.get_full_name|default:profile.user.username }}</h4>
+                    <div class="small text-white-50">
+                        {% trans "رقم الهوية / الحدود:" %} <strong>{{ card.border_or_national_id|default:"1082390192" }}</strong>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Day-by-Day Hajj Ritual Journey Assistant -->
-    <div class="mb-4">
-        <h5 class="fw-bold d-flex align-items-center justify-content-between mb-3">
-            <span><i class="bi bi-calendar2-check text-success me-1"></i> {% trans "My Hajj Ritual Journey" %}</span>
-            <span class="badge bg-success text-white">{% trans "Day 9 (Active)" %}</span>
-        </h5>
-
-        {% for r in rituals %}
-        <div class="card ritual-card p-3 {% if r.status == 'active' %}active-ritual shadow-sm{% endif %}">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-                <div>
-                    <h6 class="fw-bold mb-1 {% if r.status == 'active' %}text-success{% endif %}">
-                        {% if LANGUAGE_CODE == 'ar' %}{{ r.title_ar }}{% else %}{{ r.title_en }}{% endif %}
-                    </h6>
-                    <p class="small text-muted mb-0">
-                        {% if LANGUAGE_CODE == 'ar' %}{{ r.desc_ar }}{% else %}{{ r.desc_en }}{% endif %}
-                    </p>
+                {% if card and card.qr_code_image %}
+                <div class="bg-white p-1 rounded-3 shadow-sm text-center">
+                    <img src="{{ card.qr_code_image.url }}" alt="Nusuk QR" style="width: 72px; height: 72px; object-fit: contain;">
+                    <div class="text-dark fw-bold" style="font-size: 0.6rem;">{% trans "رمز التحقق" %}</div>
                 </div>
-                {% if r.status == 'completed' %}
-                <span class="badge bg-secondary">{% trans "Completed" %}</span>
-                {% elif r.status == 'active' %}
-                <span class="badge bg-success">{% trans "Current Ritual" %}</span>
-                {% else %}
-                <span class="badge bg-light text-muted">{% trans "Upcoming" %}</span>
                 {% endif %}
             </div>
 
-            <!-- Audio Readout for the Elderly / Illiterate -->
-            <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-2">
-                <small class="text-muted fst-italic">"{{ r.audio_text }}"</small>
-                <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="speakDua('{{ r.audio_text }}')">
-                    <i class="bi bi-volume-up-fill me-1"></i> {% trans "Listen" %}
+            <!-- Campaign & Health Badges -->
+            <div class="row g-3 small">
+                <div class="col-sm-6">
+                    <div class="text-white-50">{% trans "شركة الحج والطوافة:" %}</div>
+                    <div class="fw-bold">{{ card.campaign.name_ar|default:card.campaign.name_en|default:"شركة وفادة المشاعر الموحدة" }}</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-white-50">{% trans "موقع المخيم بمشعر منى:" %}</div>
+                    <div class="fw-bold">{{ card.campaign.assigned_mina_sector|default:"مربع 14" }} ({{ card.campaign.mina_camp_no|default:"مخيم 402" }})</div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-white-50">{% trans "دور رمي الجمرات المخصص:" %}</div>
+                    <div class="fw-bold text-warning">
+                        <i class="bi bi-layers-fill"></i> {% trans "الدور" %} {{ card.assigned_jamarat_floor|default:2 }} ({% trans "المسار الميسر" %})
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="text-white-50">{% trans "الحالة الصحية والبيانات الطبية:" %}</div>
+                    <div class="fw-bold">
+                        <span class="badge bg-danger">{{ profile.blood_type }}</span>
+                        {% if profile.is_wheelchair_user %}<span class="badge bg-light text-dark ms-1">♿ {% trans "مستخدم كرسي" %}</span>{% endif %}
+                        {% if profile.chronic_condition != 'NONE' %}<span class="badge bg-warning text-dark ms-1">❤️ {{ profile.get_chronic_condition_display }}</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <span class="small text-white-50"><i class="bi bi-shield-lock-fill"></i> {% trans "مشفرة بتقنية باركود الليزر وQR الموحد" %}</span>
+                <a href="{% url 'nusuk:digital_card' %}" class="btn btn-warning fw-bold btn-sm rounded-pill px-3 shadow-sm">
+                    <i class="bi bi-person-vcard me-1"></i> {% trans "فتح البطاقة ثلاثية الأبعاد 3D" %}
+                </a>
+            </div>
+        </div>
+
+        <!-- 3. Nusuk AI Fiqh Copilot Quick Trigger Banner -->
+        <div class="dga-card p-3 mb-4 d-flex justify-content-between align-items-center gap-3" style="background: linear-gradient(135deg, var(--dga-green-mint) 0%, #ffffff 100%); border-color: rgba(0, 108, 53, 0.25);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="action-icon-disc bg-success text-white">
+                    <i class="bi bi-chat-quote-fill"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-1 text-success">{% trans "المساعد الشرعي الذكي (Nusuk AI Copilot)" %}</h6>
+                    <div class="small text-muted">{% trans "إجابات فورية عن شكوك الطواف، رخص الكراسي المتحركة، الفدية، وحالة الزحام اللحظية." %}</div>
+                </div>
+            </div>
+            <button onclick="openNusukAiDrawer()" class="btn btn-dga-primary btn-sm px-3 shadow-sm">
+                <i class="bi bi-chat-dots-fill"></i> {% trans "اسأل المساعد" %}
+            </button>
+        </div>
+
+        <!-- 4. Interactive Core Action Tiles Grid -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <a href="{% url 'zones:live_map' %}" class="btn-action-tile h-100">
+                    <div class="action-icon-disc bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-map-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">{% trans "الخريطة المباشرة" %}</div>
+                        <div class="text-muted small">{% trans "رصد كثافة الحرم والمشاعر" %}</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="{% url 'groups:my_group' %}" class="btn-action-tile h-100">
+                    <div class="action-icon-disc bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">{% trans "فوجي والرادار" %}</div>
+                        <div class="text-muted small">{% trans "موقع المطوف وأعضاء الفوج" %}</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-4">
+                <a href="tel:{{ card.campaign.leader_phone|default:'911' }}" class="btn-action-tile h-100">
+                    <div class="action-icon-disc bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-telephone-outbound-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">{% trans "الاتصال بالمطوف" %}</div>
+                        <div class="text-muted small">{% trans "تواصل مباشر مع قائد الحملة" %}</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 5. Live Haram & Kaaba Crowd Camera (Real-Time Visual Awareness) -->
+        <div class="dga-card overflow-hidden mb-4">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">🕋</span>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark">{% trans "بث مباشر: كاميرات مراقبة وتدفق الحرم" %}</h6>
+                        <small class="text-muted">{% trans "رؤية بصرية حية لصحن المطاف والمسجد النبوي الشريف" %}</small>
+                    </div>
+                </div>
+                <button class="btn btn-dga-outline btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#cctvCollapse" aria-expanded="false">
+                    <i class="bi bi-camera-video-fill text-success me-1"></i> <span id="cctvBtnText">{% trans "مشاهدة البث" %}</span>
                 </button>
             </div>
+
+            <div class="collapse" id="cctvCollapse">
+                <!-- Channel Switcher Pills -->
+                <div class="p-2 bg-light border-bottom d-flex justify-content-center gap-2">
+                    <button class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('makkah')">
+                        🕋 {% trans "صحن المطاف (مكة المكرمة)" %}
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('madinah')">
+                        🕌 {% trans "المسجد النبوي (المدينة المنورة)" %}
+                    </button>
+                </div>
+
+                <!-- Video Player Container -->
+                <div class="ratio ratio-16x9 bg-dark">
+                    <iframe id="haramCamIframe"
+                            src="" 
+                            data-makkah="https://www.youtube-nocookie.com/embed/qXFQhMDCHZg?autoplay=1&mute=1"
+                            data-madinah="https://www.youtube-nocookie.com/embed/5F2v_2t7Fv4?autoplay=1&mute=1"
+                            title="Haram Live Stream" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                            allowfullscreen></iframe>
+                </div>
+
+                <!-- Real-Time Optical & Gate Telemetry HUD -->
+                <div class="p-3 bg-white">
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3 border">
+                                <small class="text-muted d-block">{% trans "متوسط زمن الطواف" %}</small>
+                                <span class="fw-bold text-success fs-6">~45 {% trans "دقيقة" %}</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3 border">
+                                <small class="text-muted d-block">{% trans "حالة تدفق الحشود" %}</small>
+                                <span class="badge bg-success rounded-pill">{% trans "تدفق صفيحي مستقر" %}</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2 bg-light rounded-3 border">
+                                <small class="text-muted d-block">{% trans "أبواب الدخول المتاحة" %}</small>
+                                <span class="fw-bold text-dark fs-6">1, 79, 84</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endfor %}
-    </div>
 
-</div>
-
-<!-- Emergency SOS Modal with Auto-Logging -->
-<div class="modal fade" id="sos-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-            <div class="modal-header bg-danger text-white py-3">
-                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                    <i class="bi bi-shield-fill-exclamation fs-4"></i>
-                    <span>{% trans "Immediate Emergency Dispatch (طوارئ الحج)" %}</span>
+        <!-- 6. Day-by-Day Hajj Ritual Journey Assistant -->
+        <div class="mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0">
+                    <i class="bi bi-calendar2-check text-success me-1"></i> {% trans "مراحل رحلة الحج اللحظية" %}
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <span class="badge bg-success rounded-pill px-3 py-1">{% trans "اليوم 9 (نشط)" %}</span>
             </div>
-            <div class="modal-body p-4 text-center">
-                <div class="alert alert-warning py-2 mb-3 text-start small">
-                    <i class="bi bi-info-circle-fill text-danger me-1"></i>
-                    {% trans "Tapping any emergency number dials immediately and logs your coordinates to the command center." %}
+
+            {% for r in rituals %}
+            <div class="ritual-step-card {% if r.status == 'active' %}active-step shadow-sm{% elif r.status == 'completed' %}completed-step{% endif %}">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="fw-bold mb-1 {% if r.status == 'active' %}text-success{% endif %}">
+                            {% if LANGUAGE_CODE == 'ar' %}{{ r.title_ar }}{% else %}{{ r.title_en }}{% endif %}
+                        </h6>
+                        <p class="small text-muted mb-0">
+                            {% if LANGUAGE_CODE == 'ar' %}{{ r.desc_ar }}{% else %}{{ r.desc_en }}{% endif %}
+                        </p>
+                    </div>
+                    {% if r.status == 'completed' %}
+                    <span class="badge bg-secondary rounded-pill">{% trans "مكتمل" %}</span>
+                    {% elif r.status == 'active' %}
+                    <span class="badge bg-success rounded-pill">{% trans "المرحلة الحالية" %}</span>
+                    {% else %}
+                    <span class="badge bg-light text-muted rounded-pill">{% trans "قادمة" %}</span>
+                    {% endif %}
                 </div>
 
-                <div class="d-grid gap-2">
-                    <button onclick="triggerEmergencyCall('911', 'GENERAL')" class="btn btn-danger btn-lg py-3 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-shield-shaded fs-4"></i> {% trans "Unified Police & Security (911)" %}</span>
-                        <span class="badge bg-white text-danger fs-5 px-3 py-1">911</span>
-                    </button>
-                    <button onclick="triggerEmergencyCall('997', 'MEDICAL')" class="btn btn-outline-danger btn-lg py-3 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-heart-pulse-fill fs-4"></i> {% trans "Red Crescent Ambulance (997)" %}</span>
-                        <span class="badge bg-danger text-white fs-5 px-3 py-1">997</span>
-                    </button>
-                    <button onclick="triggerEmergencyCall('998', 'CRUSH')" class="btn btn-outline-warning text-dark btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-fire fs-4 text-danger"></i> {% trans "Civil Defense (998)" %}</span>
-                        <span class="badge bg-dark text-white fs-6 px-3 py-1">998</span>
-                    </button>
-                    <button onclick="triggerEmergencyCall('1966', 'LOST')" class="btn btn-outline-success btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-building-check fs-4"></i> {% trans "Ministry of Hajj Care (1966)" %}</span>
-                        <span class="badge bg-success text-white fs-6 px-3 py-1">1966</span>
+                <!-- Audio Readout for the Elderly / Illiterate Pilgrims -->
+                <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-2">
+                    <small class="text-muted fst-italic">"{{ r.audio_text }}"</small>
+                    <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="speakDua('{{ r.audio_text }}')">
+                        <i class="bi bi-volume-up-fill me-1"></i> {% trans "استماع للذكر" %}
                     </button>
                 </div>
             </div>
+            {% endfor %}
         </div>
+
     </div>
 </div>
 {% endblock %}
@@ -325,10 +334,10 @@
             if (!haramCamIframe.src) {
                 haramCamIframe.src = haramCamIframe.getAttribute('data-makkah');
             }
-            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'Hide Camera' %}";
+            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'إخفاء البث' %}";
         });
         cctvCollapse.addEventListener('hide.bs.collapse', function () {
-            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'Watch Live' %}";
+            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'مشاهدة البث' %}";
         });
     }
 
@@ -349,45 +358,6 @@
             window.speechSynthesis.speak(utterance);
         } else {
             alert(text);
-        }
-    }
-
-    // Trigger Emergency Call + Log to Database
-    async function triggerEmergencyCall(number, category) {
-        // Fallback coordinates (Jamarat) if navigator.geolocation not immediately ready
-        let lat = 21.41980;
-        let lng = 39.87150;
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                lat = pos.coords.latitude;
-                lng = pos.coords.longitude;
-                await sendSosLog(number, category, lat, lng);
-            }, async () => {
-                await sendSosLog(number, category, lat, lng);
-            });
-        } else {
-            await sendSosLog(number, category, lat, lng);
-        }
-
-        // Open phone dialer
-        window.location.href = `tel:${number}`;
-    }
-
-    async function sendSosLog(number, category, lat, lng) {
-        try {
-            await fetch("{% url 'safety:api_trigger_sos' %}", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    category: category,
-                    called_number: number,
-                    lat: lat,
-                    lng: lng
-                })
-            });
-        } catch (e) {
-            console.error("SOS log error:", e);
         }
     }
 </script>

@@ -23,11 +23,11 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        border-radius: 30px;
-        padding: 6px 12px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(12px);
+        border-radius: var(--dga-radius-pill);
+        padding: 6px 14px;
+        box-shadow: 0 8px 24px rgba(0, 108, 53, 0.12), 0 0 0 1px var(--dga-border);
         display: flex;
         gap: 6px;
         max-width: 95vw;
@@ -35,20 +35,21 @@
     }
 
     .btn-site-pill {
-        border-radius: 20px;
+        border-radius: var(--dga-radius-pill);
         font-size: 0.85rem;
         font-weight: 700;
-        padding: 5px 14px;
+        padding: 6px 16px;
         white-space: nowrap;
-        border: none;
+        border: 1px solid transparent;
         background: #f1f5f9;
         color: #334155;
         transition: all 0.2s ease;
     }
 
     .btn-site-pill:hover, .btn-site-pill.active {
-        background: var(--hajj-green);
-        color: white;
+        background: var(--dga-green);
+        color: #ffffff;
+        box-shadow: 0 3px 8px rgba(0, 108, 53, 0.25);
     }
 
     .map-legend {
@@ -56,12 +57,13 @@
         bottom: 24px;
         right: 16px;
         z-index: 1000;
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(6px);
-        border-radius: 12px;
-        padding: 10px 14px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-        font-size: 0.8rem;
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+        border-radius: var(--dga-radius-md);
+        padding: 12px 16px;
+        box-shadow: var(--dga-shadow-lg);
+        border: 1px solid var(--dga-border);
+        font-size: 0.82rem;
     }
 
     .legend-dot {
@@ -77,19 +79,20 @@
         bottom: 24px;
         left: 16px;
         z-index: 1000;
-        background: white;
-        border-radius: 50px;
-        padding: 10px 18px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        background: #ffffff;
+        border-radius: var(--dga-radius-pill);
+        padding: 10px 20px;
+        box-shadow: var(--dga-shadow-lg);
         font-weight: 700;
         font-size: 0.9rem;
-        border: 2px solid var(--hajj-green);
-        color: var(--hajj-green);
+        border: 1.5px solid var(--dga-green);
+        color: var(--dga-green);
+        transition: all 0.2s ease;
     }
 
     .btn-locate-me:hover {
-        background: var(--hajj-green);
-        color: white;
+        background: var(--dga-green);
+        color: #ffffff;
     }
 
     .pulse-marker {

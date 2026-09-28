@@ -6,16 +6,29 @@
 {% block extra_css %}
 <style>
     .kpi-card {
-        border-radius: 16px;
-        border: none;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-        transition: transform 0.2s ease;
+        border-radius: var(--dga-radius-lg);
+        border: 1px solid var(--dga-border);
+        box-shadow: var(--dga-shadow-sm);
+        transition: all 0.22s ease;
+        background: #ffffff;
     }
     .kpi-card:hover {
-        transform: translateY(-2px);
+        transform: translateY(-3px);
+        box-shadow: var(--dga-shadow);
+        border-color: var(--dga-green);
     }
     .table-incident tbody tr {
         vertical-align: middle;
+        transition: background-color 0.15s ease;
+    }
+    .table-incident tbody tr:hover {
+        background-color: var(--dga-green-mint) !important;
+    }
+    .operations-panel-dga {
+        background: #ffffff;
+        border: 1px solid var(--dga-border);
+        border-radius: var(--dga-radius-xl);
+        box-shadow: var(--dga-shadow-sm);
     }
 </style>
 {% endblock %}
@@ -305,7 +318,7 @@
                                 <th>{% trans "Action" %}</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="incident-tbody">
                             {% for inc in incidents %}
                             <tr id="row-incident-{{ inc.id }}" class="table-danger border-bottom">
                                 <td class="fw-bold">#{{ inc.id }}</td>

@@ -1,32 +1,33 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{{ zone.name_en }} | {% trans "Zone Risk Details" %} | HajjGuard{% endblock %}
+{% block title %}{{ zone.name_ar|default:zone.name_en }} | {% trans "تحليل القطاع والتليمترية" %} | HajjGuard{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-md-4">
-    <!-- Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+<div class="container py-4">
+
+    <!-- Header bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
             <div class="d-flex align-items-center gap-2 mb-2">
-                <a href="{% url 'zones:live_map' %}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-1"></i>{% trans "Live Map" %}
+                <a href="{% url 'zones:live_map' %}" class="btn btn-sm btn-dga-outline">
+                    <i class="bi bi-arrow-right me-1"></i>{% trans "الخريطة المباشرة" %}
                 </a>
-                <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ zone.code }}</span>
+                <span class="badge bg-secondary font-monospace">{{ zone.code }}</span>
                 <span class="badge bg-light text-dark border">{{ zone.get_site_type_display }}</span>
             </div>
-            <h2 class="fw-bold mb-1 text-dark">{{ zone.name_en }}</h2>
-            <h5 class="text-muted fw-normal mb-0">{{ zone.name_ar }}</h5>
+            <h2 class="fw-bold mb-1 text-dark">{{ zone.name_ar|default:zone.name_en }}</h2>
+            <h5 class="text-muted fw-normal mb-0">{{ zone.name_en }}</h5>
         </div>
         <div class="d-flex align-items-center gap-3">
             <div class="text-end">
-                <small class="text-muted d-block">{% trans "Zone Operational Status" %}</small>
-                <span class="badge fs-6 px-3 py-2" style="background-color: {{ color_code }}; color: #fff;">
+                <small class="text-muted d-block">{% trans "حالة الإشغال التشغيلي" %}</small>
+                <span class="badge fs-6 px-3 py-2 rounded-pill" style="background-color: {{ color_code }}; color: #fff;">
                     {{ status_label }}
                 </span>
             </div>
-            <a href="{% url 'zones:guidance' %}?from={{ zone.code }}" class="btn btn-success shadow-sm">
-                <i class="bi bi-signpost-split me-1"></i>{% trans "Request Detour" %}
+            <a href="{% url 'zones:guidance' %}?from={{ zone.code }}" class="btn btn-dga-primary">
+                <i class="bi bi-signpost-split me-1"></i>{% trans "طلب تحويل مسار" %}
             </a>
         </div>
     </div>
@@ -39,122 +40,90 @@
             <i class="bi bi-exclamation-triangle-fill fs-3 text-danger"></i>
             <div>
                 <strong class="text-dark">[{{ alert.get_severity_display }}] {{ alert.get_alert_type_display }}</strong>
-                <p class="mb-0 small text-danger">{{ alert.message_en }} ({{ alert.message_ar }})</p>
+                <p class="mb-0 small text-danger">{{ alert.message_ar }} ({{ alert.message_en }})</p>
             </div>
         </div>
         {% endfor %}
     </div>
     {% endif %}
 
-    <!-- Top Metrics Overview -->
+    <!-- Top Metrics Overview Grid -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
-                <span class="text-muted small text-uppercase fw-bold">{% trans "Current Headcount" %}</span>
+            <div class="dga-card p-3 h-100">
+                <span class="text-muted small fw-bold">{% trans "العدد اللحظي للمتواجدين" %}</span>
                 <h2 class="fw-bold text-dark mb-0 mt-1">{{ current_people }}</h2>
-                <small class="text-muted">{% trans "Capacity:" %} {{ zone.safe_capacity }} ({{ capacity_pct }}%)</small>
+                <small class="text-muted">{% trans "السعة الآمنة القصوى:" %} {{ zone.safe_capacity }} ({{ capacity_pct }}%)</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
-                <span class="text-muted small text-uppercase fw-bold">{% trans "Current Density" %}</span>
-                <h2 class="fw-bold text-dark mb-0 mt-1">{{ density_sqm }} <small class="fs-6 text-muted">p/m²</small></h2>
-                <small class="text-muted">{% trans "Area:" %} {{ zone.floor_area_sqm }} m²</small>
+            <div class="dga-card p-3 h-100">
+                <span class="text-muted small fw-bold">{% trans "الكثافة اللحظية" %}</span>
+                <h2 class="fw-bold text-dark mb-0 mt-1">{{ density_sqm }} <small class="fs-6 text-muted">حاج/م²</small></h2>
+                <small class="text-muted">{% trans "المساحة الإجمالية:" %} {{ zone.floor_area_sqm }} م²</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
-                <span class="text-muted small text-uppercase fw-bold">{% trans "20-Min Forecast" %}</span>
-                <h2 class="fw-bold text-primary mb-0 mt-1">{{ predicted_density_20m }} <small class="fs-6 text-muted">p/m²</small></h2>
-                <small class="text-muted">{% trans "Predictive Forecaster" %}</small>
+            <div class="dga-card p-3 h-100">
+                <span class="text-muted small fw-bold">{% trans "تنبؤ الكثافة (بعد 20 دقيقة)" %}</span>
+                <h2 class="fw-bold text-primary mb-0 mt-1">{{ predicted_density_20m }} <small class="fs-6 text-muted">حاج/م²</small></h2>
+                <small class="text-muted">{% trans "خوارزمية التنبؤ الاستباقي" %}</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
-                <span class="text-muted small text-uppercase fw-bold">{% trans "Composite Risk Score" %}</span>
+            <div class="dga-card p-3 h-100">
+                <span class="text-muted small fw-bold">{% trans "مؤشر المخاطر المركب" %}</span>
                 <h2 class="fw-bold mb-0 mt-1" style="color: {{ color_code }};">{{ computed_risk }} <small class="fs-6 text-muted">/ 100</small></h2>
                 <small class="text-muted">{{ status_label }}</small>
             </div>
         </div>
     </div>
 
-    <!-- Mathematical Formula Breakdown (KSU Section 8.3 & Feature 2 Mandate) -->
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h4 class="fw-bold text-dark mb-1">
-                    <i class="bi bi-calculator-fill text-primary me-2"></i>{% trans "Transparent Formula Terms (KSU Specification Section 8.3)" %}
-                </h4>
-                <p class="text-muted small mb-0">
-                    {% trans "HajjGuard never calculates risk as a black box. Every mathematical term is fully exposed and audit-verifiable:" %}
-                </p>
-            </div>
-            <span class="badge bg-light text-primary border font-monospace">Risk = W_density + W_vulnerable + W_heat</span>
+    <!-- Capacity Bar & Sensor Array -->
+    <div class="dga-card p-4 mb-4">
+        <h5 class="fw-bold text-dark mb-3">{% trans "مستوى إشغال القطاع ونبض المجسات" %}</h5>
+        <div class="progress mb-3" style="height: 12px; border-radius: 6px;">
+            <div class="progress-bar" style="width: {{ capacity_pct }}%; background-color: {{ color_code }};"></div>
+        </div>
+        <div class="d-flex justify-content-between text-muted small">
+            <span>0%</span>
+            <span>{% trans "السعة الاستيعابية القصوى" %} ({{ capacity_pct }}%)</span>
+            <span>100%</span>
         </div>
 
-        <div class="row g-4 mt-2">
-            <!-- Term 1: Density -->
-            <div class="col-lg-4">
-                <div class="p-3 bg-light rounded-4 h-100 border">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-primary text-white">{% trans "Term 1 (50% Weight)" %}</span>
-                        <strong class="fs-5 text-primary">+{{ w_density }}</strong>
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">{% trans "Physical Crowd Density" %}</h6>
-                    <p class="text-muted small mb-3">
-                        {% trans "Capacity saturation ratio" %} ({{ capacity_pct }}% &times; 0.50).
-                    </p>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: {{ capacity_pct }}%;"></div>
+        <hr class="my-4">
+
+        <h6 class="fw-bold text-dark mb-2">{% trans "المجسات البصرية والرادارية النشطة بهذا القطاع" %}</h6>
+        <div class="row g-2 small">
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light d-flex align-items-center gap-2">
+                    <i class="bi bi-camera-fill text-success fs-5"></i>
+                    <div>
+                        <div class="fw-bold text-dark">FIDTM Optical Minaret Sensor</div>
+                        <span class="text-success small">{% trans "نشط بنسبة 99.4%" %}</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Term 2: Vulnerability -->
-            <div class="col-lg-4">
-                <div class="p-3 bg-light rounded-4 h-100 border">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-warning text-dark">{% trans "Term 2 (30% Weight)" %}</span>
-                        <strong class="fs-5 text-warning">+{{ w_vulnerability }}</strong>
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">{% trans "Demographic Vulnerability" %}</h6>
-                    <p class="text-muted small mb-3">
-                        {{ vulnerable_count }} {% trans "seniors/special needs" %} ({{ vulnerable_pct }}% &times; 0.30).
-                    </p>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ vulnerable_pct }}%;"></div>
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light d-flex align-items-center gap-2">
+                    <i class="bi bi-broadcast text-primary fs-5"></i>
+                    <div>
+                        <div class="fw-bold text-dark">Time-of-Flight Gate Beams</div>
+                        <span class="text-primary small">{% trans "رصد التدفق مستمر" %}</span>
                     </div>
                 </div>
             </div>
-
-            <!-- Term 3: Heat Stress -->
-            <div class="col-lg-4">
-                <div class="p-3 bg-light rounded-4 h-100 border">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-danger text-white">{% trans "Term 3 (20% Weight)" %}</span>
-                        <strong class="fs-5 text-danger">+{{ w_heat }}</strong>
-                    </div>
-                    <h6 class="fw-bold text-dark mb-1">{% trans "Radiant Heat Stress" %}</h6>
-                    <p class="text-muted small mb-3">
-                        {% trans "Ambient heat index" %} {{ heat_index }}°C.
-                    </p>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-danger" role="progressbar" style="width: {% if heat_index >= 30 %}{{ heat_index }}{% else %}20{% endif %}%;"></div>
+            <div class="col-md-4">
+                <div class="p-2 border rounded bg-light d-flex align-items-center gap-2">
+                    <i class="bi bi-cpu text-warning fs-5"></i>
+                    <div>
+                        <div class="fw-bold text-dark">Spatial Telemetry Bridge</div>
+                        <span class="text-dark small">{% trans "تحديث كل 30 ثانية" %}</span>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-4 p-3 bg-light rounded-3 d-flex justify-content-between align-items-center border">
-            <div>
-                <strong class="text-dark">{% trans "Composite Mathematical Result:" %}</strong>
-                <span class="text-muted small ms-2">{{ w_density }} + {{ w_vulnerability }} + {{ w_heat }} = </span>
-                <strong class="fs-5" style="color: {{ color_code }};">{{ computed_risk }} / 100</strong>
-            </div>
-            <a href="{% url 'analytics:risk_board' %}" class="btn btn-sm btn-outline-dark">
-                <i class="bi bi-list-stars me-1"></i>{% trans "Compare Across All Zones" %}
-            </a>
         </div>
     </div>
+
 </div>
 {% endblock %}

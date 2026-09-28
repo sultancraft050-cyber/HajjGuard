@@ -1,82 +1,87 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{% trans "Lost Pilgrim & QR Lookup" %} | HajjGuard{% endblock %}
+{% block title %}{% trans "البحث الفوري عن تائه أو حاج مفقود" %} | HajjGuard{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-md-4">
-    <!-- Header -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+<div class="container py-4">
+
+    <!-- Header bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold">
+                    <i class="bi bi-shield-check"></i> {% trans "نظام إرشاد التائهين الموحد (1966)" %}
+                </span>
+            </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-qr-code-scan text-primary me-2"></i>{% trans "Lost Pilgrim Rapid Identification" %}
+                <i class="bi bi-qr-code-scan text-success me-2"></i>{% trans "البحث الفوري والتعرف على الحجاج التائهين" %}
             </h2>
-            <p class="text-muted mb-0">
-                {% trans "Scan physical wristband QR code or enter National ID/Tasreeh to reconnect separated pilgrims with their campaign leader." %}
+            <p class="text-muted small mb-0">
+                {% trans "مسح رمز QR أو إدخال رقم الحدود / تصريح نسك / اسم الحاج لإعادة ربطه فوراً بمطوفه ومركزه بمشعر منى." %}
             </p>
         </div>
         <div>
-            <span class="badge bg-success-subtle text-success border border-success px-3 py-2">
-                <i class="bi bi-shield-check me-1"></i>{% trans "PDPL Article 16 Compliant & Audited" %}
+            <span class="badge bg-light text-muted border px-3 py-2">
+                <i class="bi bi-file-lock-fill text-success me-1"></i>{% trans "متوافق مع المادة 16 من نظام حماية البيانات الشخصية (PDPL)" %}
             </span>
         </div>
     </div>
 
-    <!-- Search / Scanner Input Card -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
-        <div class="card-body p-4">
-            <form method="GET" class="row g-3 align-items-center">
-                <div class="col-lg-8">
-                    <label class="form-label fw-bold text-dark mb-1">
-                        <i class="bi bi-search me-1"></i>{% trans "Search by QR Payload, Tasreeh Number, Phone, or Name:" %}
-                    </label>
-                    <div class="input-group input-group-lg shadow-sm">
-                        <span class="input-group-text bg-light border-end-0">
-                            <i class="bi bi-upc-scan text-primary fs-4"></i>
-                        </span>
-                        <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="{% trans 'e.g. HAJJGUARD:PRM-2026-9921, 1087429104, or rashid' %}" autofocus>
-                        <button class="btn btn-primary px-4 fw-bold" type="submit">
-                            <i class="bi bi-search me-1"></i>{% trans "Search Pilgrim" %}
-                        </button>
-                    </div>
+    <!-- Search Input Card -->
+    <div class="dga-card p-4 mb-4">
+        <form method="GET" class="row g-3 align-items-center">
+            <div class="col-lg-8">
+                <label class="form-label fw-bold text-dark mb-1">
+                    <i class="bi bi-search me-1 text-success"></i>{% trans "البحث برمز QR، رقم التصريح، الجوال أو اسم الحاج:" %}
+                </label>
+                <div class="input-group input-group-lg shadow-sm">
+                    <span class="input-group-text bg-light border-end-0">
+                        <i class="bi bi-upc-scan text-success fs-4"></i>
+                    </span>
+                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="{% trans 'مثال: HAJJGUARD:PRM-2026-9921 أو rashid أو 1087429104' %}" autofocus>
+                    <button class="btn btn-dga-primary px-4 fw-bold" type="submit">
+                        <i class="bi bi-search me-1"></i>{% trans "استعلام فوري" %}
+                    </button>
                 </div>
-                <div class="col-lg-4">
-                    <label class="form-label text-muted small mb-1">{% trans "Demo Quick Queries:" %}</label>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="?q=HAJJGUARD:PRM-2026-9921" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-qr-code me-1"></i>QR Payload
-                        </a>
-                        <a href="?q=rashid" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-person me-1"></i>rashid
-                        </a>
-                        <a href="?q=fatima" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-person me-1"></i>fatima
-                        </a>
-                    </div>
+            </div>
+            <div class="col-lg-4">
+                <label class="form-label text-muted small mb-1">{% trans "نماذج استعلام تجريبية سريعة:" %}</label>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="?q=HAJJGUARD:PRM-2026-9921" class="btn btn-sm btn-dga-outline">
+                        <i class="bi bi-qr-code me-1"></i>QR Payload
+                    </a>
+                    <a href="?q=rashid" class="btn btn-sm btn-dga-outline">
+                        <i class="bi bi-person me-1"></i>rashid
+                    </a>
+                    <a href="?q=fatima" class="btn btn-sm btn-dga-outline">
+                        <i class="bi bi-person me-1"></i>fatima
+                    </a>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
     </div>
 
     {% if query %}
         {% if pilgrim %}
         <!-- Search Results: Pilgrim & Group Card -->
         <div class="row g-4 mb-4">
-            <!-- Pilgrim Details -->
+            
+            <!-- Pilgrim Identification Card -->
             <div class="col-lg-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                    <div class="card-header bg-primary text-white py-3 px-4 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0">
-                            <i class="bi bi-person-bounding-box me-2"></i>{% trans "Pilgrim Identification" %}
+                <div class="dga-card h-100 overflow-hidden">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-person-bounding-box text-success me-2"></i>{% trans "بيانات هوية الحاج الموثقة" %}
                         </h5>
-                        <span class="badge bg-light text-primary fw-bold font-monospace">
+                        <span class="badge bg-success font-monospace">
                             ID: #{{ pilgrim.id }}
                         </span>
                     </div>
-                    <div class="card-body p-4">
+                    <div class="p-4">
                         <div class="d-flex align-items-center gap-3 mb-4">
                             <div class="rounded-circle bg-light border p-3 text-center" style="width: 70px; height: 70px;">
-                                <i class="bi bi-person-fill fs-1 text-primary"></i>
+                                <i class="bi bi-person-fill fs-1 text-success"></i>
                             </div>
                             <div>
                                 <h4 class="fw-bold mb-0 text-dark">{{ pilgrim.user.get_full_name|default:pilgrim.user.username }}</h4>
@@ -84,49 +89,49 @@
                             </div>
                         </div>
 
-                        <div class="row g-3">
+                        <div class="row g-3 small">
                             <div class="col-6">
-                                <small class="text-muted d-block">{% trans "Age & Gender" %}</small>
-                                <span class="fw-bold">{{ pilgrim.age }} {% trans "years" %} ({{ pilgrim.get_gender_display }})</span>
+                                <span class="text-muted d-block">{% trans "العمر والجنس:" %}</span>
+                                <span class="fw-bold text-dark">{{ pilgrim.age }} {% trans "سنة" %} ({{ pilgrim.get_gender_display }})</span>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block">{% trans "Blood Type" %}</small>
-                                <span class="badge bg-danger-subtle text-danger border border-danger">{{ pilgrim.blood_type }}</span>
+                                <span class="text-muted d-block">{% trans "فصيلة الدم:" %}</span>
+                                <span class="badge bg-danger">{{ pilgrim.blood_type }}</span>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block">{% trans "Mobility Status" %}</small>
+                                <span class="text-muted d-block">{% trans "حالة الإتاحة الحركية:" %}</span>
                                 {% if pilgrim.is_wheelchair_user %}
-                                    <span class="badge bg-warning text-dark"><i class="bi bi-person-wheelchair me-1"></i>{% trans "Wheelchair User" %}</span>
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-person-wheelchair me-1"></i>{% trans "مستخدم كرسي متحرك" %}</span>
                                 {% else %}
-                                    <span class="badge bg-light text-dark border">{% trans "Standard Mobility" %}</span>
+                                    <span class="badge bg-light text-dark border">{% trans "حركة عادية" %}</span>
                                 {% endif %}
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block">{% trans "Medical / Chronic" %}</small>
-                                <span class="badge bg-secondary-subtle text-secondary">{{ pilgrim.get_chronic_condition_display }}</span>
+                                <span class="text-muted d-block">{% trans "التنبيهات الطبية والمزمنة:" %}</span>
+                                <span class="badge bg-secondary">{{ pilgrim.get_chronic_condition_display }}</span>
                             </div>
                             <div class="col-12"><hr class="my-1"></div>
                             <div class="col-6">
-                                <small class="text-muted d-block">{% trans "Pilgrim Contact" %}</small>
-                                <a href="tel:{{ pilgrim.phone }}" class="text-decoration-none fw-bold text-dark">
-                                    <i class="bi bi-telephone-outbound text-primary me-1"></i>{{ pilgrim.phone|default:"No phone" }}
+                                <span class="text-muted d-block">{% trans "رقم هاتف الحاج:" %}</span>
+                                <a href="tel:{{ pilgrim.phone }}" class="text-decoration-none fw-bold text-success">
+                                    <i class="bi bi-telephone-outbound me-1"></i>{{ pilgrim.phone|default:"غير متوفر" }}
                                 </a>
                             </div>
                             <div class="col-6">
-                                <small class="text-muted d-block">{% trans "Emergency Contact" %}</small>
-                                <span class="fw-bold">{{ pilgrim.emergency_contact_name|default:"Not specified" }}</span>
+                                <span class="text-muted d-block">{% trans "جهة الاتصال العائلية للطوارئ:" %}</span>
+                                <span class="fw-bold text-dark">{{ pilgrim.emergency_contact_name|default:"غير محدد" }}</span>
                                 <small class="text-muted d-block">{{ pilgrim.emergency_contact_phone }}</small>
                             </div>
                         </div>
 
                         {% if latest_ping %}
-                        <div class="alert alert-light border rounded-3 mt-4 mb-0">
+                        <div class="alert alert-light border rounded-3 mt-4 mb-0 small">
                             <div class="d-flex align-items-center justify-content-between mb-1">
-                                <strong class="text-dark small"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{% trans "Last Known Location" %}:</strong>
-                                <small class="text-muted">{{ latest_ping.timestamp|timesince }} {% trans "ago" %}</small>
+                                <strong class="text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{% trans "آخر موقع جغرافي تم رصده:" %}</strong>
+                                <small class="text-muted">{{ latest_ping.timestamp|timesince }} {% trans "مضت" %}</small>
                             </div>
-                            <div class="fw-semibold text-dark">{{ latest_ping.zone.name_en|default:"Corridor" }} ({{ latest_ping.zone.code|default:"GPS" }})</div>
-                            <div class="font-monospace small text-muted">
+                            <div class="fw-bold text-dark">{{ latest_ping.zone.name_ar|default:latest_ping.zone.name_en }} ({{ latest_ping.zone.code|default:"GPS" }})</div>
+                            <div class="font-monospace text-muted small">
                                 Lat: {{ latest_ping.lat|floatformat:5 }}, Lng: {{ latest_ping.lng|floatformat:5 }}
                             </div>
                         </div>
@@ -135,119 +140,76 @@
                 </div>
             </div>
 
-            <!-- Campaign & Leader Details -->
+            <!-- Campaign & Leader Details Card -->
             <div class="col-lg-6">
-                <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
-                    <div class="card-header bg-success text-white py-3 px-4 d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0">
-                            <i class="bi bi-people-fill me-2"></i>{% trans "Assigned Campaign & Group" %}
+                <div class="dga-card h-100 overflow-hidden">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                        <h5 class="fw-bold mb-0 text-dark">
+                            <i class="bi bi-building-check text-success me-2"></i>{% trans "بيانات الفوج والحملة المشرفة" %}
                         </h5>
                         {% if group %}
-                            <span class="badge bg-light text-success fw-bold font-monospace">{{ group.code }}</span>
+                            <span class="badge bg-success font-monospace">{{ group.join_code }}</span>
                         {% endif %}
                     </div>
-                    <div class="card-body p-4">
+                    <div class="p-4">
                         {% if group %}
-                            <h4 class="fw-bold text-dark mb-1">{{ group.name_en }}</h4>
-                            <p class="text-muted small mb-3">{{ group.name_ar }}</p>
+                            <h4 class="fw-bold text-dark mb-1">{{ group.name }}</h4>
+                            <p class="text-muted small mb-3">{% trans "كود الانضمام:" %} {{ group.join_code }}</p>
 
-                            <div class="card bg-light border-0 rounded-3 p-3 mb-3">
+                            <div class="p-3 mb-3 rounded-3 bg-light border">
                                 <h6 class="fw-bold text-dark mb-2">
-                                    <i class="bi bi-person-badge-fill text-success me-1"></i>{% trans "Campaign Group Leader" %}
+                                    <i class="bi bi-person-badge-fill text-success me-1"></i>{% trans "المطوف / قائد الفوج المسئول" %}
                                 </h6>
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                     <div>
                                         <div class="fw-bold text-dark">{{ leader.user.get_full_name|default:group.leader.user.username }}</div>
                                         <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ group.leader.phone|default:"+966 50 123 4567" }}</small>
                                     </div>
-                                    <a href="tel:{{ group.leader.phone|default:'+966501234567' }}" class="btn btn-success btn-sm px-3 rounded-pill">
-                                        <i class="bi bi-telephone-fill me-1"></i>{% trans "Call Leader" %}
+                                    <a href="tel:{{ group.leader.phone|default:'+966501234567' }}" class="btn btn-dga-primary btn-sm px-3 rounded-pill">
+                                        <i class="bi bi-telephone-fill me-1"></i>{% trans "اتصال فوري بالمطوف" %}
                                     </a>
                                 </div>
                             </div>
 
-                            <div class="row g-3">
+                            <div class="row g-3 small">
                                 <div class="col-6">
-                                    <small class="text-muted d-block">{% trans "Assigned Mina Sector" %}</small>
-                                    <span class="fw-semibold text-dark">Sector 3, Camp #44</span>
+                                    <span class="text-muted d-block">{% trans "مخيم مشعر منى المخصص:" %}</span>
+                                    <span class="fw-bold text-dark">قطاع 3، مخيم #44</span>
                                 </div>
                                 <div class="col-6">
-                                    <small class="text-muted d-block">{% trans "Makkah Residence" %}</small>
-                                    <span class="fw-semibold text-dark">Al-Aziziyah Tower 2</span>
+                                    <span class="text-muted d-block">{% trans "سكن مكة المكرمة:" %}</span>
+                                    <span class="fw-bold text-dark">أبراج العزيزية 2</span>
                                 </div>
                             </div>
 
                             <div class="d-grid mt-4">
-                                <a href="{% url 'groups:my_group' %}" class="btn btn-outline-success">
-                                    <i class="bi bi-diagram-3-fill me-1"></i>{% trans "View Group Radar & Drift Status" %}
+                                <a href="{% url 'groups:my_group' %}" class="btn btn-dga-outline">
+                                    <i class="bi bi-diagram-3-fill me-1"></i>{% trans "فتح رادار الفوج والتوجيه الميداني" %}
                                 </a>
                             </div>
                         {% else %}
                             <div class="alert alert-warning border-0 rounded-3 text-center py-4">
                                 <i class="bi bi-exclamation-circle fs-3 d-block mb-2"></i>
-                                <span class="fw-bold">{% trans "No Active Campaign Group Linked" %}</span>
-                                <p class="small text-muted mb-0">{% trans "This pilgrim is not currently assigned to a monitored campaign group." %}</p>
+                                <span class="fw-bold">{% trans "لا يوجد فوج نشط مرتبط بهذا الحاج" %}</span>
+                                <p class="small text-muted mb-0">{% trans "لم يتم تعيين هذا الحاج ضمن حملة طوافة مسجلة بالنظام." %}</p>
                             </div>
                         {% endif %}
                     </div>
                 </div>
             </div>
+
         </div>
         {% else %}
-        <!-- Not Found -->
-        <div class="card border-0 shadow-sm rounded-4 p-5 text-center mb-4 bg-white">
+        <!-- Not Found Card -->
+        <div class="dga-card p-5 text-center mb-4 bg-white">
             <i class="bi bi-person-x text-danger fs-1 mb-3"></i>
-            <h4 class="fw-bold text-dark">{% trans "No Pilgrim Record Found" %}</h4>
-            <p class="text-muted mb-3">
-                {% trans "Could not find any registered pilgrim matching query" %} "<span class="font-monospace fw-bold">{{ query }}</span>".
+            <h4 class="fw-bold text-dark">{% trans "لم يتم العثور على سجل للحاج" %}</h4>
+            <p class="text-muted small mb-0">
+                {% trans "تحقق من صحة رمز QR أو رقم الحدود المدخل وحاول مجدداً." %}
             </p>
-            <div class="d-flex justify-content-center gap-2">
-                <a href="{% url 'groups:lost_pilgrim' %}" class="btn btn-light border">{% trans "Try Another Query" %}</a>
-            </div>
         </div>
         {% endif %}
     {% endif %}
 
-    <!-- Audit Log Section (PDPL Compliance) -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-header bg-white py-3 px-4 border-bottom d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold text-dark mb-0">
-                <i class="bi bi-clock-history text-secondary me-2"></i>{% trans "Recent Authorized Lookup Audit Trail" %}
-            </h6>
-            <small class="text-muted">{% trans "Auto-logged for PDPL Article 16 compliance" %}</small>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 small">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-4">{% trans "Timestamp" %}</th>
-                        <th>{% trans "Audited Operator" %}</th>
-                        <th>{% trans "Action Type" %}</th>
-                        <th>{% trans "Queried Target" %}</th>
-                        <th class="pe-4 text-end">{% trans "Origin IP" %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for audit in recent_audits %}
-                    <tr>
-                        <td class="ps-4 text-muted">{{ audit.timestamp|date:"Y-m-d H:i:s" }}</td>
-                        <td class="fw-semibold text-dark">{{ audit.user.username|default:"System Dispatcher" }}</td>
-                        <td>
-                            <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ audit.action }}</span>
-                        </td>
-                        <td class="text-dark">{{ audit.target }}</td>
-                        <td class="pe-4 text-end text-muted font-monospace">{{ audit.ip_address|default:"127.0.0.1" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-4 text-muted">
-                            {% trans "No lookups recorded yet in the audit log." %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 </div>
 {% endblock %}

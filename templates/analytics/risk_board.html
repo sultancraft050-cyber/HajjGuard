@@ -1,168 +1,141 @@
 {% extends "base.html" %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{% trans "Live Risk Board" %} | HajjGuard{% endblock %}
+{% block title %}{% trans "مصفوفة مخاطر التدفق والاختناق اللحظية" %} | HajjGuard{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-md-4">
-    <!-- Header with Live Telemetry -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+<div class="container py-4">
+
+    <!-- Header bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger fw-bold">
+                    <i class="bi bi-shield-exclamation"></i> {% trans "مؤشر المخاطر المركب (Risk Index)" %}
+                </span>
+            </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-bar-chart-steps text-danger me-2"></i>{% trans "Live Zone Risk Board" %}
+                <i class="bi bi-bar-chart-steps text-danger me-2"></i>{% trans "مصفوفة رصد مخاطر التدفق والاختناق بالمشاعر" %}
             </h2>
-            <p class="text-muted mb-0">
-                {% trans "Real-time risk scoring prioritizing crowd composition (elderly, wheelchair, chronic conditions) alongside physical density." %}
+            <p class="text-muted small mb-0">
+                {% trans "تصنيف استباقي لحظي للقطاعات يدمج الكثافة المادية مع التركيبة الديموغرافية (كبار السن، الكراسي المتحركة، الأمراض المزمنة) والإجهاد الحراري." %}
             </p>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <div class="bg-white border rounded-3 p-2 px-3 shadow-sm d-flex align-items-center gap-3">
+            <div class="dga-card p-2 px-3 d-flex align-items-center gap-3">
                 <div>
-                    <small class="text-muted d-block">{% trans "Holy Sites Weather" %}</small>
-                    <span class="fw-bold text-dark fs-6">{{ weather.temperature_c }}°C ({{ weather.weather_desc }})</span>
+                    <small class="text-muted d-block">{% trans "طقس المشاعر المقدسة" %}</small>
+                    <span class="fw-bold text-dark fs-6">{{ weather.temperature_c|default:34 }}°C ({{ weather.weather_desc }})</span>
                 </div>
                 <div class="border-start ps-3">
-                    <small class="text-muted d-block">{% trans "Heat Stress Index" %}</small>
-                    <span class="badge {% if heat_index >= 40 %}bg-danger{% elif heat_index >= 35 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6">
-                        {{ heat_index }}°C
+                    <small class="text-muted d-block">{% trans "مؤشر الإجهاد الحراري" %}</small>
+                    <span class="badge {% if heat_index >= 40 %}bg-danger{% elif heat_index >= 35 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6 rounded-pill px-2">
+                        {{ heat_index|default:36 }}°C
                     </span>
                 </div>
             </div>
-            <a href="{% url 'analytics:export_density_csv' %}" class="btn btn-outline-success shadow-sm">
-                <i class="bi bi-file-earmark-excel me-1"></i>{% trans "Export CSV" %}
+            <a href="{% url 'analytics:export_density_csv' %}" class="btn btn-dga-outline">
+                <i class="bi bi-file-earmark-excel text-success me-1"></i>{% trans "تصدير CSV" %}
             </a>
         </div>
     </div>
 
     <!-- Filter & Sort Bar -->
-    <div class="card border-0 shadow-sm rounded-3 mb-4">
-        <div class="card-body py-3">
-            <form method="GET" class="row g-2 align-items-center">
-                <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1">{% trans "Filter by Holy Site" %}</label>
-                    <select name="site" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="ALL" {% if site_filter == 'ALL' %}selected{% endif %}>{% trans "All Holy Sites" %}</option>
-                        <option value="HARAM" {% if site_filter == 'HARAM' %}selected{% endif %}>{% trans "Grand Mosque (Makkah)" %}</option>
-                        <option value="MINA" {% if site_filter == 'MINA' %}selected{% endif %}>{% trans "Mina Valley" %}</option>
-                        <option value="JAMARAT" {% if site_filter == 'JAMARAT' %}selected{% endif %}>{% trans "Jamarat Complex" %}</option>
-                        <option value="ARAFAT" {% if site_filter == 'ARAFAT' %}selected{% endif %}>{% trans "Mount Arafat" %}</option>
-                        <option value="MUZDALIFAH" {% if site_filter == 'MUZDALIFAH' %}selected{% endif %}>{% trans "Muzdalifah Plains" %}</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label small text-muted mb-1">{% trans "Sort Priority" %}</label>
-                    <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="risk" {% if sort_by == 'risk' %}selected{% endif %}>{% trans "Highest Risk Score (Default)" %}</option>
-                        <option value="predicted" {% if sort_by == 'predicted' %}selected{% endif %}>{% trans "Highest 20-Min Predicted Density" %}</option>
-                        <option value="vulnerable" {% if sort_by == 'vulnerable' %}selected{% endif %}>{% trans "Highest Vulnerable Pilgrim %" %}</option>
-                        <option value="capacity" {% if sort_by == 'capacity' %}selected{% endif %}>{% trans "Highest Capacity Utilization" %}</option>
-                        <option value="people" {% if sort_by == 'people' %}selected{% endif %}>{% trans "Total Headcount" %}</option>
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end justify-content-end gap-2 pt-3 pt-md-0">
-                    <a href="{% url 'analytics:risk_board' %}" class="btn btn-sm btn-light border">
-                        <i class="bi bi-arrow-clockwise me-1"></i>{% trans "Reset" %}
-                    </a>
-                    <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-sm btn-outline-dark">
-                        <i class="bi bi-speedometer2 me-1"></i>{% trans "Operations Map" %}
-                    </a>
-                </div>
-            </form>
-        </div>
+    <div class="dga-card p-3 mb-4">
+        <form method="GET" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1 fw-bold">{% trans "تصفية حسب المشعر المقدس:" %}</label>
+                <select name="site" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="ALL" {% if site_filter == 'ALL' %}selected{% endif %}>{% trans "كافة المشاعر المقدسة" %}</option>
+                    <option value="HARAM" {% if site_filter == 'HARAM' %}selected{% endif %}>{% trans "المسجد الحرام وصحن المطاف" %}</option>
+                    <option value="MINA" {% if site_filter == 'MINA' %}selected{% endif %}>{% trans "مشعر منى ومخيمات الإقامة" %}</option>
+                    <option value="JAMARAT" {% if site_filter == 'JAMARAT' %}selected{% endif %}>{% trans "منشأة جسر الجمرات" %}</option>
+                    <option value="ARAFAT" {% if site_filter == 'ARAFAT' %}selected{% endif %}>{% trans "مشعر عرفات وجبل الرحمة" %}</option>
+                    <option value="MUZDALIFAH" {% if site_filter == 'MUZDALIFAH' %}selected{% endif %}>{% trans "مشعر مزدلفة" %}</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small text-muted mb-1 fw-bold">{% trans "أولوية الترتيب:" %}</label>
+                <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="risk" {% if sort_by == 'risk' %}selected{% endif %}>{% trans "الأعلى في مؤشر المخاطر (الافتراضي)" %}</option>
+                    <option value="predicted" {% if sort_by == 'predicted' %}selected{% endif %}>{% trans "أعلى كثافة متوقعة (بعد 20 دقيقة)" %}</option>
+                    <option value="vulnerable" {% if sort_by == 'vulnerable' %}selected{% endif %}>{% trans "أعلى نسبة فئات رعاية خاصة" %}</option>
+                    <option value="capacity" {% if sort_by == 'capacity' %}selected{% endif %}>{% trans "أعلى نسبة استغلال للسعة" %}</option>
+                    <option value="people" {% if sort_by == 'people' %}selected{% endif %}>{% trans "إجمالي عدد الحجاج المتواجدين" %}</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end justify-content-end gap-2 pt-3 pt-md-0">
+                <a href="{% url 'analytics:risk_board' %}" class="btn btn-sm btn-dga-outline">
+                    <i class="bi bi-arrow-clockwise me-1"></i>{% trans "إعادة ضبط" %}
+                </a>
+                <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-sm btn-dga-primary">
+                    <i class="bi bi-speedometer2 me-1"></i>{% trans "لوحة القيادة التكتيكية" %}
+                </a>
+            </div>
+        </form>
     </div>
 
-    <!-- Main Table -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+    <!-- Main Risk Table Card -->
+    <div class="dga-card overflow-hidden mb-4">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light border-bottom">
-                    <tr class="text-uppercase small text-muted fw-bold">
-                        <th class="ps-4">{% trans "Zone & Site" %}</th>
-                        <th>{% trans "Current Headcount" %}</th>
-                        <th>{% trans "Capacity Ratio" %}</th>
-                        <th>{% trans "Density (p/m²)" %}</th>
-                        <th>{% trans "20-Min Forecast" %}</th>
-                        <th>{% trans "Vulnerable %" %}</th>
-                        <th>{% trans "Composite Risk" %}</th>
-                        <th>{% trans "Status" %}</th>
-                        <th class="pe-4 text-end">{% trans "Action" %}</th>
+                    <tr class="small text-muted fw-bold">
+                        <th class="ps-4">{% trans "القطاع والمشعر" %}</th>
+                        <th>{% trans "الكثافة اللحظية" %}</th>
+                        <th>{% trans "تنبؤ (20 دقيقة)" %}</th>
+                        <th>{% trans "نسبة إشغال السعة" %}</th>
+                        <th>{% trans "الحجاج ذوي الأولوية" %}</th>
+                        <th>{% trans "درجة المخاطر" %}</th>
+                        <th class="text-end pe-4">{% trans "الإجراء" %}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in ranked_zones %}
-                    <tr class="{% if item.risk_score >= 80 %}table-danger-subtle{% elif item.risk_score >= 60 %}table-warning-subtle{% endif %}">
-                        <td class="ps-4 py-3">
-                            <div class="d-flex align-items-center">
-                                <div class="badge bg-secondary-subtle text-secondary me-2 font-monospace">{{ item.zone.code }}</div>
-                                <div>
-                                    <div class="fw-bold text-dark">{{ item.zone.name_en }}</div>
-                                    <small class="text-muted">{{ item.zone.name_ar }} · <span class="badge bg-light text-dark border">{{ item.zone.get_site_type_display }}</span></small>
-                                </div>
-                            </div>
+                    {% for item in zones_data %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="fw-bold text-dark">{{ item.zone.name_ar|default:item.zone.name_en }}</div>
+                            <span class="badge bg-light text-muted border font-monospace small">{{ item.zone.code }}</span>
+                            <span class="text-muted small ms-1">({{ item.zone.get_site_type_display }})</span>
                         </td>
                         <td>
-                            <span class="fw-bold fs-6">{{ item.current_people|default:0 }}</span>
-                            <small class="text-muted d-block">/ {{ item.zone.safe_capacity }} {% trans "safe cap" %}</small>
+                            <strong class="text-dark">{{ item.density_sqm }}</strong> <small class="text-muted">حاج/م²</small>
+                            <small class="text-muted d-block">إجمالي: {{ item.current_people }}</small>
                         </td>
-                        <td style="width: 140px;">
-                            <div class="d-flex justify-content-between small mb-1">
+                        <td>
+                            <strong class="text-primary">{{ item.predicted_density_20m }}</strong> <small class="text-muted">حاج/م²</small>
+                        </td>
+                        <td style="min-width: 140px;">
+                            <div class="d-flex justify-content-between align-items-center mb-1 small">
                                 <span>{{ item.capacity_pct }}%</span>
+                                <span class="text-muted">{{ item.zone.safe_capacity }} max</span>
                             </div>
                             <div class="progress" style="height: 6px;">
-                                <div class="progress-bar {% if item.capacity_pct >= 90 %}bg-danger{% elif item.capacity_pct >= 75 %}bg-warning{% else %}bg-success{% endif %}"
-                                     role="progressbar" style="width: {{ item.capacity_pct }}%;"></div>
+                                <div class="progress-bar" style="width: {{ item.capacity_pct }}%; background-color: {{ item.color_code }};"></div>
                             </div>
                         </td>
                         <td>
-                            <span class="fw-semibold">{{ item.density_sqm }}</span> <small class="text-muted">p/m²</small>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-1">
-                                <span class="fw-bold">{{ item.predicted_density_20m }}</span>
-                                {% if item.predicted_density_20m > item.density_sqm %}
-                                    <i class="bi bi-arrow-up-right text-danger fw-bold" title="{% trans 'Rising density' %}"></i>
-                                {% elif item.predicted_density_20m < item.density_sqm %}
-                                    <i class="bi bi-arrow-down-right text-success fw-bold" title="{% trans 'Decreasing density' %}"></i>
-                                {% else %}
-                                    <i class="bi bi-arrow-right text-muted"></i>
-                                {% endif %}
-                            </div>
-                            <small class="text-muted">{% trans "predicted" %}</small>
+                            <span class="badge bg-secondary rounded-pill">{{ item.vulnerable_pct }}%</span>
+                            <small class="text-muted d-block">{{ item.vulnerable_count }} حاج</small>
                         </td>
                         <td>
                             <div class="d-flex align-items-center gap-2">
-                                <span class="badge {% if item.vulnerable_pct >= 25 %}bg-danger-subtle text-danger border border-danger{% else %}bg-light text-dark border{% endif %}">
-                                    <i class="bi bi-person-wheelchair me-1"></i>{{ item.vulnerable_pct }}%
+                                <span class="badge fs-6 rounded-pill px-3 py-1" style="background-color: {{ item.color_code }}; color: #fff;">
+                                    {{ item.computed_risk }}
                                 </span>
-                            </div>
-                            <small class="text-muted">{{ item.vulnerable_count }} {% trans "seniors/special" %}</small>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="fs-5 fw-bold" style="color: {{ item.status_color }};">
-                                    {{ item.risk_score }}
-                                </div>
-                                <div class="progress flex-grow-1" style="height: 8px; width: 60px;">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ item.risk_score }}%; background-color: {{ item.status_color }};"></div>
-                                </div>
+                                <small class="fw-bold" style="color: {{ item.color_code }};">{{ item.status_label }}</small>
                             </div>
                         </td>
-                        <td>
-                            <span class="badge rounded-pill px-3 py-1" style="background-color: {{ item.status_color }}; color: #fff;">
-                                {{ item.status_label }}
-                            </span>
-                        </td>
-                        <td class="pe-4 text-end">
-                            <a href="{% url 'zones:zone_detail' item.zone.code %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                {% trans "Inspect Breakdown" %} <i class="bi bi-chevron-right ms-1"></i>
+                        <td class="text-end pe-4">
+                            <a href="{% url 'zones:zone_detail' item.zone.code %}" class="btn btn-sm btn-dga-outline">
+                                <i class="bi bi-eye"></i> {% trans "تفاصيل" %}
                             </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="text-center py-5 text-muted">
-                            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
-                            {% trans "No zone telemetry available for current filter." %}
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            {% trans "لا توجد قطاعات مسجلة مطابقة لمعايير التصفية." %}
                         </td>
                     </tr>
                     {% endfor %}
@@ -171,26 +144,5 @@
         </div>
     </div>
 
-    <!-- Formulation Reference Banner (KSU Feature 2) -->
-    <div class="card border-0 bg-light rounded-4 p-4 shadow-sm">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h5 class="fw-bold text-dark mb-1">
-                    <i class="bi bi-calculator me-2 text-primary"></i>{% trans "KSU Capstone Formula Breakdown: Composite Risk Weighting" %}
-                </h5>
-                <p class="text-muted small mb-2">
-                    {% trans "As specified in KSU Capstone Section 3 (F2), HajjGuard risk calculation evaluates crowd vulnerability rather than raw count alone:" %}
-                </p>
-                <div class="p-2 bg-white border rounded font-monospace small">
-                    <strong>Risk</strong> = 0.50 &times; (Capacity Utilization %) + 0.30 &times; (Vulnerable Demographics %) + 0.20 &times; (Heat Stress Index Penalty)
-                </div>
-            </div>
-            <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                <a href="{% url 'analytics:routing_comparison' %}" class="btn btn-success shadow-sm">
-                    <i class="bi bi-award-fill me-1"></i>{% trans "View Defense Routing Benchmark" %}
-                </a>
-            </div>
-        </div>
-    </div>
 </div>
 {% endblock %}

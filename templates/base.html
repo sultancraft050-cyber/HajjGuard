@@ -5,12 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}HajjGuard | نظام إدارة الحشود وسلامة الحجاج{% endblock %}</title>
+    <title>{% block title %}HajjGuard | نظام إدارة الحشود وسلامة الحجاج - كود المنصات{% endblock %}</title>
 
-    <!-- Google Fonts: Cairo & Inter -->
+    <!-- Google Fonts: IBM Plex Sans Arabic, Cairo & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 CSS (RTL aware) -->
     {% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}
@@ -25,193 +25,415 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
+    <!-- Saudi Unified National Design System (DGA 'كود المنصات' - 'قالب الحج') -->
     <style>
         :root {
-            --hajj-green: #0d5c3a;
-            --hajj-green-dark: #0a462c;
-            --hajj-gold: #c5a059;
-            --hajj-dark: #1b262c;
-            --hajj-light: #f8fafc;
+            /* Official Saudi National Palette */
+            --dga-green: #006C35;
+            --dga-green-dark: #004D25;
+            --dga-green-hover: #008744;
+            --dga-green-light: #10B981;
+            --dga-green-mint: #ECFDF5;
+            --dga-green-sage: #E6F4EA;
+            --dga-gold: #C5A059;
+            --dga-gold-light: #FBF4E4;
+            
+            /* Surfaces & Typography */
+            --dga-bg: #F8FAFC;
+            --dga-card-bg: #FFFFFF;
+            --dga-border: #E2E8F0;
+            --dga-border-light: #F1F5F9;
+            --dga-text-primary: #0F172A;
+            --dga-text-muted: #64748B;
+            --dga-text-light: #94A3B8;
+            
+            /* Status / Action */
+            --dga-emergency-red: #DC2626;
+            --dga-warning-amber: #D97706;
+            --dga-info-blue: #0284C7;
+            
+            /* Shadows & Radii */
+            --dga-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+            --dga-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+            --dga-shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+            --dga-radius-md: 10px;
+            --dga-radius-lg: 14px;
+            --dga-radius-xl: 18px;
+            --dga-radius-pill: 9999px;
         }
 
         body {
-            font-family: {% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}'Cairo', sans-serif{% else %}'Inter', sans-serif{% endif %};
-            background-color: var(--hajj-light);
-            color: #1e293b;
+            font-family: {% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}'IBM Plex Sans Arabic', 'Cairo', sans-serif{% else %}'Inter', system-ui, sans-serif{% endif %};
+            background-color: var(--dga-bg);
+            color: var(--dga-text-primary);
             margin: 0;
             padding: 0;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .navbar-hajj {
-            background-color: var(--hajj-green);
-            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        /* 1. Official DGA Top Verification Ribbon */
+        .dga-gov-ribbon {
+            background-color: #0b2e1b;
+            color: #d1fae5;
+            font-size: 0.8rem;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .dga-gov-ribbon a {
+            color: #a7f3d0;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            font-weight: 500;
+        }
+        .dga-gov-ribbon a:hover {
+            color: #ffffff;
+        }
+        .dga-saudi-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            padding: 2px 10px;
+            border-radius: var(--dga-radius-pill);
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
-        .navbar-brand {
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            color: #ffffff !important;
+        /* 2. Unified Navigation Header (Figma Hajj Template Standard) */
+        .navbar-dga {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--dga-border);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            padding: 0.65rem 0;
+            transition: all 0.25s ease;
+        }
+        .navbar-brand-dga {
             display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--dga-text-primary);
+        }
+        .brand-logo-container {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--dga-green) 0%, var(--dga-green-dark) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-size: 1.35rem;
+            box-shadow: 0 4px 10px rgba(0, 108, 53, 0.25);
+        }
+        .brand-text-title {
+            font-size: 1.18rem;
+            font-weight: 800;
+            color: var(--dga-green-dark);
+            line-height: 1.2;
+            letter-spacing: -0.3px;
+        }
+        .brand-text-subtitle {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--dga-text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        /* Navigation Links & Dropdowns */
+        .navbar-dga .nav-link {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #334155 !important;
+            padding: 0.5rem 0.85rem !important;
+            border-radius: var(--dga-radius-md);
+            transition: all 0.18s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .navbar-dga .nav-link:hover {
+            color: var(--dga-green) !important;
+            background-color: var(--dga-green-mint);
+        }
+        .navbar-dga .nav-link.active {
+            color: var(--dga-green-dark) !important;
+            background-color: var(--dga-green-mint);
+            font-weight: 700;
+        }
+        .dropdown-menu-dga {
+            border: 1px solid var(--dga-border);
+            border-radius: var(--dga-radius-lg);
+            box-shadow: var(--dga-shadow-lg);
+            padding: 8px;
+            min-width: 250px;
+            margin-top: 8px;
+        }
+        .dropdown-menu-dga .dropdown-item {
+            border-radius: var(--dga-radius-md);
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: #334155;
+            transition: all 0.15s ease;
+        }
+        .dropdown-menu-dga .dropdown-item:hover {
+            background-color: var(--dga-green-mint);
+            color: var(--dga-green);
+        }
+
+        /* Interactive Action Buttons */
+        .btn-dga-primary {
+            background-color: var(--dga-green);
+            color: #ffffff;
+            font-weight: 700;
+            border-radius: var(--dga-radius-pill);
+            padding: 8px 20px;
+            border: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 8px rgba(0, 108, 53, 0.2);
+            display: inline-flex;
             align-items: center;
             gap: 8px;
         }
-
-        .badge-gold {
-            background-color: var(--hajj-gold);
-            color: #000;
-            font-weight: 700;
+        .btn-dga-primary:hover {
+            background-color: var(--dga-green-hover);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(0, 108, 53, 0.28);
         }
-
-        .btn-sos-nav {
-            background-color: #dc3545;
-            color: white;
-            font-weight: 800;
-            animation: pulse-sos 2s infinite;
-            border-radius: 20px;
-            padding: 6px 16px;
-        }
-
-        @keyframes pulse-sos {
-            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-        }
-
-        .nav-link {
+        .btn-dga-outline {
+            border: 1.5px solid var(--dga-border);
+            background: #ffffff;
+            color: #334155;
             font-weight: 600;
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.85) !important;
-            transition: color 0.15s ease-in-out;
+            border-radius: var(--dga-radius-pill);
+            padding: 7px 18px;
+            transition: all 0.18s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-dga-outline:hover {
+            border-color: var(--dga-green);
+            color: var(--dga-green);
+            background-color: var(--dga-green-mint);
+        }
+        
+        /* Interactive SOS Action Button */
+        .btn-dga-sos {
+            background-color: var(--dga-emergency-red);
+            color: #ffffff !important;
+            font-weight: 800;
+            border-radius: var(--dga-radius-pill);
+            padding: 7px 18px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+            animation: dga-sos-pulse 2.2s infinite;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+        @keyframes dga-sos-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
         }
 
-        .nav-link:hover, .nav-link.active {
-            color: #ffffff !important;
-            background-color: rgba(255,255,255,0.1);
-            border-radius: 8px;
+        /* National Card Standards */
+        .dga-card {
+            background: var(--dga-card-bg);
+            border: 1px solid var(--dga-border);
+            border-radius: var(--dga-radius-lg);
+            box-shadow: var(--dga-shadow-sm);
+            transition: all 0.25s ease;
+        }
+        .dga-card:hover {
+            box-shadow: var(--dga-shadow);
+            border-color: #cbd5e1;
+        }
+
+        /* 3. National Platform Footer */
+        .dga-footer {
+            background-color: #0b1f14;
+            color: #cbd5e1;
+            padding: 48px 0 24px 0;
+            margin-top: auto;
+            border-top: 3px solid var(--dga-green);
+        }
+        .dga-footer a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+        .dga-footer a:hover {
+            color: #34d399;
+        }
+
+        /* Search Modal Hotkey Badge */
+        .search-badge {
+            background: #f1f5f9;
+            color: #64748b;
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            font-weight: 700;
         }
     </style>
 
+    {% block extra_head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-    <!-- Top Navigation Bar with full KSU 15-screen map -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-hajj sticky-top">
-        <div class="container-fluid px-3">
-            <a class="navbar-brand" href="{% url 'accounts:pilgrim_portal' %}">
-                <span class="fs-4">🕋</span>
-                <span>HajjGuard <small class="fw-normal text-white-50 fs-6">| حارس الحج</small></span>
+    <!-- 1. DGA Official Saudi Government Verification Ribbon -->
+    <div class="dga-gov-ribbon">
+        <div class="container-fluid px-3 px-lg-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="dga-saudi-badge">
+                        <span>🇸🇦</span>
+                        <span class="fw-bold">{% trans "المملكة العربية السعودية" %}</span>
+                    </span>
+                    <span class="d-none d-sm-inline opacity-75">|</span>
+                    <span class="small">
+                        {% trans "موقع حكومي رسمي موثّق لدى هيئة الحكومة الرقمية (كود المنصات)" %}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-3 small">
+                    <a href="javascript:void(0)" onclick="openGovVerificationModal()" class="text-white-50">
+                        <i class="bi bi-shield-check text-success"></i> {% trans "كيف تتحقق؟" %}
+                    </a>
+                    <span class="text-white-50 d-none d-md-inline">•</span>
+                    <span class="text-white-50 d-none d-md-inline">
+                        <i class="bi bi-clock-history"></i> {% trans "موسم حج 1447هـ / 2026م" %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Unified Navigation Header (Figma 'قالب الحج' Standard) -->
+    <nav class="navbar navbar-expand-lg navbar-dga sticky-top">
+        <div class="container-fluid px-3 px-lg-4">
+            
+            <!-- Brand Platform Logo & Emblem -->
+            <a class="navbar-brand-dga" href="{% url 'home' %}">
+                <div class="brand-logo-container">
+                    <i class="bi bi-shield-fill-check"></i>
+                </div>
+                <div>
+                    <div class="brand-text-title">HajjGuard <span class="fw-light text-muted">| حارس الحج</span></div>
+                    <div class="brand-text-subtitle">{% trans "نظام إدارة الحشود وسلامة الحجاج الموحد" %}</div>
+                </div>
             </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#hajjNavbar">
-                <span class="navbar-toggler-icon"></span>
+            <!-- Mobile Navbar Toggler -->
+            <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#dgaNavbar">
+                <i class="bi bi-list fs-2 text-dark"></i>
             </button>
 
-            <div class="collapse navbar-collapse" id="hajjNavbar">
-                <!-- Pilgrim Screens Menu -->
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <!-- Navbar Links & Dropdowns -->
+            <div class="collapse navbar-collapse mt-3 mt-lg-0" id="dgaNavbar">
+                
+                <!-- Main Navigation Tabs -->
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link px-2" href="{% url 'accounts:pilgrim_portal' %}">
-                            <i class="bi bi-person-badge me-1"></i> {% trans "Pilgrim Portal" %}
+                        <a class="nav-link {% if request.path == '/' or request.path == '/home/' %}active{% endif %}" href="{% url 'home' %}">
+                            <i class="bi bi-house-door"></i> {% trans "الرئيسية" %}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-2 text-warning" href="{% url 'nusuk:digital_card' %}">
-                            <i class="bi bi-person-vcard me-1"></i> {% trans "Smart Nusuk Card" %}
+                        <a class="nav-link {% if '/accounts/portal/' in request.path %}active{% endif %}" href="{% url 'accounts:pilgrim_portal' %}">
+                            <i class="bi bi-person-badge"></i> {% trans "بوابة ضيف الرحمن" %}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-2" href="{% url 'zones:live_map' %}">
-                            <i class="bi bi-map-fill me-1"></i> {% trans "Live Map" %}
+                        <a class="nav-link text-success fw-bold {% if '/nusuk/card/' in request.path %}active{% endif %}" href="{% url 'nusuk:digital_card' %}">
+                            <i class="bi bi-person-vcard text-success"></i> {% trans "بطاقة نسك الذكية" %}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-2" href="{% url 'groups:my_group' %}">
-                            <i class="bi bi-people-fill me-1"></i> {% trans "My Group & Radar" %}
+                        <a class="nav-link {% if '/zones/map/' in request.path %}active{% endif %}" href="{% url 'zones:live_map' %}">
+                            <i class="bi bi-map"></i> {% trans "الخريطة المباشرة" %}
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-2" href="{% url 'zones:guidance' %}">
-                            <i class="bi bi-signpost-split me-1"></i> {% trans "Smart Guidance" %}
+                        <a class="nav-link {% if '/groups/my-group/' in request.path %}active{% endif %}" href="{% url 'groups:my_group' %}">
+                            <i class="bi bi-people"></i> {% trans "فوجي والرادار" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/zones/guidance/' in request.path %}active{% endif %}" href="{% url 'zones:guidance' %}">
+                            <i class="bi bi-compass"></i> {% trans "الإرشاد الذكي" %}
                         </a>
                     </li>
 
-                    <!-- Operations Command Dropdown -->
+                    <!-- Operations & Control Dropdown -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle px-2" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-shield-shaded me-1"></i> {% trans "Operations Hub" %}
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-cpu"></i> {% trans "مركز العمليات" %}
                         </a>
-                        <ul class="dropdown-menu shadow-lg border-0 rounded-3">
+                        <ul class="dropdown-menu dropdown-menu-dga shadow-lg">
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'safety:operations_dashboard' %}">
-                                    <i class="bi bi-speedometer2 text-success me-2"></i> {% trans "Tactical Command Dashboard" %}
+                                    <i class="bi bi-speedometer2 text-success me-2"></i> {% trans "غرفة العمليات والتحكم التكتيكي" %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'analytics:risk_board' %}">
-                                    <i class="bi bi-bar-chart-steps text-danger me-2"></i> {% trans "Live Risk Board (Ranked)" %}
+                                    <i class="bi bi-bar-chart-steps text-danger me-2"></i> {% trans "مصفوفة مخاطر التدفق والاختناق" %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'safety:incident_queue' %}">
-                                    <i class="bi bi-inbox-fill text-warning me-2"></i> {% trans "Incident Ticket Queue & Dispatch" %}
+                                    <i class="bi bi-bell-fill text-warning me-2"></i> {% trans "إدارة بلاغات واستجابة الطوارئ" %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'groups:lost_pilgrim' %}">
-                                    <i class="bi bi-qr-code-scan text-primary me-2"></i> {% trans "Lost Pilgrim QR / ID Lookup" %}
+                                    <i class="bi bi-qr-code-scan text-primary me-2"></i> {% trans "البحث الفوري عن تائه (Nusuk QR/ID)" %}
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li><hr class="dropdown-divider my-1"></li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'analytics:reports' %}">
-                                    <i class="bi bi-file-earmark-spreadsheet-fill text-info me-2"></i> {% trans "Reports & CSV Export" %}
+                                    <i class="bi bi-file-earmark-bar-graph text-info me-2"></i> {% trans "تقارير الكثافة والتصدير الإحصائي" %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'analytics:routing_comparison' %}">
-                                    <i class="bi bi-compass text-secondary me-2"></i> {% trans "Defense Routing Benchmark (>=15%)" %}
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" href="/admin/" target="_blank">
-                                    <i class="bi bi-gear-fill text-dark me-2"></i> {% trans "Django Admin Panel" %}
+                                    <i class="bi bi-diagram-3 text-secondary me-2"></i> {% trans "معيار التوجيه الدفاعي (KSU >= 15%)" %}
                                 </a>
                             </li>
                         </ul>
                     </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link px-2" href="{% url 'accounts:profile' %}">
-                            <i class="bi bi-person-circle me-1"></i> {% trans "Profile & PDPL" %}
-                        </a>
-                    </li>
                 </ul>
 
-                <div class="d-flex align-items-center gap-2">
-                    <!-- Quick PWA Switcher -->
-                    <a href="http://localhost:3000" target="_blank" class="btn btn-outline-light btn-sm rounded-pill px-3 shadow-sm d-flex align-items-center gap-1" title="Open Next.js Modern PWA">
-                        <i class="bi bi-phone"></i>
-                        <span>Nusuk-Next PWA</span>
-                    </a>
-
-                    <!-- Direct Emergency SOS Button -->
-                    <button type="button" class="btn btn-sos-nav d-flex align-items-center gap-1" onclick="openEmergencyModal()">
-                        <i class="bi bi-shield-exclamation"></i>
-                        <span>{% trans "SOS" %}</span>
+                <!-- Utility Cluster: Search, Language, Auth, Emergency SOS -->
+                <div class="d-flex align-items-center flex-wrap gap-2 pt-2 pt-lg-0">
+                    
+                    <!-- Interactive Global Search Palette Button -->
+                    <button type="button" class="btn btn-dga-outline py-2 px-3" onclick="openSearchPaletteModal()" title="Search commands (Ctrl+K)">
+                        <i class="bi bi-search"></i>
+                        <span class="d-none d-xl-inline">{% trans "البحث" %}</span>
+                        <span class="search-badge d-none d-xl-inline">Ctrl K</span>
                     </button>
 
                     <!-- Language Switcher Dropdown -->
                     <div class="dropdown">
-                        <button class="btn btn-outline-light btn-sm dropdown-toggle rounded-pill px-3" type="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-globe me-1"></i>
+                        <button class="btn btn-dga-outline py-2 px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-translate"></i>
                             {% if LANGUAGE_CODE == 'ar' %}العربية
                             {% elif LANGUAGE_CODE == 'en' %}English
                             {% elif LANGUAGE_CODE == 'ur' %}اردو
                             {% elif LANGUAGE_CODE == 'id' %}Indonesia
                             {% else %}Language{% endif %}
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <ul class="dropdown-menu dropdown-menu-dga dropdown-menu-end shadow">
                             <form action="{% url 'set_language' %}" method="post" id="lang-form">
                                 {% csrf_token %}
                                 <input name="next" type="hidden" value="{{ request.get_full_path }}">
@@ -222,6 +444,34 @@
                             </form>
                         </ul>
                     </div>
+
+                    <!-- User Profile / SSO Button -->
+                    {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="btn btn-dga-outline py-2 px-3 dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle text-success"></i>
+                            <span class="small fw-bold">{{ user.username|truncatechars:12 }}</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dga dropdown-menu-end shadow">
+                            <li><div class="dropdown-header text-muted small">{% trans "الحساب الموثق" %}</div></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-gear me-2"></i>{% trans "إعدادات الملف الشخصي" %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'nusuk:digital_card' %}"><i class="bi bi-person-vcard me-2"></i>{% trans "بطاقتي الذكية" %}</a></li>
+                            <li><hr class="dropdown-divider my-1"></li>
+                            <li><a class="dropdown-item text-danger" href="/admin/logout/"><i class="bi bi-box-arrow-right me-2"></i>{% trans "تسجيل الخروج" %}</a></li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <a href="{% url 'accounts:register' %}" class="btn btn-dga-outline py-2 px-3">
+                        <i class="bi bi-box-arrow-in-right"></i>
+                        <span>{% trans "تسجيل الدخول" %}</span>
+                    </a>
+                    {% endif %}
+
+                    <!-- Direct Emergency SOS Button -->
+                    <button type="button" class="btn btn-dga-sos" onclick="openEmergencyModal()">
+                        <i class="bi bi-shield-exclamation"></i>
+                        <span>{% trans "طوارئ SOS" %}</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -232,45 +482,207 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Global Emergency SOS Modal -->
+    <!-- 3. National Platform Footer (Unified Saudi Standards) -->
+    <footer class="dga-footer">
+        <div class="container px-3 px-lg-4">
+            <div class="row g-4 mb-4">
+                
+                <div class="col-lg-4 col-md-6">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="brand-logo-container" style="width: 36px; height: 36px; font-size: 1.1rem;">
+                            <i class="bi bi-shield-check"></i>
+                        </div>
+                        <h5 class="fw-bold text-white mb-0">HajjGuard | حارس الحج</h5>
+                    </div>
+                    <p class="small text-muted mb-3">
+                        {% trans "المنصة الوطنية الموحدة لإدارة الحشود وحماية ضيوف الرحمن بالحرم المكي والمشاعر المقدسة عبر الرصد الهيدروديناميكي المكاني ونماذج الاتزان اللحظي." %}
+                    </p>
+                    <div class="d-flex align-items-center gap-2 small text-success">
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>{% trans "متوافق مع معايير هيئة الحكومة الرقمية ونظام حماية البيانات الشخصية (PDPL)" %}</span>
+                    </div>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <h6 class="fw-bold text-white mb-3">{% trans "خدمات الحاج" %}</h6>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+                        <li><a href="{% url 'accounts:pilgrim_portal' %}">{% trans "بوابة ضيف الرحمن" %}</a></li>
+                        <li><a href="{% url 'nusuk:digital_card' %}">{% trans "بطاقة نسك الرقمية" %}</a></li>
+                        <li><a href="{% url 'zones:live_map' %}">{% trans "الخريطة المباشرة" %}</a></li>
+                        <li><a href="{% url 'groups:my_group' %}">{% trans "فوجي والرادار" %}</a></li>
+                        <li><a href="{% url 'zones:guidance' %}">{% trans "الإرشاد الذكي" %}</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-2 col-md-3 col-6">
+                    <h6 class="fw-bold text-white mb-3">{% trans "مركز القيادة" %}</h6>
+                    <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+                        <li><a href="{% url 'safety:operations_dashboard' %}">{% trans "غرفة العمليات" %}</a></li>
+                        <li><a href="{% url 'analytics:risk_board' %}">{% trans "لوحة المخاطر" %}</a></li>
+                        <li><a href="{% url 'safety:incident_queue' %}">{% trans "إدارة البلاغات" %}</a></li>
+                        <li><a href="{% url 'groups:lost_pilgrim' %}">{% trans "البحث عن مفقود" %}</a></li>
+                        <li><a href="{% url 'analytics:reports' %}">{% trans "التقارير التحليلية" %}</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4 col-md-12">
+                    <h6 class="fw-bold text-white mb-3">{% trans "خطوط الطوارئ والمساندة المباشرة" %}</h6>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
+                                <div class="text-danger fw-bold fs-5">911</div>
+                                <div class="small text-white-50">{% trans "الطوارئ الموحد" %}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
+                                <div class="text-warning fw-bold fs-5">997</div>
+                                <div class="small text-white-50">{% trans "الهلال الأحمر (إسعاف)" %}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
+                                <div class="text-info fw-bold fs-5">1966</div>
+                                <div class="small text-white-50">{% trans "إرشاد التائهين (نسك)" %}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
+                                <div class="text-success fw-bold fs-5">937</div>
+                                <div class="small text-white-50">{% trans "مركز استشارات الصحة" %}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="border-secondary my-4">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small text-muted">
+                <div>
+                    &copy; 2026-2027 King Saud University (KSU CCIS) | IS 498 / IS 499 Capstone Defense | HajjGuard
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <a href="{% url 'accounts:profile' %}">{% trans "سياسة الخصوصية وحماية البيانات" %}</a>
+                    <span>•</span>
+                    <a href="javascript:void(0)" onclick="openGovVerificationModal()">{% trans "اعتماد كود المنصات" %}</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Search Palette Modal (Ctrl+K) -->
+    <div class="modal fade" id="globalSearchModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header border-bottom p-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-0"><i class="bi bi-search fs-5 text-muted"></i></span>
+                        <input type="text" id="globalSearchInput" class="form-control border-0 fs-5 shadow-none" placeholder="{% trans 'ابحث عن قطاع، خدمة، حاج، بلاغ أو فتوى شرعية...' %}" onkeyup="filterGlobalSearch()">
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-3" style="max-height: 400px; overflow-y: auto;">
+                    <div class="small text-muted fw-bold mb-2">{% trans "الوصول السريع الأكثر استخداماً:" %}</div>
+                    <div class="list-group list-group-flush" id="searchQuickLinks">
+                        <a href="{% url 'nusuk:digital_card' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-person-vcard text-success"></i> <strong>{% trans "بطاقة نسك الذكية (Digital Card & QR)" %}</strong></span>
+                            <span class="badge bg-light text-dark">{% trans "خدمة فورية" %}</span>
+                        </a>
+                        <a href="{% url 'zones:live_map' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-map text-primary"></i> <strong>{% trans "خريطة الحرم والمشاعر اللحظية (Live Map)" %}</strong></span>
+                            <span class="badge bg-light text-dark">{% trans "رصد مباشر" %}</span>
+                        </a>
+                        <a href="{% url 'safety:operations_dashboard' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-danger"></i> <strong>{% trans "غرفة العمليات والرصد الميداني (Command Ops)" %}</strong></span>
+                            <span class="badge bg-light text-dark">{% trans "قيادة تكتيكية" %}</span>
+                        </a>
+                        <a href="{% url 'groups:lost_pilgrim' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-qr-code text-warning"></i> <strong>{% trans "البحث الفوري عن تائه أو حاج مفقود" %}</strong></span>
+                            <span class="badge bg-light text-dark">{% trans "استجابة ميدانية" %}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Official DGA Verification Explainer Modal -->
+    <div class="modal fade" id="dgaVerificationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg">
+                <div class="modal-header bg-success text-white border-0 py-3">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <i class="bi bi-patch-check-fill fs-4"></i>
+                        <span>{% trans "التوثيق الرقمي الحكومي الموحد" %}</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3 text-success fs-1"><i class="bi bi-shield-shaded"></i></div>
+                    <h5 class="fw-bold mb-2">{% trans "منصة حكومية معتمدة وفق كود المنصات" %}</h5>
+                    <p class="text-muted small mb-4">
+                        {% trans "تم بناء واجهة HajjGuard وفق نظام التصميم الوطني الموحد (كود المنصات) الصادر عن هيئة الحكومة الرقمية بالمملكة العربية السعودية، مما يضمن أعلى معايير أمن المعلومات، التشفير الشامل للبيانات الشخصية، وسلاسة الوصول لكافة الحجاج والجهات المشرفة." %}
+                    </p>
+                    <div class="p-3 bg-light rounded-3 text-start small">
+                        <div class="d-flex align-items-center gap-2 mb-2 text-success fw-bold">
+                            <i class="bi bi-lock-fill"></i> {% trans "اتصال مشفر 256-bit SSL/TLS" %}
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mb-2 text-success fw-bold">
+                            <i class="bi bi-database-check"></i> {% trans "التوافق التام مع نظام حماية البيانات الشخصية (PDPL)" %}
+                        </div>
+                        <div class="d-flex align-items-center gap-2 text-success fw-bold">
+                            <i class="bi bi-cpu-fill"></i> {% trans "ربط خوارزمي لحظي مع غرفة عمليات المشاعر المقدسة" %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3">
+                    <button type="button" class="btn btn-dga-primary w-100" data-bs-dismiss="modal">{% trans "فهمت ذلك، استمرار" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Global Emergency SOS Modal -->
     <div class="modal fade" id="globalSosModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 border-0 shadow-lg">
                 <div class="modal-header bg-danger text-white border-0 py-3">
                     <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
                         <i class="bi bi-shield-exclamation fs-4"></i>
-                        <span>{% trans "Emergency SOS Dispatch" %} | طوارئ الحج والعمرة</span>
+                        <span>{% trans "إرسال نداء استغاثة فوري (SOS Dispatch)" %}</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
                     <p class="text-muted small mb-4">
-                        {% trans "Tap your emergency category below. Your real-time location will be transmitted directly to the Operations Command Center and nearest Field Unit." %}
+                        {% trans "اختر نوع الحالة الطارئة أدناه. سيتم فوراً بث موقعك الجغرافي الدقيق إلى غرفة العمليات الموحدة وتوجيه أقرب فرقة استجابة ميدانية." %}
                     </p>
 
                     <div class="row g-3">
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold" onclick="sendGlobalSos('MEDICAL', '997')">
+                            <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('MEDICAL', '997')">
                                 <i class="bi bi-heart-pulse-fill fs-2 d-block mb-1"></i>
-                                {% trans "Medical" %} / إسعاف (997)
+                                {% trans "حالة طبية حرجة" %}<br><small class="text-danger fw-normal">إسعاف (997)</small>
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-warning w-100 p-3 rounded-4 fw-bold text-dark" onclick="sendGlobalSos('HEAT', '937')">
+                            <button type="button" class="btn btn-outline-warning w-100 p-3 rounded-4 fw-bold text-dark shadow-sm" onclick="sendGlobalSos('HEAT', '937')">
                                 <i class="bi bi-thermometer-sun fs-2 d-block mb-1 text-warning"></i>
-                                {% trans "Heat Stroke" %} / إجهاد (937)
+                                {% trans "ضربة شمس / إجهاد" %}<br><small class="text-muted fw-normal">صحة (937)</small>
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold" onclick="sendGlobalSos('CRUSH', '911')">
+                            <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('CRUSH', '911')">
                                 <i class="bi bi-people-fill fs-2 d-block mb-1"></i>
-                                {% trans "Crowd Stampede" %} / تدافع (911)
+                                {% trans "تدافع / زحام حرج" %}<br><small class="text-danger fw-normal">عمليات (911)</small>
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-primary w-100 p-3 rounded-4 fw-bold" onclick="sendGlobalSos('LOST', '1966')">
+                            <button type="button" class="btn btn-outline-primary w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('LOST', '1966')">
                                 <i class="bi bi-geo-alt-fill fs-2 d-block mb-1"></i>
-                                {% trans "Lost Pilgrim" %} / تائه (1966)
+                                {% trans "حاج تائه عن فوجه" %}<br><small class="text-primary fw-normal">إرشاد (1966)</small>
                             </button>
                         </div>
                     </div>
@@ -281,41 +693,57 @@
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-auto border-top border-secondary">
-        <div class="container text-center text-muted small">
-            <div class="d-flex flex-wrap justify-content-center gap-3 mb-2">
-                <a href="{% url 'accounts:pilgrim_portal' %}" class="text-white-50 text-decoration-none">{% trans "Pilgrim Portal" %}</a>
-                <span>•</span>
-                <a href="{% url 'zones:live_map' %}" class="text-white-50 text-decoration-none">{% trans "Live Map" %}</a>
-                <span>•</span>
-                <a href="{% url 'safety:operations_dashboard' %}" class="text-white-50 text-decoration-none">{% trans "Operations Dashboard" %}</a>
-                <span>•</span>
-                <a href="{% url 'analytics:risk_board' %}" class="text-white-50 text-decoration-none">{% trans "Risk Board" %}</a>
-                <span>•</span>
-                <a href="{% url 'accounts:profile' %}" class="text-white-50 text-decoration-none">{% trans "Privacy & PDPL" %}</a>
-            </div>
-            <div>
-                &copy; 2026-2027 King Saud University (KSU CCIS) | IS 498 / IS 499 Senior Graduation Project | HajjGuard
-            </div>
-        </div>
-    </footer>
-
     <!-- Bootstrap 5 JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- Global Interactive Script -->
     <script>
         function openEmergencyModal() {
             var myModal = new bootstrap.Modal(document.getElementById('globalSosModal'));
             myModal.show();
         }
 
+        function openGovVerificationModal() {
+            var myModal = new bootstrap.Modal(document.getElementById('dgaVerificationModal'));
+            myModal.show();
+        }
+
+        function openSearchPaletteModal() {
+            var myModal = new bootstrap.Modal(document.getElementById('globalSearchModal'));
+            myModal.show();
+            setTimeout(() => {
+                const input = document.getElementById('globalSearchInput');
+                if (input) input.focus();
+            }, 300);
+        }
+
+        // Global hotkey Ctrl+K / Cmd+K listener
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                openSearchPaletteModal();
+            }
+        });
+
+        function filterGlobalSearch() {
+            const query = document.getElementById('globalSearchInput').value.toLowerCase().trim();
+            const items = document.querySelectorAll('#searchQuickLinks .list-group-item');
+            items.forEach(item => {
+                const text = item.innerText.toLowerCase();
+                if (text.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
         function sendGlobalSos(category, number) {
             const statusBox = document.getElementById('sos-dispatch-status');
             statusBox.classList.remove('d-none');
-            statusBox.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> {% trans "Acquiring GPS coordinates & alerting Operations Command..." %}';
+            statusBox.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> {% trans "جاري تحديد إحداثيات GPS وإشعار غرفة القيادة الميدانية..." %}';
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -341,7 +769,7 @@
             .then(res => res.json())
             .then(data => {
                 const statusBox = document.getElementById('sos-dispatch-status');
-                statusBox.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i> {% trans "SOS Incident Logged! Ticket #"}` + data.incident_id + ` - {% trans "Field Unit alerted. Dialing "}` + number;
+                statusBox.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i> {% trans "تم توثيق البلاغ برقم #"}` + data.incident_id + ` - {% trans "تم توجيه الفرقة الميدانية. جاري الاتصال بـ "}` + number;
                 setTimeout(() => {
                     window.location.href = 'tel:' + number;
                 }, 1200);

@@ -17,6 +17,18 @@ class GroupDriftService:
     SILENCE_THRESHOLD_SECONDS = 600.0  # 10 minutes
 
     @classmethod
+    def compute_group_metrics(cls, group_or_id):
+        data = cls.calculate_group_drift(group_or_id)
+        centroid = data.get('centroid') or {}
+        return {
+            'centroid_lat': centroid.get('lat'),
+            'centroid_lng': centroid.get('lng'),
+            'dispersion_radius_meters': data.get('cohesion_entropy', 0.0),
+            'drift_alert': data.get('has_alerts', False),
+            'raw_data': data
+        }
+
+    @classmethod
     def calculate_group_drift(cls, group_or_id):
         if isinstance(group_or_id, (int, str)):
             group = PilgrimGroup.objects.get(id=group_or_id)

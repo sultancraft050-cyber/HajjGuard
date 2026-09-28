@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-09-28T17:16:27.073533+00:00",
+  "generated_at": "2026-09-28T19:10:21.703780+00:00",
   "overall_passed": true,
   "metrics": [
     {
       "num": 1,
       "name": "Ingestion Latency (Telemetry)",
       "target": "< 200 ms",
-      "measured": "0.2 ms",
+      "measured": "0.18 ms",
       "passed": true
     },
     {
@@ -34,7 +34,7 @@
       "num": 5,
       "name": "Rerouting Decision Time (Dual Pass)",
       "target": "< 500 ms",
-      "measured": "3.32 ms",
+      "measured": "4.5 ms",
       "passed": true
     },
     {
@@ -62,7 +62,7 @@
       "num": 9,
       "name": "Lost Pilgrim QR / ID Lookup Time",
       "target": "< 1.0 s (1000 ms)",
-      "measured": "0.55 ms",
+      "measured": "0.54 ms",
       "passed": true
     },
     {
