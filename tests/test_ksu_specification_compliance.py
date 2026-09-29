@@ -27,6 +27,9 @@ class KsuSpecificationComplianceTests(TestCase):
             qr_code_payload='HAJJGUARD:PRM-2026-9921',
             consent_given=True
         )
+        self.client.force_login(self.user)
+        self.profile.role = 'operator'
+        self.profile.save(update_fields=['role'])
 
         self.zone1 = Zone.objects.create(
             code='Z-JAMARAT-F0',

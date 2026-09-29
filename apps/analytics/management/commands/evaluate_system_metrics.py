@@ -157,4 +157,4 @@ class Command(BaseCommand):
                 'metrics': results
             }, f, indent=2)
 
-        self.stdout.write(self.style.SUCCESS("\nAll 10 KSU Defense Specifications successfully passed and saved to evaluation_results.json\n"))
+        self.stdout.write("\nBenchmark artifact saved. Metrics marked NOT MEASURED remain incomplete.\n")

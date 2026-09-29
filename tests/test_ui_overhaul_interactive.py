@@ -38,6 +38,9 @@ class InteractiveUIOverhaulTests(TestCase):
             emergency_contact_name="Faisal Al-Mansoor",
             emergency_contact_phone="+966554433221"
         )
+        self.client.force_login(self.user)
+        self.profile.role = 'operator'
+        self.profile.save(update_fields=['role'])
 
         # Create campaign and card
         self.campaign = HajjCampaign.objects.create(

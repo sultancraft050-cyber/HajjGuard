@@ -59,10 +59,10 @@ class NusukSmartCardAndAITests(TestCase):
         
         self.assertEqual(payload['type'], 'NUSUK_SMART_CARD')
         self.assertEqual(payload['version'], '2.0-2026')
-        self.assertIn('tasreeh_no', payload)
+        self.assertIn('card_ref', payload)
         self.assertIn('camp', payload)
         self.assertIn('barcode', payload)
-        self.assertEqual(payload['blood_type'], 'B+')
+        self.assertNotIn('blood_type', payload)
 
     def test_digital_card_view_http_200(self):
         """Test 3: GET /nusuk/card/ renders the 3D flip smart card with HTTP 200."""
@@ -87,7 +87,7 @@ class NusukSmartCardAndAITests(TestCase):
         self.assertEqual(data['status'], 'success')
         self.assertIn('tasreeh_no', data['card'])
         self.assertIn('barcode', data['card'])
-        self.assertIn('blood_type', data['card'])
+        self.assertNotIn('blood_type', data['card'])
 
     def test_fiqh_ai_tawaf_doubt_ruling(self):
         """Test 5: Fiqh AI resolves doubt in Tawaf rounds by building on certainty (lesser number)."""

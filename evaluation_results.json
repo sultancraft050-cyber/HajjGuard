@@ -1,7 +1,76 @@
 {
-  "status": "not_generated",
-  "generated_at": null,
+  "generated_at": "2026-09-29T16:42:04.243501+00:00",
   "overall_passed": false,
-  "metrics": [],
-  "message": "Run manage.py evaluate_system_metrics with a prepared dataset. No benchmark result is asserted by the repository."
+  "metrics": [
+    {
+      "num": 1,
+      "name": "Ingestion Latency (Telemetry)",
+      "target": "< 200 ms",
+      "measured": "NOT MEASURED",
+      "passed": false
+    },
+    {
+      "num": 2,
+      "name": "Map Full State Refresh Rate",
+      "target": "< 3.0 s",
+      "measured": "0.001 s",
+      "passed": true
+    },
+    {
+      "num": 3,
+      "name": "Predictive Forecaster Horizon",
+      "target": "20 min",
+      "measured": "20 min",
+      "passed": true
+    },
+    {
+      "num": 4,
+      "name": "Forecast Accuracy (MAE vs Actual)",
+      "target": "MAE < 0.30 p/m\u00b2",
+      "measured": "NOT MEASURED: labeled future data required",
+      "passed": false
+    },
+    {
+      "num": 5,
+      "name": "Rerouting Decision Time (Dual Pass)",
+      "target": "< 500 ms",
+      "measured": "3.63 ms",
+      "passed": true
+    },
+    {
+      "num": 6,
+      "name": "Choke Point Load Reduction",
+      "target": ">= 15.0%",
+      "measured": "NOT MEASURED: controlled surge scenario required",
+      "passed": false
+    },
+    {
+      "num": 7,
+      "name": "Client Battery Consumption",
+      "target": "< 8.0% / 12h",
+      "measured": "NOT MEASURED: real-device protocol required",
+      "passed": false
+    },
+    {
+      "num": 8,
+      "name": "Offline ServiceWorker Map Fallback",
+      "target": "< 1.0 s",
+      "measured": "NOT MEASURED: browser offline run required",
+      "passed": false
+    },
+    {
+      "num": 9,
+      "name": "Lost Pilgrim QR / ID Lookup Time",
+      "target": "< 1.0 s (1000 ms)",
+      "measured": "0.38 ms",
+      "passed": true
+    },
+    {
+      "num": 10,
+      "name": "False-Alarm Rate on Group Drift",
+      "target": "< 5.0%",
+      "measured": "NOT MEASURED: labeled drift truth required",
+      "passed": false
+    }
+  ]
 }

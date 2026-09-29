@@ -26,6 +26,9 @@ class SectionalHeadcountTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='telemetry_admin', password='password123')
+        self.client.force_login(self.user)
+        from accounts.models import PilgrimProfile
+        PilgrimProfile.objects.create(user=self.user, role='operator')
 
         # Seed all 7 physical sections
         self.sections = {}

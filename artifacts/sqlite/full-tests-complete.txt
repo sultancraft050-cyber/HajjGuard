@@ -1,0 +1,57 @@
+Creating test database for alias 'default'...
+
+..........Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+..Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+.......................Error during CCTV frame person detection: Simulated GPU inference crash
+Traceback (most recent call last):
+  File "C:\Users\sulta\Documents\Codex\2026-09-29\read-00-start-here-md-and\work\HajjGuard\services\cctv.py", line 38, in process_frame
+    file_size = os.path.getsize(image_path)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sulta\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sulta\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\sulta\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1198, in _execute_mock_call
+    raise effect
+RuntimeError: Simulated GPU inference crash
+...........Timeout querying Nusuk API for 9999999999 after 5.0s
+Nusuk upstream server error 503 on 9999999999
+.....Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+.......Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+......Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+.Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+...Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+...Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+...Live Makkah weather API unavailable, applying astronomical fallback: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>
+.
+----------------------------------------------------------------------
+Ran 75 tests in 10.784s
+
+OK
+Destroying test database for alias 'default'...
+
+Found 75 test(s).
+System check identified no issues (0 silenced).
+================================================================================
+HAJJGUARD CAPSTONE DEFENSE VERIFICATION (KSU SECTION 15 BENCHMARKS)
+================================================================================
+
+#    | Evaluation Metric                    | Target               | Measured Result        | Defense Status
+---------------------------------------------------------------------------------------------------------
+1    | Ingestion Latency (Telemetry)        | < 200 ms             | NOT MEASURED           | FAILED
+2    | Map Full State Refresh Rate          | < 3.0 s              | 0.001 s                | PASSED [OK]
+3    | Predictive Forecaster Horizon        | 20 min               | 20 min                 | PASSED [OK]
+4    | Forecast Accuracy (MAE vs Actual)    | MAE < 0.30 p/m�      | NOT MEASURED: labeled future data required | FAILED
+5    | Rerouting Decision Time (Dual Pass)  | < 500 ms             | 3.63 ms                | PASSED [OK]
+6    | Choke Point Load Reduction           | >= 15.0%             | NOT MEASURED: controlled surge scenario required | FAILED
+7    | Client Battery Consumption           | < 8.0% / 12h         | NOT MEASURED: real-device protocol required | FAILED
+8    | Offline ServiceWorker Map Fallback   | < 1.0 s              | NOT MEASURED: browser offline run required | FAILED
+9    | Lost Pilgrim QR / ID Lookup Time     | < 1.0 s (1000 ms)    | 0.38 ms                | PASSED [OK]
+10   | False-Alarm Rate on Group Drift      | < 5.0%               | NOT MEASURED: labeled drift truth required | FAILED
+---------------------------------------------------------------------------------------------------------
+
+Benchmark artifact saved. Metrics marked NOT MEASURED remain incomplete.
+would delete 1 location pings older than 24 hours.
+deleted 1 location pings older than 24 hours.

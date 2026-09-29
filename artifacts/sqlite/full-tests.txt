@@ -1,0 +1,23 @@
+Found 75 test(s).
+System check identified no issues (0 silenced).
+================================================================================
+HAJJGUARD CAPSTONE DEFENSE VERIFICATION (KSU SECTION 15 BENCHMARKS)
+================================================================================
+
+#    | Evaluation Metric                    | Target               | Measured Result        | Defense Status
+---------------------------------------------------------------------------------------------------------
+1    | Ingestion Latency (Telemetry)        | < 200 ms             | NOT MEASURED           | FAILED
+2    | Map Full State Refresh Rate          | < 3.0 s              | 0.001 s                | PASSED [OK]
+3    | Predictive Forecaster Horizon        | 20 min               | 20 min                 | PASSED [OK]
+4    | Forecast Accuracy (MAE vs Actual)    | MAE < 0.30 p/m�      | NOT MEASURED: labeled future data required | FAILED
+5    | Rerouting Decision Time (Dual Pass)  | < 500 ms             | 3.08 ms                | PASSED [OK]
+6    | Choke Point Load Reduction           | >= 15.0%             | NOT MEASURED: controlled surge scenario required | FAILED
+7    | Client Battery Consumption           | < 8.0% / 12h         | NOT MEASURED: real-device protocol required | FAILED
+8    | Offline ServiceWorker Map Fallback   | < 1.0 s              | NOT MEASURED: browser offline run required | FAILED
+9    | Lost Pilgrim QR / ID Lookup Time     | < 1.0 s (1000 ms)    | 0.31 ms                | PASSED [OK]
+10   | False-Alarm Rate on Group Drift      | < 5.0%               | NOT MEASURED: labeled drift truth required | FAILED
+---------------------------------------------------------------------------------------------------------
+
+Benchmark artifact saved. Metrics marked NOT MEASURED remain incomplete.
+would delete 1 location pings older than 24 hours.
+deleted 1 location pings older than 24 hours.
