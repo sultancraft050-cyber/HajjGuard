@@ -113,12 +113,12 @@
                         <span class="text-success fw-bold small">{% trans "المسار الذكي المتزن:" %}</span>
                         <strong class="text-success">{{ comparison.congestion_aware.estimated_minutes }} {% trans "دقيقة" %}</strong>
                     </div>
-                    <div class="small text-success fw-bold"><i class="bi bi-shield-check me-1"></i>{% trans "تخفيض حمل الاختناق بنسبة 23.4%" %}</div>
+                    <div class="small text-muted fw-bold"><i class="bi bi-info-circle me-1"></i>{% trans "تحسين المسار مُقترح؛ قياس خفض الحمل غير متاح بعد" %}</div>
                 </div>
 
                 <div class="alert alert-secondary small mb-0 border">
                     <i class="bi bi-info-circle me-1"></i>
-                    {% trans "تم التحقق من خوارزمية التوجيه وفق معايير KSU لمشروع التخرج (تحويل الحمل ≥ 15%)." %}
+                    {% trans "يجب إعادة قياس خفض الحمل وفق سيناريو مضبوط قبل عرض نتيجة دفاع KSU." %}
                 </div>
             </div>
         </div>

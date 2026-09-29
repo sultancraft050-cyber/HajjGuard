@@ -12,7 +12,7 @@ def auto_provision_nusuk_card(sender, instance, created, **kwargs):
     """
     Automated Smart Card Provisioning:
     Whenever a pilgrim profile is created (or missing a smart card),
-    automatically provisions an official Nusuk Smart Card with unique Tasreeh No,
+    automatically provisions a simulated HajjGuard card with a unique reference,
     camp allocation, and cryptographic QR payload.
     """
     if instance.role != 'pilgrim':
@@ -24,7 +24,7 @@ def auto_provision_nusuk_card(sender, instance, created, **kwargs):
     if NusukCard.objects.filter(pilgrim=instance).exists():
         return
 
-    # Find or create a default verified campaign
+    # Find or create a local demo campaign. This is not an official integration.
     campaign = HajjCampaign.objects.first()
     if not campaign:
         campaign = HajjCampaign.objects.create(
@@ -63,4 +63,4 @@ def auto_provision_nusuk_card(sender, instance, created, **kwargs):
         logger.warning(f"Could not generate PNG for QR: {e}")
         
     card.save()
-    logger.info(f"Auto-provisioned official NusukCard {tasreeh_no} for user {instance.user.username}")
+    logger.info(f"Auto-provisioned simulated HajjGuard card {tasreeh_no} for user {instance.user.username}")

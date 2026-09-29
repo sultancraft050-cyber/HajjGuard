@@ -266,7 +266,7 @@
                             <span class="badge bg-secondary text-light fw-bold px-2 py-1" style="font-size: 0.7rem;">
                                 <i class="bi bi-lock-fill"></i> {% trans "السجل الأمني الطبي للطوارئ" %}
                             </span>
-                            <span class="text-warning small fw-bold">PIN: {{ card.emergency_pin|default:"992144" }}</span>
+                            <span class="text-muted small">{% trans "Emergency PIN is not configured" %}</span>
                         </div>
                         <div class="hologram-strip"></div>
                     </div>

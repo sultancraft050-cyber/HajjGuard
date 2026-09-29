@@ -23,7 +23,7 @@ class GroupDriftService:
         return {
             'centroid_lat': centroid.get('lat'),
             'centroid_lng': centroid.get('lng'),
-            'dispersion_radius_meters': data.get('cohesion_entropy', 0.0),
+            'dispersion_radius_meters': data.get('dispersion_radius_meters', 0.0),
             'drift_alert': data.get('has_alerts', False),
             'raw_data': data
         }
@@ -141,7 +141,8 @@ class GroupDriftService:
                     'alert_reason': None
                 })
 
-        # Calculate Group Spatial Centroid and Cohesion Entropy
+        # Calculate centroid dispersion in metres. This is an RMS distance,
+        # not Shannon entropy.
         active_coords = []
         if leader_ping:
             active_coords.append((leader_ping.lat, leader_ping.lng))
@@ -154,12 +155,12 @@ class GroupDriftService:
             centroid_lat = sum(c[0] for c in active_coords) / len(active_coords)
             centroid_lng = sum(c[1] for c in active_coords) / len(active_coords)
             sq_dists = [haversine_distance(centroid_lat, centroid_lng, c[0], c[1]) ** 2 for c in active_coords]
-            cohesion_entropy = math.sqrt(sum(sq_dists) / len(active_coords))
+            dispersion_radius_meters = math.sqrt(sum(sq_dists) / len(active_coords))
         else:
             centroid_lat, centroid_lng = None, None
-            cohesion_entropy = 0.0
+            dispersion_radius_meters = 0.0
 
-        is_group_scattered = (cohesion_entropy > 40.0)
+        is_group_scattered = (dispersion_radius_meters > 40.0)
         has_alerts = (drifting_count > 0 or silent_count > 0 or is_group_scattered)
 
         return {
@@ -175,7 +176,7 @@ class GroupDriftService:
                 'lat': round(centroid_lat, 6) if centroid_lat is not None else None,
                 'lng': round(centroid_lng, 6) if centroid_lng is not None else None
             },
-            'cohesion_entropy': round(cohesion_entropy, 1),
+            'dispersion_radius_meters': round(dispersion_radius_meters, 1),
             'is_group_scattered': is_group_scattered,
             'has_alerts': has_alerts,
             'members': member_results

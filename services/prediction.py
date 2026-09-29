@@ -1,5 +1,9 @@
-import numpy as np
-from sklearn.linear_model import LinearRegression
+try:
+    import numpy as np
+    from sklearn.linear_model import LinearRegression
+except ImportError:  # Keep health checks and the fallback model usable offline.
+    np = None
+    LinearRegression = None
 
 def predict_zone_density_20min(zone_or_records) -> float:
     """
@@ -42,16 +46,23 @@ def predict_zone_density_20min(zone_or_records) -> float:
     if len(densities) < 2:
         return max(0.0, round(float(densities[0] if densities else 0.5), 2))
 
-    X = np.arange(len(densities)).reshape(-1, 1)
-    y = np.array(densities, dtype=float)
-
     try:
-        model = LinearRegression()
-        model.fit(X, y)
-
-        # Predict 4 steps ahead (+20 minutes assuming 5-minute telemetry intervals)
-        future_step = np.array([[len(densities) + 4]])
-        prediction = model.predict(future_step)[0]
+        # Predict four steps ahead (+20 minutes at five-minute intervals).
+        if LinearRegression is not None and np is not None:
+            X = np.arange(len(densities)).reshape(-1, 1)
+            y = np.array(densities, dtype=float)
+            model = LinearRegression()
+            model.fit(X, y)
+            prediction = model.predict(np.array([[len(densities) + 4]]))[0]
+        else:
+            # Dependency-free least-squares fallback for health checks and
+            # constrained deployments.
+            n = len(densities)
+            mean_x = (n - 1) / 2.0
+            mean_y = sum(densities) / n
+            denom = sum((i - mean_x) ** 2 for i in range(n)) or 1.0
+            slope = sum((i - mean_x) * (v - mean_y) for i, v in enumerate(densities)) / denom
+            prediction = mean_y + slope * (n + 4 - mean_x)
 
         # Enforce non-negative constraint
         return max(0.0, round(float(prediction), 2))

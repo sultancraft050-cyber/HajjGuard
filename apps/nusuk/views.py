@@ -13,10 +13,6 @@ from services.fiqh_ai import NusukFiqhAI
 def get_or_create_demo_card(user):
     """Retrieves or provisions a NusukCard for user."""
     profile = getattr(user, 'profile', None) if user.is_authenticated else None
-    if not profile:
-        # Fallback to demo profile 'rashid'
-        profile = PilgrimProfile.objects.filter(user__username='rashid').first()
-    
     if profile:
         card = NusukCard.objects.filter(pilgrim=profile).first()
         if not card:
@@ -56,9 +52,10 @@ def get_or_create_demo_card(user):
     return None
 
 
+@login_required(login_url='/accounts/login/')
 def digital_card_view(request):
     """
-    Renders the official Digital 'Nusuk Card' (Smart ID) interface.
+    Renders the local simulated HajjGuard card interface.
     Features Apple/Google Wallet 3D flip styling, holographic chip, Code-128 laser barcode,
     scannable QR code, and offline printable pass simulation.
     """
@@ -82,9 +79,10 @@ def digital_card_view(request):
     return render(request, 'nusuk/digital_card.html', context)
 
 
+@login_required(login_url='/accounts/login/')
 @require_GET
 def api_card_details(request):
-    """Returns official card data in JSON format."""
+    """Returns the minimum card data needed by the authenticated owner."""
     card = get_or_create_demo_card(request.user)
     if not card:
         return JsonResponse({'status': 'error', 'message': 'No card found'}, status=404)
@@ -93,8 +91,6 @@ def api_card_details(request):
         'status': 'success',
         'card': {
             'tasreeh_no': card.tasreeh_no,
-            'national_id': card.border_or_national_id,
-            'name': card.pilgrim.user.get_full_name() or card.pilgrim.user.username,
             'campaign': card.campaign.name_en,
             'campaign_ar': card.campaign.name_ar,
             'camp': f"{card.campaign.assigned_mina_sector} - {card.campaign.mina_camp_no}",
@@ -102,10 +98,7 @@ def api_card_details(request):
             'makkah_hotel': card.makkah_hotel_name,
             'assigned_jamarat_floor': card.assigned_jamarat_floor,
             'tafweej_slot': card.tafweej_jamarat_slot,
-            'blood_type': card.pilgrim.blood_type,
             'barcode': card.get_barcode_code(),
-            'emergency_pin': card.emergency_pin,
-            'leader_phone': card.campaign.leader_phone,
             'qr_image_url': card.qr_code_image.url if card.qr_code_image else None,
             'is_valid': card.is_valid
         }

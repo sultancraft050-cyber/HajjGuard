@@ -50,7 +50,7 @@ class NusukCard(models.Model):
     makkah_hotel_name = models.CharField(max_length=150, blank=True, default='Abraj Al-Bait / Jabal Omar')
     photo_url = models.CharField(max_length=255, blank=True, default='')
     barcode_code = models.CharField(max_length=64, blank=True, default='')
-    emergency_pin = models.CharField(max_length=10, blank=True, default='992144')
+    emergency_pin = models.CharField(max_length=10, blank=True, default='')
     
     # Verification and QR
     qr_payload = models.TextField(blank=True)
@@ -69,16 +69,12 @@ class NusukCard(models.Model):
             "type": "NUSUK_SMART_CARD",
             "version": "2.0-2026",
             "tasreeh_no": self.tasreeh_no,
-            "pilgrim_id": self.border_or_national_id,
-            "name": self.pilgrim.user.get_full_name() or self.pilgrim.user.username,
-            "nationality": getattr(self.pilgrim, 'nationality', 'Saudi Arabia'),
+            # QR codes are scanned in uncontrolled environments. Keep the
+            # payload to opaque references and non-sensitive routing data.
+            "card_ref": self.tasreeh_no,
             "campaign_id": self.campaign.license_no,
             "campaign_name": self.campaign.name_en,
             "camp": f"{self.campaign.assigned_mina_sector} - {self.campaign.mina_camp_no} ({self.tent_street_no})",
-            "leader_phone": self.campaign.leader_phone,
-            "blood_type": self.pilgrim.blood_type,
-            "is_vulnerable": self.pilgrim.is_vulnerable(),
-            "emergency_pin": self.emergency_pin,
             "barcode": self.get_barcode_code(),
             "jamarat_slot": self.tafweej_jamarat_slot,
             "jamarat_floor": self.assigned_jamarat_floor

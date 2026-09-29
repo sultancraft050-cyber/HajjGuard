@@ -6,11 +6,19 @@ from django.views.decorators.http import require_GET, require_POST
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext as _
+from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import SosIncident, EmergencyContact, FieldUnit, Alert
 from zones.models import Zone, DensityRecord, LocationPing
 from accounts.models import PilgrimProfile, AuditLog
 from nusuk.models import NusukCard
 from services.weather import get_live_makkah_weather
+
+staff_required = user_passes_test(
+    lambda user: user.is_authenticated and (
+        user.is_staff or getattr(getattr(user, 'profile', None), 'role', None) in {'operator', 'field_unit'}
+    ),
+    login_url='/accounts/login/'
+)
 
 def operations_dashboard(request):
     """
@@ -68,7 +76,7 @@ def api_live_weather(request):
     weather = get_live_makkah_weather()
     return JsonResponse(weather)
 
-@csrf_exempt
+@login_required(login_url='/accounts/login/')
 @require_POST
 def api_trigger_sos(request):
     """
@@ -164,7 +172,7 @@ def api_trigger_sos(request):
         'created_at': incident.created_at.strftime('%H:%M:%S')
     })
 
-@csrf_exempt
+@staff_required
 @require_POST
 def api_resolve_incident_by_id(request, incident_id):
     """
@@ -189,6 +197,7 @@ def api_resolve_incident_by_id(request, incident_id):
 
     return JsonResponse({'status': 'success', 'message': f'Incident #{incident_id} marked as resolved.'})
 
+@staff_required
 @require_GET
 def api_lookup_pilgrim(request):
     """
@@ -237,7 +246,7 @@ def api_lookup_pilgrim(request):
         }
     })
 
-@csrf_exempt
+@staff_required
 @require_POST
 def api_sync_haramain(request):
     """
@@ -249,6 +258,7 @@ def api_sync_haramain(request):
     return JsonResponse(result)
 
 
+@staff_required
 def incident_queue_view(request):
     """
     KSU Specification Section 7.2 (Screen 3):
@@ -282,7 +292,7 @@ def incident_queue_view(request):
     })
 
 
-@csrf_exempt
+@staff_required
 @require_POST
 def api_assign_incident(request):
     """
@@ -321,7 +331,7 @@ def api_assign_incident(request):
     })
 
 
-@csrf_exempt
+@staff_required
 @require_POST
 def api_resolve_incident(request):
     """
@@ -377,7 +387,7 @@ def api_haram_sectional_status(request):
     })
 
 
-@csrf_exempt
+@staff_required
 @require_POST
 def api_simulate_section_gate_flow(request):
     """

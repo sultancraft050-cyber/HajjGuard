@@ -43,8 +43,10 @@ class PilgrimProfile(models.Model):
     qr_code_payload = models.CharField(max_length=255, blank=True, help_text="Unique QR identity payload")
     
     # PDPL Compliance: Consent record (Section 16)
-    consent_given = models.BooleanField(default=True, help_text="User consent under Saudi PDPL regulations")
-    consent_timestamp = models.DateTimeField(default=timezone.now)
+    # Consent must be an explicit, recorded choice.  New profiles start
+    # without consent and therefore cannot be treated as opted in.
+    consent_given = models.BooleanField(default=False, help_text="Explicit consent for the selected HajjGuard processing purposes")
+    consent_timestamp = models.DateTimeField(null=True, blank=True)
     
     # Emergency contact (son, daughter, relative)
     emergency_contact_name = models.CharField(max_length=100, blank=True)

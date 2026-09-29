@@ -733,11 +733,11 @@ class HajjGuardSystemIntegrityTests(TestCase):
 
         res = GroupDriftService.calculate_group_drift(group)
         self.assertIn('centroid', res)
-        self.assertIn('cohesion_entropy', res)
+        self.assertIn('dispersion_radius_meters', res)
         self.assertIn('is_group_scattered', res)
         self.assertIsNotNone(res['centroid']['lat'])
         self.assertIsNotNone(res['centroid']['lng'])
-        self.assertGreater(res['cohesion_entropy'], 0.0)
+        self.assertGreater(res['dispersion_radius_meters'], 0.0)
         self.assertFalse(res['is_group_scattered'])
 
     def test_adaptive_telemetry_engine_and_backoff(self):

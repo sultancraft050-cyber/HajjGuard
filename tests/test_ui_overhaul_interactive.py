@@ -307,7 +307,7 @@ class InteractiveUIOverhaulTests(TestCase):
         content = res.content.decode('utf-8')
 
         self.assertIn("KSU Benchmark", content) or self.assertIn("معيار التحقق التجريبي", content)
-        self.assertIn("23.4%", content)
+        self.assertIn("KSU Benchmark", content) or self.assertIn("لم يُقَس بعد", content)
 
     # 14. WINDOW 14: Analytics & Historical Reports (reports.html)
     def test_reports_analytics_window(self):
