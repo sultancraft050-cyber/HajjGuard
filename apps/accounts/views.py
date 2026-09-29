@@ -1,22 +1,24 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
+from django.utils import timezone
 from django.utils.translation import gettext as _
 from .models import PilgrimProfile
 from nusuk.models import NusukCard
 from safety.models import EmergencyContact
 
+@login_required(login_url='/accounts/login/')
 def pilgrim_portal(request):
     """
     Renders the tactile, accessible mobile-friendly Pilgrim Portal.
     Defaults to 'rashid' demo pilgrim if not authenticated.
     """
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
-        profile = request.user.profile
-    else:
-        profile = PilgrimProfile.objects.filter(user__username='rashid').first()
-        if not profile:
-            profile = PilgrimProfile.objects.filter(role='pilgrim').first()
+    profile = getattr(request.user, 'profile', None)
+    if profile is None:
+        return HttpResponse('A pilgrim profile is required.', status=404)
 
     nusuk_card = NusukCard.objects.filter(pilgrim=profile).first()
     emergency_numbers = EmergencyContact.objects.all()[:4]
@@ -61,35 +63,19 @@ def pilgrim_portal(request):
         },
     ]
 
-    all_demo_pilgrims = PilgrimProfile.objects.filter(role='pilgrim')
-
     return render(request, 'accounts/pilgrim_portal.html', {
         'profile': profile,
         'card': nusuk_card,
         'emergency_numbers': emergency_numbers,
         'rituals': rituals,
-        'demo_pilgrims': all_demo_pilgrims,
+        'demo_pilgrims': (),
     })
-
-def demo_switch_user(request, username):
-    """
-    Helper for test examiners to seamlessly switch profiles 
-    (e.g., Uncle Rashid vs Fatima Noor vs Operator)
-    """
-    user = get_object_or_404(User, username=username)
-    login(request, user)
-    
-    if user.profile.role == 'operator':
-        return redirect('safety:operations_dashboard')
-    return redirect('accounts:pilgrim_portal')
-
 
 def register_view(request):
     """
     KSU Specification Section 7.1 (Screen 1) & Section 16 (PDPL):
     Register and login: Form, language choice, age band, mobility status, consent agreement.
     """
-    from django.utils import timezone
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         first_name = request.POST.get('first_name', '').strip()
@@ -98,7 +84,10 @@ def register_view(request):
         phone = request.POST.get('phone', '').strip()
         language = request.POST.get('language', 'ar')
         nationality = request.POST.get('nationality', 'Saudi Arabia')
-        age = int(request.POST.get('age', 35))
+        try:
+            age = int(request.POST.get('age', 35))
+        except (TypeError, ValueError):
+            return HttpResponse('Invalid age.', status=400)
         gender = request.POST.get('gender', 'M')
         is_wheelchair = request.POST.get('is_wheelchair_user') == 'on'
         chronic = request.POST.get('chronic_condition', 'NONE')
@@ -106,35 +95,24 @@ def register_view(request):
         em_name = request.POST.get('emergency_contact_name', '').strip()
         em_phone = request.POST.get('emergency_contact_phone', '').strip()
         consent = request.POST.get('consent_given') == 'on'
+        password = request.POST.get('password', '')
 
-        if not username:
-            username = f"pilgrim_{phone[-4:] if len(phone)>=4 else timezone.now().strftime('%M%S')}"
+        if not username or len(password) < 12 or not consent:
+            return HttpResponse('Username, a password of at least 12 characters, and explicit consent are required.', status=400)
+        if not 5 <= age <= 110:
+            return HttpResponse('Age must be between 5 and 110.', status=400)
+        if User.objects.filter(username=username).exists():
+            return HttpResponse('Username is already registered.', status=409)
 
-        user, created = User.objects.get_or_create(username=username, defaults={
-            'first_name': first_name,
-            'last_name': last_name,
-            'email': email,
-        })
-        if not created and not hasattr(user, 'profile'):
-            user.first_name = first_name
-            user.last_name = last_name
-            user.save()
-
-        profile, p_created = PilgrimProfile.objects.update_or_create(user=user, defaults={
-            'role': 'pilgrim',
-            'phone': phone,
-            'language': language,
-            'nationality': nationality,
-            'age': age,
-            'gender': gender,
-            'is_wheelchair_user': is_wheelchair,
-            'chronic_condition': chronic,
-            'blood_type': blood_type,
-            'emergency_contact_name': em_name,
-            'emergency_contact_phone': em_phone,
-            'consent_given': consent,
-            'consent_timestamp': timezone.now(),
-        })
+        with transaction.atomic():
+            user = User.objects.create_user(username=username, password=password,
+                first_name=first_name, last_name=last_name, email=email)
+            PilgrimProfile.objects.create(user=user, role='pilgrim', phone=phone,
+                language=language, nationality=nationality, age=age, gender=gender,
+                is_wheelchair_user=is_wheelchair, chronic_condition=chronic,
+                blood_type=blood_type, emergency_contact_name=em_name,
+                emergency_contact_phone=em_phone, consent_given=True,
+                consent_timestamp=timezone.now())
 
         login(request, user)
         return redirect('accounts:pilgrim_portal')
@@ -145,25 +123,31 @@ def register_view(request):
     })
 
 
+@login_required(login_url='/accounts/login/')
 def profile_view(request):
     """
     KSU Specification Section 7.1 (Screen 9) & Section 16:
     Profile: Edit details, language, consent settings.
     """
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
-        profile = request.user.profile
-    else:
-        profile = PilgrimProfile.objects.filter(role='pilgrim').first()
+    profile = getattr(request.user, 'profile', None)
+    if profile is None:
+        return HttpResponse('A pilgrim profile is required.', status=404)
 
     if request.method == 'POST':
         profile.language = request.POST.get('language', profile.language)
         profile.phone = request.POST.get('phone', profile.phone)
-        profile.age = int(request.POST.get('age', profile.age))
+        try:
+            profile.age = int(request.POST.get('age', profile.age))
+        except (TypeError, ValueError):
+            return HttpResponse('Invalid age.', status=400)
+        if not 5 <= profile.age <= 110:
+            return HttpResponse('Age must be between 5 and 110.', status=400)
         profile.is_wheelchair_user = request.POST.get('is_wheelchair_user') == 'on'
         profile.chronic_condition = request.POST.get('chronic_condition', profile.chronic_condition)
         profile.emergency_contact_name = request.POST.get('emergency_contact_name', profile.emergency_contact_name)
         profile.emergency_contact_phone = request.POST.get('emergency_contact_phone', profile.emergency_contact_phone)
         profile.consent_given = request.POST.get('consent_given') == 'on'
+        profile.consent_timestamp = timezone.now() if profile.consent_given else None
         profile.save()
         return redirect('accounts:profile')
 

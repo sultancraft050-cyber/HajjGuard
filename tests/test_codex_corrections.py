@@ -24,7 +24,8 @@ class CodexCorrectionTests(TestCase):
         card = NusukCard.objects.get(pilgrim=self.profile)
         payload = json.loads(card.qr_payload)
         self.assertEqual(payload['type'], 'NUSUK_SMART_CARD')
-        self.assertEqual(payload['card_ref'], card.tasreeh_no)
+        self.assertIn('token', payload)
+        self.assertGreaterEqual(len(payload['token']), 32)
         for forbidden in ('pilgrim_id', 'name', 'nationality', 'blood_type', 'leader_phone', 'emergency_pin'):
             self.assertNotIn(forbidden, payload)
 

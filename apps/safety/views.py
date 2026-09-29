@@ -1,9 +1,9 @@
 import json
+import math
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.db import models
+from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.contrib.auth.decorators import login_required, user_passes_test
@@ -15,7 +15,7 @@ from services.weather import get_live_makkah_weather
 
 staff_required = user_passes_test(
     lambda user: user.is_authenticated and (
-        user.is_staff or getattr(getattr(user, 'profile', None), 'role', None) in {'operator', 'field_unit'}
+        user.is_staff
     ),
     login_url='/accounts/login/'
 )
@@ -84,29 +84,42 @@ def api_trigger_sos(request):
     Saves incident telemetry in database.
     """
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body or '{}')
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON payload.'}, status=400)
+    try:
         category = data.get('category', 'GENERAL')
         lat = float(data.get('lat', 21.4198))
         lng = float(data.get('lng', 39.8715))
-        called_number = data.get('called_number', '911')
-    except Exception:
-        category = 'GENERAL'
-        lat = 21.4198
-        lng = 39.8715
-        called_number = '911'
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid emergency payload.'}, status=400)
+    valid_categories = {choice[0] for choice in SosIncident.CATEGORY_CHOICES}
+    if category not in valid_categories:
+        return JsonResponse({'status': 'error', 'message': 'Invalid emergency category.'}, status=400)
+    if not (math.isfinite(lat) and math.isfinite(lng)) or not (-90 <= lat <= 90 and -180 <= lng <= 180):
+        return JsonResponse({'status': 'error', 'message': 'Invalid coordinates.'}, status=400)
+    emergency_number = '997' if category in {'MEDICAL', 'HEAT'} else ('998' if category == 'CRUSH' else '911')
 
     # Get pilgrim profile
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
-        pilgrim = request.user.profile
-    else:
-        pilgrim = PilgrimProfile.objects.filter(role='pilgrim').first()
+    pilgrim = getattr(request.user, 'profile', None)
+    if pilgrim is None or pilgrim.role != 'pilgrim':
+        return JsonResponse({'status': 'error', 'message': 'A pilgrim account is required.'}, status=403)
 
     battery_level = None
     try:
         if data.get('battery_level') is not None:
             battery_level = int(data.get('battery_level'))
     except (ValueError, TypeError):
-        pass
+        return JsonResponse({'status': 'error', 'message': 'Invalid battery level.'}, status=400)
+    if battery_level is not None and not 0 <= battery_level <= 100:
+        return JsonResponse({'status': 'error', 'message': 'Invalid battery level.'}, status=400)
+
+    from groups.models import GroupMembership
+    membership = GroupMembership.objects.filter(
+        pilgrim=pilgrim, is_active=True
+    ).select_related('group__leader__user').first()
+    leader_phone = membership.group.leader.phone if membership else ''
+    leader_phone = ''.join(ch for ch in leader_phone if ch.isdigit() or ch == '+')
 
     # Find matching zone
     zone = None
@@ -129,7 +142,7 @@ def api_trigger_sos(request):
     is_plausible_location = (21.30 <= lat <= 21.60) and (39.70 <= lng <= 40.15)
     plausibility_tag = "" if is_plausible_location else "[PLAUSIBILITY_WARNING: Coords outside Holy Sites]"
 
-    notes_text = f"Auto-logged via HajjGuard SOS trigger to {called_number}. {plausibility_tag}"
+    notes_text = f"SOS recorded for manual call to {emergency_number}. {plausibility_tag}"
     if battery_level is not None and battery_level <= 5:
         notes_text += " [LAST-GASP BEACON: Battery <= 5%]"
 
@@ -149,7 +162,11 @@ def api_trigger_sos(request):
             'message': 'Existing active SOS incident coordinates updated.',
             'category': existing_incident.get_category_display(),
             'zone': zone.name_en if zone else 'Holy Sites Corridor',
-            'created_at': existing_incident.created_at.strftime('%H:%M:%S')
+            'created_at': existing_incident.created_at.strftime('%H:%M:%S'),
+            'emergency_number': emergency_number,
+            'emergency_call_url': f'tel:{emergency_number}',
+            'group_leader_phone': leader_phone,
+            'group_leader_call_url': f'tel:{leader_phone}' if leader_phone else None,
         })
 
     incident = SosIncident.objects.create(
@@ -159,7 +176,7 @@ def api_trigger_sos(request):
         lng=lng,
         zone=zone,
         battery_level=battery_level,
-        called_number=called_number,
+        called_number=emergency_number,
         status='OPEN',
         notes=notes_text.strip()
     )
@@ -169,7 +186,11 @@ def api_trigger_sos(request):
         'incident_id': incident.id,
         'category': incident.get_category_display(),
         'zone': zone.name_en if zone else 'Holy Sites Corridor',
-        'created_at': incident.created_at.strftime('%H:%M:%S')
+        'created_at': incident.created_at.strftime('%H:%M:%S'),
+        'emergency_number': emergency_number,
+        'emergency_call_url': f'tel:{emergency_number}',
+        'group_leader_phone': leader_phone,
+        'group_leader_call_url': f'tel:{leader_phone}' if leader_phone else None,
     })
 
 @staff_required
@@ -178,10 +199,13 @@ def api_resolve_incident_by_id(request, incident_id):
     """
     Resolves an active SOS incident by ID (URL parameter).
     """
-    incident = get_object_or_404(SosIncident, id=incident_id)
-    incident.status = 'RESOLVED'
-    incident.resolved_at = timezone.now()
-    incident.save()
+    with transaction.atomic():
+        incident = get_object_or_404(SosIncident.objects.select_for_update(), id=incident_id)
+        if incident.status == 'RESOLVED':
+            return JsonResponse({'status': 'already_resolved', 'incident_id': incident.id})
+        incident.status = 'RESOLVED'
+        incident.resolved_at = timezone.now()
+        incident.save(update_fields=['status', 'resolved_at'])
 
     if incident.assigned_unit:
         incident.assigned_unit.available = True
@@ -202,39 +226,32 @@ def api_resolve_incident_by_id(request, incident_id):
 def api_lookup_pilgrim(request):
     """
     Lost Pilgrim Instant Lookup:
-    Accepts 'q' (national id, tasreeh, name, or raw QR payload)
-    and returns verified campaign & leader contact.
+    Accepts an exact opaque QR token or exact staff-controlled username
+    and returns minimum recovery contact details.
     """
     query = request.GET.get('q', '').strip()
     if not query:
         return JsonResponse({'status': 'error', 'message': 'Query parameter required'}, status=400)
 
-    # Search in Nusuk Cards
-    card = NusukCard.objects.filter(
-        models.Q(tasreeh_no__icontains=query) |
-        models.Q(border_or_national_id__icontains=query) |
-        models.Q(pilgrim__user__first_name__icontains=query) |
-        models.Q(pilgrim__user__last_name__icontains=query) |
-        models.Q(qr_payload__icontains=query)
-    ).select_related('pilgrim', 'campaign').first()
+    # Exact token or exact username only. Never perform substring enumeration.
+    card = NusukCard.objects.filter(qr_token=query, is_valid=True).select_related('pilgrim', 'campaign').first()
+    if card is None:
+        profile = PilgrimProfile.objects.filter(user__username__iexact=query).first()
+        card = NusukCard.objects.filter(pilgrim=profile, is_valid=True).select_related('pilgrim', 'campaign').first() if profile else None
 
     if not card:
+        AuditLog.objects.create(user=request.user, action='VIEW_PILGRIM', target='LOST_LOOKUP_NOT_FOUND', ip_address=request.META.get('REMOTE_ADDR'))
         return JsonResponse({'status': 'not_found', 'message': 'No registered pilgrim found matching query.'})
 
     profile = card.pilgrim
     camp = card.campaign
+    AuditLog.objects.create(user=request.user, action='VIEW_PILGRIM', target=f'Pilgrim #{profile.id}', ip_address=request.META.get('REMOTE_ADDR'))
 
     return JsonResponse({
         'status': 'found',
         'pilgrim': {
             'name': profile.user.get_full_name() or profile.user.username,
-            'id': card.border_or_national_id,
-            'tasreeh': card.tasreeh_no,
-            'age': profile.age,
-            'blood_type': profile.blood_type,
-            'is_vulnerable': profile.is_vulnerable(),
-            'phone': profile.phone,
-            'emergency_contact': f"{profile.emergency_contact_name} ({profile.emergency_contact_phone})",
+            'emergency_contact': f"{profile.emergency_contact_name} ({profile.emergency_contact_phone})" if profile.emergency_contact_name else None,
         },
         'campaign': {
             'name': camp.name_en,
@@ -250,8 +267,7 @@ def api_lookup_pilgrim(request):
 @require_POST
 def api_sync_haramain(request):
     """
-    Triggers live synchronization with the official Saudi Two Holy Mosques Authority SCADA gateway.
-    Fetches real-time Tawaf/Masaa capacity, open gates, and estimated headcount.
+    Refreshes the local synthetic Haram telemetry demonstration dataset.
     """
     from services.haramain_adapter import HaramainLiveAdapter
     result = HaramainLiveAdapter.sync_to_database()
@@ -305,15 +321,20 @@ def api_assign_incident(request):
     except Exception:
         return JsonResponse({'status': 'error', 'message': 'Invalid parameters'}, status=400)
 
-    incident = get_object_or_404(SosIncident, id=incident_id)
-    unit = get_object_or_404(FieldUnit, id=unit_id)
+    with transaction.atomic():
+        incident = get_object_or_404(SosIncident.objects.select_for_update(), id=incident_id)
+        unit = get_object_or_404(FieldUnit.objects.select_for_update(), id=unit_id)
+        if incident.status not in {'OPEN', 'RESPONDING'}:
+            return JsonResponse({'status': 'error', 'message': 'Incident is not assignable.'}, status=409)
+        if not unit.available and incident.assigned_unit_id != unit.id:
+            return JsonResponse({'status': 'error', 'message': 'Field unit is unavailable.'}, status=409)
 
-    incident.assigned_unit = unit
-    incident.status = 'RESPONDING'
-    incident.save()
+        incident.assigned_unit = unit
+        incident.status = 'RESPONDING'
+        incident.save(update_fields=['assigned_unit', 'status'])
 
-    unit.available = False
-    unit.save()
+        unit.available = False
+        unit.save(update_fields=['available'])
 
     if request.user.is_authenticated:
         AuditLog.objects.create(
@@ -344,12 +365,15 @@ def api_resolve_incident(request):
     except Exception:
         return JsonResponse({'status': 'error', 'message': 'Invalid parameters'}, status=400)
 
-    incident = get_object_or_404(SosIncident, id=incident_id)
-    incident.status = 'RESOLVED'
-    incident.resolved_at = timezone.now()
-    if notes:
-        incident.notes = notes
-    incident.save()
+    with transaction.atomic():
+        incident = get_object_or_404(SosIncident.objects.select_for_update(), id=incident_id)
+        if incident.status == 'RESOLVED':
+            return JsonResponse({'status': 'already_resolved', 'incident_id': incident.id})
+        incident.status = 'RESOLVED'
+        incident.resolved_at = timezone.now()
+        if notes:
+            incident.notes = notes
+        incident.save()
 
     if incident.assigned_unit:
         incident.assigned_unit.available = True
@@ -382,7 +406,7 @@ def api_haram_sectional_status(request):
         'status': 'success',
         'timestamp': timezone.now().isoformat(),
         'total_sections': len(matrix),
-        'accuracy_rating': '>=98.5% (ToF + FIDTM Verified)',
+        'accuracy_rating': 'Synthetic demonstration estimate; field accuracy not measured',
         'sections': matrix
     })
 

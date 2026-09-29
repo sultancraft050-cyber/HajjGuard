@@ -43,6 +43,8 @@ class HajjGuardSystemIntegrityTests(TestCase):
             last_name="Al-Ghamdi",
             email="ahmad@hajjguard.sa"
         )
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
         self.profile = PilgrimProfile.objects.create(
             user=self.user,
             role="pilgrim",
@@ -55,8 +57,6 @@ class HajjGuardSystemIntegrityTests(TestCase):
             emergency_contact_phone="+966559876543"
         )
         self.client.force_login(self.user)
-        self.profile.role = 'operator'
-        self.profile.save(update_fields=['role'])
 
         # Base Campaign
         self.campaign = HajjCampaign.objects.create(
@@ -145,7 +145,8 @@ class HajjGuardSystemIntegrityTests(TestCase):
         self.assertTrue(bool(card.qr_payload))
         qr_data = json.loads(card.qr_payload)
         self.assertEqual(qr_data["type"], "NUSUK_SMART_CARD")
-        self.assertEqual(qr_data["card_ref"], "TASREEH-1448-9901")
+        self.assertIn("token", qr_data)
+        self.assertGreaterEqual(len(qr_data["token"]), 32)
         self.assertNotIn("is_vulnerable", qr_data)
 
     def test_nusuk_live_gateway_resilience_and_timeouts(self):

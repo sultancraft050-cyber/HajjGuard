@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+import secrets
 
 class PilgrimProfile(models.Model):
     ROLE_CHOICES = [
@@ -60,7 +61,7 @@ class PilgrimProfile(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.qr_code_payload:
-            self.qr_code_payload = f"HAJJGUARD-PILGRIM-{self.user.id}-{self.user.username.upper()}"
+            self.qr_code_payload = f"HG-{secrets.token_urlsafe(32)}"
         super().save(*args, **kwargs)
 
     def __str__(self):

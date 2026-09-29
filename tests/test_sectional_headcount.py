@@ -26,6 +26,8 @@ class SectionalHeadcountTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='telemetry_admin', password='password123')
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
         self.client.force_login(self.user)
         from accounts.models import PilgrimProfile
         PilgrimProfile.objects.create(user=self.user, role='operator')
@@ -281,7 +283,7 @@ class SectionalHeadcountTests(TestCase):
 
         self.assertEqual(data['status'], 'success')
         self.assertEqual(data['total_sections'], 7)
-        self.assertIn('>=98.5%', data['accuracy_rating'])
+        self.assertIn('not measured', data['accuracy_rating'])
         
         section_codes = [s['code'] for s in data['sections']]
         self.assertEqual(len(section_codes), 7)

@@ -34,6 +34,7 @@ class ZonesLiveMapTestCase(TestCase):
         # Create test pilgrim user
         self.user = User.objects.create_user(username='testpilgrim', password='password123')
         self.profile = PilgrimProfile.objects.create(user=self.user, role='pilgrim')
+        self.client.force_login(self.user)
 
     def test_live_map_renders(self):
         response = self.client.get(reverse('zones:live_map'))

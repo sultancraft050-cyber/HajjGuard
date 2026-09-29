@@ -41,8 +41,11 @@ class NusukService:
         """
         try:
             data = json.loads(qr_text)
-            if data.get("type") == "NUSUK_SMART_CARD":
-                return True, data
+            if data.get("type") == "NUSUK_SMART_CARD" and data.get("token"):
+                card = NusukCard.objects.filter(qr_token=data["token"], is_valid=True).first()
+                if card:
+                    return True, data
+                return False, "QR token is unknown or revoked"
             return False, "Not a valid Nusuk Smart Card QR code"
         except Exception as e:
             return False, f"Failed to parse QR data: {str(e)}"

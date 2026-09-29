@@ -59,9 +59,10 @@ class NusukSmartCardAndAITests(TestCase):
         
         self.assertEqual(payload['type'], 'NUSUK_SMART_CARD')
         self.assertEqual(payload['version'], '2.0-2026')
-        self.assertIn('card_ref', payload)
-        self.assertIn('camp', payload)
-        self.assertIn('barcode', payload)
+        self.assertIn('token', payload)
+        self.assertGreaterEqual(len(payload['token']), 32)
+        self.assertNotIn('camp', payload)
+        self.assertNotIn('barcode', payload)
         self.assertNotIn('blood_type', payload)
 
     def test_digital_card_view_http_200(self):
@@ -73,7 +74,7 @@ class NusukSmartCardAndAITests(TestCase):
         response = self.client.get('/nusuk/card/')
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Digital Nusuk Smart Card")
-        self.assertContains(response, "AUTHORIZED PILGRIM")
+        self.assertContains(response, "Prototype Card")
         self.assertContains(response, "flipCard")
 
     def test_api_card_details_http_200(self):
@@ -127,6 +128,8 @@ class NusukSmartCardAndAITests(TestCase):
             'question': 'قصصت شعري قبل ذبح الهدي يوم النحر فما الحكم؟',
             'language': 'ar'
         }
+        PilgrimProfile.objects.get_or_create(user=self.user, defaults={'role': 'pilgrim'})
+        self.client.force_login(self.user)
         response = self.client.post(
             '/nusuk/api/ai/chat/',
             data=json.dumps(payload),

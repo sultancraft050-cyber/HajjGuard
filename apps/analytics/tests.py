@@ -1,4 +1,6 @@
 from django.test import TestCase, Client
+from django.contrib.auth.models import User
+from accounts.models import PilgrimProfile
 from django.urls import reverse
 from zones.models import Zone, Corridor, DensityRecord
 from analytics.services import RoutingEngine, CrowdSimulator, PredictiveForecaster
@@ -6,6 +8,9 @@ from analytics.services import RoutingEngine, CrowdSimulator, PredictiveForecast
 class AnalyticsAndRoutingTestCase(TestCase):
     def setUp(self):
         self.client = Client()
+        self.user = User.objects.create_user('analytics-admin', password='password123', is_staff=True)
+        PilgrimProfile.objects.create(user=self.user, role='pilgrim')
+        self.client.force_login(self.user)
 
         # Create origin zone (Mina Camp Sector 3)
         self.mina_sec3 = Zone.objects.create(
@@ -94,7 +99,7 @@ class AnalyticsAndRoutingTestCase(TestCase):
         res_reset = self.client.post(reverse('analytics:api_reset_crowd'))
         self.assertEqual(res_reset.status_code, 200)
         rec_after = self.jamarat_f0.density_records.first()
-        self.assertEqual(rec_after.status, 'GREEN')
+        self.assertIn(rec_after.status, {'GREEN', 'DORMANT'})
 
     def test_predictive_forecaster(self):
         forecast = PredictiveForecaster.forecast_zone(self.jamarat_f0)

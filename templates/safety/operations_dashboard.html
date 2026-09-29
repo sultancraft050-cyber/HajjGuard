@@ -129,7 +129,7 @@
         </div>
     </div>
 
-    <!-- Real-World Deployment & Saudi Haramain Authority SCADA Integration -->
+    <!-- Local synthetic telemetry demonstration -->
     <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white border-top border-4 border-success">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
@@ -139,13 +139,13 @@
                 </div>
                 <h5 class="fw-bold text-dark mt-2 mb-0 d-flex align-items-center gap-2">
                     <span>🕋</span>
-                    <span>{% trans "Masjid Al-Haram Live Authority SCADA & 24/7 Optical Feed" %}</span>
+                    <span>{% trans "Synthetic Haram telemetry demonstration" %}</span>
                 </h5>
-                <small class="text-muted">{% trans "Live real-world Tawaf expected duration, active entry gates, and optical stream synchronization directly from the General Authority for the Care of the Two Holy Mosques." %}</small>
+                <small class="text-muted">{% trans "Local synthetic Tawaf duration, entry-gate, and optical-feed demonstration values." %}</small>
             </div>
             <div class="d-flex gap-2 mt-2 mt-md-0">
                 <button class="btn btn-success fw-bold rounded-pill px-3 shadow-sm" id="btn-sync-haramain" onclick="syncHaramainLive()">
-                    <i class="bi bi-cloud-arrow-down-fill me-1"></i> {% trans "Sync Live Saudi Gov SCADA" %}
+                    <i class="bi bi-cloud-arrow-down-fill me-1"></i> {% trans "Refresh synthetic telemetry" %}
                 </button>
                 <button class="btn btn-outline-dark fw-bold rounded-pill px-3" onclick="toggleKaabaLiveStream()">
                     <i class="bi bi-camera-video-fill me-1"></i> {% trans "24/7 Kaaba Live Feed" %}
@@ -153,7 +153,7 @@
             </div>
         </div>
 
-        <!-- Live SCADA Telemetry Highlights -->
+        <!-- Synthetic telemetry highlights -->
         <div class="row g-3" id="haramain-telemetry-cards">
             <div class="col-12 col-md-4">
                 <div class="p-3 border rounded-3 bg-light h-100">
@@ -191,7 +191,7 @@
                     <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                         <i class="bi bi-grid-3x3-gap-fill text-success"></i>
                         <span>{% trans "Masjid Al-Haram 7-Section 3D Flow & Accurate Headcount Matrix" %}</span>
-                        <span class="badge bg-success-subtle text-success border border-success small font-monospace">≥98.5% Accuracy (ToF + FIDTM)</span>
+                        <span class="badge bg-warning-subtle text-warning border border-warning small font-monospace">Synthetic estimate — field accuracy not measured</span>
                     </h6>
                     <small class="text-muted">{% trans "Conservation of crowd flow equation: ΔN = (∑Inflow - ∑Outflow) × Δt across 3 architectural tiers." %}</small>
                 </div>
@@ -665,13 +665,13 @@
         }
     }
 
-    // Trigger Real-World Synchronization with Official Saudi Haramain SCADA Gateway
+    // Refresh local synthetic telemetry values
     async function syncHaramainLive() {
         const btn = document.getElementById('btn-sync-haramain');
         const alertBox = document.getElementById('scada-sync-alert');
         if (btn) {
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {% trans "Connecting to Saudi Gov SCADA..." %}';
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {% trans "Refreshing synthetic telemetry..." %}';
         }
 
         try {
@@ -694,7 +694,7 @@
                 if (alertBox) {
                     alertBox.classList.remove('d-none');
                     alertBox.className = "alert alert-success py-2 mb-0 mt-3 d-flex align-items-center justify-content-between";
-                    alertBox.innerHTML = `<div><i class="bi bi-check-circle-fill me-2"></i><strong>{% trans "Real-World Sync Verified:" %}</strong> {% trans "Successfully synchronized Holy Mosque live sectors directly from the Saudi Two Holy Mosques Authority SCADA gateway." %}</div><span class="badge bg-success">trasul.gph.gov.sa</span>`;
+                    alertBox.innerHTML = `<div><i class="bi bi-check-circle-fill me-2"></i><strong>{% trans "Synthetic refresh complete:" %}</strong> {% trans "Updated local demonstration values. No government or SCADA service was contacted." %}</div>`;
                 }
 
                 // Automatically reload table after 1.5 seconds so capacity bars update
@@ -709,7 +709,7 @@
                 }
             }
         } catch (e) {
-            console.error("Live SCADA sync error:", e);
+            console.error("Synthetic telemetry refresh error:", e);
             if (alertBox) {
                 alertBox.classList.remove('d-none');
                 alertBox.className = "alert alert-danger py-2 mb-0 mt-3";
@@ -718,7 +718,7 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-cloud-arrow-down-fill me-1"></i> {% trans "Sync Live Saudi Gov SCADA" %}';
+                btn.innerHTML = '<i class="bi bi-cloud-arrow-down-fill me-1"></i> {% trans "Refresh synthetic telemetry" %}';
             }
         }
     }

@@ -25,6 +25,8 @@ class InteractiveUIOverhaulTests(TestCase):
             last_name="Al-Mansoor",
             email="rashid@hajjguard.sa"
         )
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
         self.profile = PilgrimProfile.objects.create(
             user=self.user,
             role="pilgrim",
@@ -39,8 +41,6 @@ class InteractiveUIOverhaulTests(TestCase):
             emergency_contact_phone="+966554433221"
         )
         self.client.force_login(self.user)
-        self.profile.role = 'operator'
-        self.profile.save(update_fields=['role'])
 
         # Create campaign and card
         self.campaign = HajjCampaign.objects.create(
@@ -180,14 +180,13 @@ class InteractiveUIOverhaulTests(TestCase):
 
         # Check 'قسم من نحن' (4 circular mint metric cards)
         self.assertIn("قسم من نحن", content)
-        self.assertIn("1.5M+", content)
-        self.assertIn("99.8%", content)
+        self.assertIn("غير مقاس", content)
         self.assertIn("7", content)
 
         # Check 'قسم الخدمات' (Standardized service cards)
         self.assertIn("قسم الخدمات", content)
         self.assertIn("بوابة ضيف الرحمن الذكية", content)
-        self.assertIn("بطاقة نسك الرقمية", content)
+        self.assertIn("HajjGuard", content)
         self.assertIn("المساعد الشرعي الذكي", content)
 
     # 3. WINDOW 3: Pilgrim Smart Portal (pilgrim_portal.html)
@@ -197,8 +196,8 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertEqual(res.status_code, 200)
         content = res.content.decode('utf-8')
 
-        self.assertIn("العم رشيد", content)
-        self.assertIn("بطاقة نسك الرقمية المعتمدة", content)
+        self.assertIn("Rashid", content)
+        self.assertIn("بطاقة HajjGuard التجريبية", content)
         self.assertIn("cctvCollapse", content)
         self.assertIn("haramCamIframe", content)
         self.assertIn("مراحل رحلة الحج اللحظية", content)

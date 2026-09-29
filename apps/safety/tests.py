@@ -27,6 +27,8 @@ class SafetyAndPortalTestCase(TestCase):
 
         # Create test user and pilgrim profile
         self.user = User.objects.create_user(username='testpilgrim2', password='password123')
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
         self.profile = PilgrimProfile.objects.create(
             user=self.user,
             role='pilgrim',
@@ -35,13 +37,16 @@ class SafetyAndPortalTestCase(TestCase):
             is_wheelchair_user=True,
             chronic_condition='CARDIAC'
         )
-        self.card = NusukCard.objects.create(
-            pilgrim=self.profile,
-            campaign=self.campaign,
-            tasreeh_no='TAS-TEST-001',
-            border_or_national_id='1082390192',
-            is_valid=True
-        )
+        self.client.force_login(self.user)
+        self.card = NusukCard.objects.filter(pilgrim=self.profile).first()
+        if self.card is None:
+            self.card = NusukCard.objects.create(
+                pilgrim=self.profile,
+                campaign=self.campaign,
+                tasreeh_no='TAS-TEST-001',
+                border_or_national_id='1082390192',
+                is_valid=True
+            )
 
     def test_pilgrim_portal_renders(self):
         response = self.client.get(reverse('accounts:pilgrim_portal'))
@@ -71,7 +76,7 @@ class SafetyAndPortalTestCase(TestCase):
         self.assertTrue(SosIncident.objects.filter(id=data['incident_id']).exists())
 
     def test_api_lookup_lost_pilgrim(self):
-        response = self.client.get(reverse('safety:api_lookup_pilgrim') + '?q=1082390192')
+        response = self.client.get(reverse('safety:api_lookup_pilgrim') + f'?q={self.card.qr_token}')
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(data['status'], 'found')

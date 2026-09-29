@@ -764,15 +764,16 @@
             fetch('/safety/api/trigger-sos/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category: category, called_number: number, lat: lat, lng: lng })
+                body: JSON.stringify({ category: category, lat: lat, lng: lng })
             })
             .then(res => res.json())
             .then(data => {
                 const statusBox = document.getElementById('sos-dispatch-status');
-                statusBox.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i> {% trans "تم توثيق البلاغ برقم #"}` + data.incident_id + ` - {% trans "تم توجيه الفرقة الميدانية. جاري الاتصال بـ "}` + number;
-                setTimeout(() => {
-                    window.location.href = 'tel:' + number;
-                }, 1200);
+                const leaderLink = data.group_leader_call_url ?
+                    ` <a class="btn btn-sm btn-outline-success ms-2" href="${data.group_leader_call_url}">اتصال بقائد المجموعة</a>` : '';
+                statusBox.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> تم توثيق البلاغ برقم #' + data.incident_id +
+                    ' - يرجى اختيار الاتصال بالطوارئ أو قائد المجموعة: ' +
+                    `<a class="btn btn-sm btn-danger ms-2" href="${data.emergency_call_url}">اتصال بالطوارئ ${data.emergency_number}</a>` + leaderLink;
             })
             .catch(err => {
                 window.location.href = 'tel:' + number;

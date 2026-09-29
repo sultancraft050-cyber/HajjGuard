@@ -1,9 +1,8 @@
 import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from .models import PilgrimGroup, GroupMembership
@@ -11,6 +10,7 @@ from accounts.models import PilgrimProfile, AuditLog
 from zones.models import Zone, LocationPing
 from .services import GroupDriftService
 
+@login_required(login_url='/accounts/login/')
 def my_group_view(request):
     """
     KSU Specification Section 7.1 (Screen 6):
@@ -20,11 +20,10 @@ def my_group_view(request):
     if request.user.is_authenticated and hasattr(request.user, 'profile'):
         profile = request.user.profile
     else:
-        # Default pilgrim profile for demonstration
-        profile = PilgrimProfile.objects.filter(role='pilgrim').first()
+        return JsonResponse({'status': 'error', 'message': 'A pilgrim profile is required.'}, status=404)
 
     membership = GroupMembership.objects.filter(pilgrim=profile, is_active=True).first()
-    group = membership.group if membership else PilgrimGroup.objects.first()
+    group = membership.group if membership else None
 
     members_data = []
     group_centroid = None
@@ -67,6 +66,12 @@ def my_group_view(request):
     })
 
 
+staff_lookup_required = user_passes_test(
+    lambda user: user.is_authenticated and user.is_staff,
+    login_url='/accounts/login/'
+)
+
+@staff_lookup_required
 def lost_pilgrim_lookup_view(request):
     """
     KSU Specification Section 7.2 (Screen 4) & Section 16 (PDPL):
@@ -80,18 +85,20 @@ def lost_pilgrim_lookup_view(request):
     latest_ping = None
 
     if query:
-        # Match by QR payload, user ID, username, phone, or national identity
+        # Match only exact opaque QR payloads or exact staff-controlled identifiers.
         pilgrim = PilgrimProfile.objects.filter(
             qr_code_payload__iexact=query
         ).first()
+        if not pilgrim:
+            from nusuk.models import NusukCard
+            card = NusukCard.objects.filter(qr_token=query, is_valid=True).select_related('pilgrim').first()
+            pilgrim = card.pilgrim if card else None
 
         if not pilgrim and query.isdigit():
             pilgrim = PilgrimProfile.objects.filter(user__id=int(query)).first()
 
         if not pilgrim:
-            pilgrim = PilgrimProfile.objects.filter(phone__icontains=query).first() or \
-                      PilgrimProfile.objects.filter(user__username__icontains=query).first() or \
-                      PilgrimProfile.objects.filter(user__first_name__icontains=query).first()
+            pilgrim = PilgrimProfile.objects.filter(user__username__iexact=query).first()
 
         if pilgrim:
             # Audit log entry as mandated by KSU specification Section 16
@@ -110,8 +117,16 @@ def lost_pilgrim_lookup_view(request):
 
             latest_ping = LocationPing.objects.filter(pilgrim=pilgrim).order_by('-timestamp').first()
 
+        if pilgrim is None:
+            AuditLog.objects.create(
+                user=request.user,
+                action='VIEW_PILGRIM',
+                target='LOST_LOOKUP_NOT_FOUND',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+
     # Recent lookups audit
-    recent_audits = AuditLog.objects.filter(action__in=['SCAN_QR', 'VIEW_PILGRIM'])[:5]
+    recent_audits = AuditLog.objects.filter(action__in=['SCAN_QR', 'VIEW_PILGRIM'], user=request.user)[:5]
 
     return render(request, 'groups/lost_pilgrim_lookup.html', {
         'query': query,
@@ -123,7 +138,7 @@ def lost_pilgrim_lookup_view(request):
     })
 
 
-@csrf_exempt
+@login_required(login_url='/accounts/login/')
 @require_POST
 def api_join_group(request):
     """
@@ -143,10 +158,9 @@ def api_join_group(request):
     if not group:
         return JsonResponse({'status': 'error', 'message': _('Invalid group code. Group not found.')}, status=404)
 
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
-        pilgrim = request.user.profile
-    else:
-        pilgrim = PilgrimProfile.objects.filter(role='pilgrim').first()
+    pilgrim = getattr(request.user, 'profile', None)
+    if pilgrim is None or pilgrim.role != 'pilgrim':
+        return JsonResponse({'status': 'error', 'message': _('A pilgrim account is required.')}, status=403)
 
     membership, created = GroupMembership.objects.get_or_create(
         group=group,
@@ -156,7 +170,7 @@ def api_join_group(request):
 
     return JsonResponse({
         'status': 'success',
-        'message': _('Successfully joined group %(group)s!') % {'group': group.name},
+        'message': (_('Successfully joined group %(group)s!') if created else _('You are already a member of %(group)s.')) % {'group': group.name},
         'group_id': group.id,
         'group_name': group.name,
         'leader_name': group.leader.user.get_full_name() or group.leader.user.username,

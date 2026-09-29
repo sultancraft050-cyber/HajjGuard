@@ -2,7 +2,6 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_GET, require_POST
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from accounts.models import PilgrimProfile, AuditLog
@@ -105,7 +104,7 @@ def api_card_details(request):
     })
 
 
-@csrf_exempt
+@login_required(login_url='/accounts/login/')
 @require_POST
 def api_nusuk_ai_chat(request):
     """

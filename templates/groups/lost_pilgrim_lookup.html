@@ -90,32 +90,9 @@
                         </div>
 
                         <div class="row g-3 small">
-                            <div class="col-6">
-                                <span class="text-muted d-block">{% trans "العمر والجنس:" %}</span>
-                                <span class="fw-bold text-dark">{{ pilgrim.age }} {% trans "سنة" %} ({{ pilgrim.get_gender_display }})</span>
-                            </div>
-                            <div class="col-6">
-                                <span class="text-muted d-block">{% trans "فصيلة الدم:" %}</span>
-                                <span class="badge bg-danger">{{ pilgrim.blood_type }}</span>
-                            </div>
-                            <div class="col-6">
-                                <span class="text-muted d-block">{% trans "حالة الإتاحة الحركية:" %}</span>
-                                {% if pilgrim.is_wheelchair_user %}
-                                    <span class="badge bg-warning text-dark"><i class="bi bi-person-wheelchair me-1"></i>{% trans "مستخدم كرسي متحرك" %}</span>
-                                {% else %}
-                                    <span class="badge bg-light text-dark border">{% trans "حركة عادية" %}</span>
-                                {% endif %}
-                            </div>
-                            <div class="col-6">
-                                <span class="text-muted d-block">{% trans "التنبيهات الطبية والمزمنة:" %}</span>
-                                <span class="badge bg-secondary">{{ pilgrim.get_chronic_condition_display }}</span>
-                            </div>
-                            <div class="col-12"><hr class="my-1"></div>
-                            <div class="col-6">
-                                <span class="text-muted d-block">{% trans "رقم هاتف الحاج:" %}</span>
-                                <a href="tel:{{ pilgrim.phone }}" class="text-decoration-none fw-bold text-success">
-                                    <i class="bi bi-telephone-outbound me-1"></i>{{ pilgrim.phone|default:"غير متوفر" }}
-                                </a>
+                            <div class="col-12">
+                                <span class="text-muted d-block">{% trans "بيانات التعريف الأساسية فقط:" %}</span>
+                                <span class="fw-bold text-dark">{% trans "تم تقليل البيانات لحماية الخصوصية." %}</span>
                             </div>
                             <div class="col-6">
                                 <span class="text-muted d-block">{% trans "جهة الاتصال العائلية للطوارئ:" %}</span>
@@ -124,18 +101,6 @@
                             </div>
                         </div>
 
-                        {% if latest_ping %}
-                        <div class="alert alert-light border rounded-3 mt-4 mb-0 small">
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <strong class="text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i>{% trans "آخر موقع جغرافي تم رصده:" %}</strong>
-                                <small class="text-muted">{{ latest_ping.timestamp|timesince }} {% trans "مضت" %}</small>
-                            </div>
-                            <div class="fw-bold text-dark">{{ latest_ping.zone.name_ar|default:latest_ping.zone.name_en }} ({{ latest_ping.zone.code|default:"GPS" }})</div>
-                            <div class="font-monospace text-muted small">
-                                Lat: {{ latest_ping.lat|floatformat:5 }}, Lng: {{ latest_ping.lng|floatformat:5 }}
-                            </div>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>

@@ -1,9 +1,10 @@
 import json
+import math
 from datetime import datetime, timezone as dt_timezone
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from .models import Zone, Corridor, LocationPing, DensityRecord
@@ -103,7 +104,7 @@ def api_zones_status(request):
 # Minimum throttling interval between pings per pilgrim (prevents device polling battery drain/DOS)
 MIN_PING_INTERVAL_SECONDS = 3.0
 
-@csrf_exempt
+@login_required(login_url='/accounts/login/')
 @require_POST
 def api_location_ping(request):
     """
@@ -125,7 +126,7 @@ def api_location_ping(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid latitude or longitude numerical values'}, status=400)
 
     # 1. Geographic Coordinate Boundary Validation
-    if not (-90.0 <= lat <= 90.0) or not (-180.0 <= lng <= 180.0):
+    if not (math.isfinite(lat) and math.isfinite(lng)) or not (-90.0 <= lat <= 90.0) or not (-180.0 <= lng <= 180.0):
         return JsonResponse({'status': 'error', 'message': 'Coordinates out of physical bounds (-90..90, -180..180)'}, status=400)
 
     # 2. Multi-level floor and altitude parameters
@@ -165,25 +166,13 @@ def api_location_ping(request):
             if delta < -86400.0:  # More than 24 hours in the past
                 return JsonResponse({'status': 'error', 'message': 'Stale telemetry timestamp: older than 24 hours'}, status=400)
         except Exception:
-            pass  # Fall back to server now()
+            return JsonResponse({'status': 'error', 'message': 'Invalid telemetry timestamp'}, status=400)
 
     # 4. Resolve Pilgrim Profile
-    pilgrim = None
-    if request.user.is_authenticated and hasattr(request.user, 'profile'):
-        pilgrim = request.user.profile
-    else:
-        # Check if pilgrim_id or border_id is passed in request body
-        pid = data.get('pilgrim_id') or data.get('border_id')
-        if pid:
-            from nusuk.models import NusukCard
-            card = NusukCard.objects.filter(border_or_national_id=pid).select_related('pilgrim').first()
-            if card:
-                pilgrim = card.pilgrim
-        if not pilgrim:
-            pilgrim = PilgrimProfile.objects.filter(role='pilgrim').first()
+    pilgrim = getattr(request.user, 'profile', None)
 
     if not pilgrim:
-        return JsonResponse({'status': 'error', 'message': 'No registered pilgrim profile found'}, status=400)
+        return JsonResponse({'status': 'error', 'message': 'A registered pilgrim profile is required'}, status=403)
 
     # 5. Mobile Ingestion Throttling Check
     last_ping = LocationPing.objects.filter(pilgrim=pilgrim).order_by('-timestamp').first()

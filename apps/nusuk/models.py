@@ -1,5 +1,6 @@
 import io
 import json
+import secrets
 import qrcode
 from django.db import models
 from django.core.files.base import ContentFile
@@ -54,6 +55,7 @@ class NusukCard(models.Model):
     
     # Verification and QR
     qr_payload = models.TextField(blank=True)
+    qr_token = models.CharField(max_length=64, unique=True, db_index=True, blank=True, editable=False)
     qr_code_image = models.ImageField(upload_to='nusuk_qrs/', blank=True, null=True)
     is_valid = models.BooleanField(default=True)
     issued_at = models.DateTimeField(auto_now_add=True)
@@ -65,24 +67,19 @@ class NusukCard(models.Model):
         return self.barcode_code
 
     def generate_qr_payload(self):
+        if not self.qr_token:
+            self.qr_token = secrets.token_urlsafe(32)
         payload = {
             "type": "NUSUK_SMART_CARD",
             "version": "2.0-2026",
-            "tasreeh_no": self.tasreeh_no,
-            # QR codes are scanned in uncontrolled environments. Keep the
-            # payload to opaque references and non-sensitive routing data.
-            "card_ref": self.tasreeh_no,
-            "campaign_id": self.campaign.license_no,
-            "campaign_name": self.campaign.name_en,
-            "camp": f"{self.campaign.assigned_mina_sector} - {self.campaign.mina_camp_no} ({self.tent_street_no})",
-            "barcode": self.get_barcode_code(),
-            "jamarat_slot": self.tafweej_jamarat_slot,
-            "jamarat_floor": self.assigned_jamarat_floor
+            "token": self.qr_token,
         }
         self.qr_payload = json.dumps(payload, ensure_ascii=False)
         return self.qr_payload
 
     def save(self, *args, **kwargs):
+        if not self.qr_token:
+            self.qr_token = secrets.token_urlsafe(32)
         if not self.barcode_code:
             self.get_barcode_code()
         if not self.qr_payload:

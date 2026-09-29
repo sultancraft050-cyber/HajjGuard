@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Login | HajjGuard{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 520px;">
+  <div class="dga-card p-4">
+    <h2 class="fw-bold mb-4">Sign in</h2>
+    {% if form.errors %}<div class="alert alert-danger">Invalid username or password.</div>{% endif %}
+    <form method="post">{% csrf_token %}
+      <label class="form-label">Username</label>
+      <input class="form-control mb-3" type="text" name="username" autocomplete="username" required>
+      <label class="form-label">Password</label>
+      <input class="form-control mb-3" type="password" name="password" autocomplete="current-password" required>
+      <button class="btn btn-dga-primary w-100" type="submit">Sign in</button>
+    </form>
+    <a class="d-block mt-3" href="{% url 'accounts:register' %}">Create a pilgrim account</a>
+  </div>
+</div>
+{% endblock %}

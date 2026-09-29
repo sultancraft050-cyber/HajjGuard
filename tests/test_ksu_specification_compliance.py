@@ -18,6 +18,8 @@ class KsuSpecificationComplianceTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(username='demo_user', password='password123')
+        self.user.is_staff = True
+        self.user.save(update_fields=['is_staff'])
         self.profile = PilgrimProfile.objects.create(
             user=self.user,
             role='pilgrim',
@@ -28,8 +30,6 @@ class KsuSpecificationComplianceTests(TestCase):
             consent_given=True
         )
         self.client.force_login(self.user)
-        self.profile.role = 'operator'
-        self.profile.save(update_fields=['role'])
 
         self.zone1 = Zone.objects.create(
             code='Z-JAMARAT-F0',

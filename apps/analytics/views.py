@@ -1,8 +1,8 @@
 import csv
+from functools import wraps
 from datetime import timedelta
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -11,6 +11,26 @@ from zones.models import Zone, DensityRecord, LocationPing
 from safety.models import SosIncident
 from accounts.models import PilgrimProfile, AuditLog
 from services.weather import get_live_makkah_weather
+
+
+def staff_export_required(view):
+    @wraps(view)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated or not request.user.is_staff:
+            AuditLog.objects.create(
+                user=request.user if request.user.is_authenticated else None,
+                action='EXPORT_REPORT',
+                target=f'DENIED {request.path}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+            )
+            return JsonResponse({'status': 'error', 'message': 'Authorized staff access required.'}, status=403)
+        return view(request, *args, **kwargs)
+    return wrapped
+
+
+def _safe_csv_cell(value):
+    text = '' if value is None else str(value)
+    return "'" + text if text.startswith(('=', '+', '-', '@')) else text
 
 def risk_board_view(request):
     """
@@ -153,6 +173,7 @@ def routing_comparison_view(request):
     })
 
 
+@staff_export_required
 def export_density_csv(request):
     """
     KSU Specification Section 7.2 & 16:
@@ -175,9 +196,9 @@ def export_density_csv(request):
     records = DensityRecord.objects.select_related('zone').order_by('-timestamp')[:500]
     for r in records:
         writer.writerow([
-            r.zone.code,
-            r.zone.name_en,
-            r.zone.site_type,
+            _safe_csv_cell(r.zone.code),
+            _safe_csv_cell(r.zone.name_en),
+            _safe_csv_cell(r.zone.site_type),
             r.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
             r.phone_count,
             r.image_count,
@@ -191,6 +212,7 @@ def export_density_csv(request):
     return response
 
 
+@staff_export_required
 def export_incidents_csv(request):
     """
     KSU Specification Section 7.2:
@@ -214,7 +236,7 @@ def export_incidents_csv(request):
     for inc in incidents:
         writer.writerow([
             inc.id,
-            inc.pilgrim.user.get_full_name() or inc.pilgrim.user.username,
+            _safe_csv_cell(inc.pilgrim.user.get_full_name() or inc.pilgrim.user.username),
             inc.get_category_display(),
             inc.zone.code if inc.zone else 'Unknown',
             inc.lat,
@@ -228,7 +250,7 @@ def export_incidents_csv(request):
     return response
 
 
-@csrf_exempt
+@staff_export_required
 @require_POST
 def api_trigger_surge(request):
     """
@@ -239,7 +261,7 @@ def api_trigger_surge(request):
     if success:
         return JsonResponse({
             'status': 'success',
-            'message': 'Morning Jamarat Surge Triggered! Z-JAMARAT-F0 reached 34,500 pilgrims (115% capacity). Status changed to RED.',
+            'message': 'Synthetic morning Jamarat surge applied to the local demo dataset.',
             'surged_zone': 'Z-JAMARAT-F0',
             'new_status': 'RED',
             'headcount': 34500,
@@ -247,7 +269,7 @@ def api_trigger_surge(request):
         })
     return JsonResponse({'status': 'error', 'message': 'Failed to trigger surge'}, status=500)
 
-@csrf_exempt
+@staff_export_required
 @require_POST
 def api_reset_crowd(request):
     """
@@ -256,7 +278,7 @@ def api_reset_crowd(request):
     CrowdSimulator.reset_all_zones_normal()
     return JsonResponse({
         'status': 'success',
-        'message': 'All holy site zones restored to safe normal capacity (GREEN).'
+        'message': 'Synthetic crowd data restored to the local demo baseline.'
     })
 
 @require_GET
