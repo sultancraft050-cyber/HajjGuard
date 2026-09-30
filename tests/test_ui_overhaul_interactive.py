@@ -174,6 +174,7 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("Simulation Mode", content)
         self.assertIn("Drag to orbit", content)
         self.assertIn("Expand model", content)
+        self.assertIn("Enable walkthrough mode", content)
         self.assertIn("Jump to a Holy Site", content)
         self.assertIn("hg-zone-list", content)
         self.assertIn("Intelligence that helps you decide", content)

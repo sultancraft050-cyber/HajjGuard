@@ -15,6 +15,7 @@ let pointer;
 let selected;
 let frame;
 let contentRoot;
+let walkMode = false;
 const siteGroups = new Map();
 
 function statusColor(status) {
@@ -260,6 +261,26 @@ function buildScene(data) {
     stage.dataset.zoneMeshes = 'ready';
     canvas.addEventListener('pointerdown', () => { canvas.dataset.dragging = 'true'; });
     canvas.addEventListener('pointerup', () => { canvas.dataset.dragging = 'false'; });
+    canvas.addEventListener('keydown', (event) => {
+        if (!walkMode) return;
+        const key = event.key.toLowerCase();
+        if (!['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) return;
+        event.preventDefault();
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        direction.y = 0;
+        direction.normalize();
+        const right = new THREE.Vector3(-direction.z, 0, direction.x);
+        const step = event.shiftKey ? 34 : 16;
+        const movement = new THREE.Vector3();
+        if (key === 'w' || key === 'arrowup') movement.addScaledVector(direction, step);
+        if (key === 's' || key === 'arrowdown') movement.addScaledVector(direction, -step);
+        if (key === 'a' || key === 'arrowleft') movement.addScaledVector(right, -step);
+        if (key === 'd' || key === 'arrowright') movement.addScaledVector(right, step);
+        camera.position.add(movement);
+        controls.target.add(movement);
+        controls.update();
+    });
     canvas.addEventListener('click', (event) => {
         const rect = canvas.getBoundingClientRect();
         pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -375,6 +396,16 @@ window.toggleTwinExpanded = () => {
         button.title = expanded ? 'Close expanded model' : 'Expand model';
     }
     resize();
+};
+window.toggleWalkMode = () => {
+    walkMode = !walkMode;
+    const button = document.getElementById('hg-walk-button');
+    if (button) {
+        button.setAttribute('aria-label', walkMode ? 'Disable walkthrough mode' : 'Enable walkthrough mode');
+        button.title = walkMode ? 'Walkthrough mode enabled: use W A S D or arrow keys' : 'Enable walkthrough mode';
+        button.classList.toggle('is-active', walkMode);
+    }
+    if (walkMode) canvas?.focus();
 };
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && stage?.classList.contains('is-expanded')) window.toggleTwinExpanded();
