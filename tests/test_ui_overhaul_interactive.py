@@ -165,6 +165,7 @@ class InteractiveUIOverhaulTests(TestCase):
 
         self.assertIn("A safer journey through", content)
         self.assertIn("hg-stage", content)
+        self.assertIn("images/haram_aerial.jpg", content)
         self.assertIn("Holy Sites digital twin", content)
         self.assertIn("Simulation Mode", content)
         self.assertIn("selectZone", content)
@@ -172,7 +173,7 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("Plan your next transfer", content)
         self.assertIn("Emergency SOS", content)
         self.assertIn("does not claim official government", content)
-        self.assertNotIn("haram_aerial.jpg", content)
+        self.assertNotIn("haram-photo-viewport", content)
 
     # 3. WINDOW 3: Pilgrim Smart Portal (pilgrim_portal.html)
     def test_pilgrim_portal_window(self):

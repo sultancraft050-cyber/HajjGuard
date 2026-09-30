@@ -6,7 +6,7 @@ The landing experience is organized around one decision: help a pilgrim understa
 
 ## Main components
 
-- **Exploration hero:** an interactive CSS digital twin of the Holy Sites with selectable zone markers, rotation controls, and a clear Simulation Mode label.
+- **Exploration hero:** a large illustrative aerial Haram view with selectable zone markers, rotation controls, and a clear Simulation Mode label. It is not a live camera feed.
 - **Zone information panel:** shows the selected zone, current status, density, prediction, risk, and links to the full map and guidance screens.
 - **Intelligence cards:** explain the three user benefits: Predict, Guide, and Protect.
 - **Journey planner:** lets the user choose a start, destination, and priority such as less crowded, cooler, or accessible.
@@ -23,7 +23,7 @@ The landing experience is organized around one decision: help a pilgrim understa
 
 ## Technical choices
 
-The first screen remains a server-rendered Django page and uses the existing sectional telemetry JSON. The interactive model is deliberately lightweight HTML, CSS, and JavaScript so it works without a new build system, external 3D runtime, or paid map service. Selecting a marker reads the existing zone record; it does not create a separate frontend data source. The full geographic map remains available on the live-map route.
+The first screen remains a server-rendered Django page and uses the existing sectional telemetry JSON. The explorer uses a repository-hosted illustrative aerial image with lightweight HTML, CSS, and JavaScript overlays, so it works without a new build system, external 3D runtime, or paid map service. Selecting a marker reads the existing zone record; it does not create a separate frontend data source. The full geographic map remains available on the live-map route.
 
 ## Accessibility and responsive behavior
 
