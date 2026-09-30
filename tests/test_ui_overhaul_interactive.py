@@ -169,7 +169,7 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("js/hajjguard-digital-twin.js", content)
         self.assertIn("pointer-events:none", content)
         self.assertIn("touch-action:none", content)
-        self.assertIn("js/hajjguard-digital-twin.js?v=6", content)
+        self.assertIn("js/hajjguard-digital-twin.js?v=7", content)
         self.assertIn("Holy Sites digital twin", content)
         self.assertIn("Simulation Mode", content)
         self.assertIn("Drag to orbit", content)

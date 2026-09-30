@@ -208,6 +208,7 @@ function buildScene(data) {
     controls.minDistance = 240;
     controls.maxDistance = 1600;
     controls.maxPolarAngle = Math.PI * 0.48;
+    controls.addEventListener('change', syncCameraState);
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
 
@@ -318,6 +319,12 @@ function buildScene(data) {
     animate();
 }
 
+function syncCameraState() {
+    if (!stage || !camera) return;
+    stage.dataset.camera = [camera.position.x, camera.position.y, camera.position.z, controls?.target.x, controls?.target.z]
+        .map((value) => Number(value || 0).toFixed(1)).join(',');
+}
+
 function fitCameraToContent() {
     if (!contentRoot || !camera || !controls) return;
     const bounds = new THREE.Box3().setFromObject(contentRoot);
@@ -331,6 +338,7 @@ function fitCameraToContent() {
     camera.far = Math.max(3000, distance * 4);
     camera.updateProjectionMatrix();
     controls.update();
+    syncCameraState();
 }
 
 function renderZoneList(items) {
