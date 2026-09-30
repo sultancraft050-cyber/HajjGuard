@@ -365,6 +365,20 @@ window.resetTwin = () => {
 window.fitTwin = () => {
     fitCameraToContent();
 };
+window.toggleTwinExpanded = () => {
+    if (!stage) return;
+    const expanded = stage.classList.toggle('is-expanded');
+    document.body.classList.toggle('hg-twin-open', expanded);
+    const button = document.getElementById('hg-expand-button');
+    if (button) {
+        button.setAttribute('aria-label', expanded ? 'Close expanded model' : 'Expand model');
+        button.title = expanded ? 'Close expanded model' : 'Expand model';
+    }
+    resize();
+};
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && stage?.classList.contains('is-expanded')) window.toggleTwinExpanded();
+});
 window.selectZone = selectZone;
 window.focusSite = focusSite;
 window.addEventListener('resize', resize);
