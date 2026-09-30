@@ -88,6 +88,7 @@ class LocationPing(models.Model):
     pilgrim = models.ForeignKey(PilgrimProfile, on_delete=models.CASCADE, related_name='pings')
     lat = models.FloatField()
     lng = models.FloatField()
+    accuracy_meters = models.FloatField(null=True, blank=True, help_text="Device-reported horizontal accuracy in meters")
     altitude = models.FloatField(null=True, blank=True, help_text="Barometric or GPS altitude in meters")
     floor_level = models.IntegerField(default=0, help_text="Estimated floor level (0=Ground, 1=Level 1, etc.)")
     zone = models.ForeignKey(Zone, on_delete=models.SET_NULL, null=True, blank=True, related_name='pings')

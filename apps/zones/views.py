@@ -77,6 +77,14 @@ def api_zones_status(request):
         status_code, color_code, status_label = z.get_status(current_people)
         capacity_ratio = round((current_people / max(z.safe_capacity, 1)) * 100, 1)
 
+        observed_at = latest_record.timestamp if latest_record else None
+        age_seconds = round((now - observed_at).total_seconds(), 1) if observed_at else None
+        freshness = (
+            'live' if age_seconds is not None and age_seconds <= 60 else
+            'recent' if age_seconds is not None and age_seconds <= 900 else
+            'stale' if age_seconds is not None else 'unavailable'
+        )
+
         results.append({
             'id': z.id,
             'code': z.code,
@@ -97,9 +105,31 @@ def api_zones_status(request):
             'status': status_code,
             'color': color_code,
             'status_label': str(status_label),
+            'observed_at': observed_at.isoformat() if observed_at else None,
+            'data_age_seconds': age_seconds,
+            'data_freshness': freshness,
+            'data_source': 'density_record' if latest_record else 'telemetry_only',
         })
 
-    return JsonResponse({'status': 'success', 'count': len(results), 'zones': results})
+    corridors = []
+    for corridor in Corridor.objects.filter(is_active=True).select_related('from_zone', 'to_zone'):
+        from_zone = next((z for z in results if z['id'] == corridor.from_zone_id), None)
+        to_zone = next((z for z in results if z['id'] == corridor.to_zone_id), None)
+        if not from_zone or not to_zone:
+            continue
+        corridors.append({
+            'id': corridor.id,
+            'name_ar': corridor.name_ar,
+            'name_en': corridor.name_en,
+            'from_code': from_zone['code'],
+            'to_code': to_zone['code'],
+            'coordinates': [[from_zone['lat'], from_zone['lng']], [to_zone['lat'], to_zone['lng']]],
+            'walking_minutes': corridor.base_walking_minutes,
+            'width_meters': corridor.width_meters,
+            'status': 'watch' if from_zone['status'] in ('RED', 'ORANGE') or to_zone['status'] in ('RED', 'ORANGE') else 'open',
+        })
+
+    return JsonResponse({'status': 'success', 'count': len(results), 'zones': results, 'corridors': corridors})
 
 # Minimum throttling interval between pings per pilgrim (prevents device polling battery drain/DOS)
 MIN_PING_INTERVAL_SECONDS = 3.0
@@ -147,6 +177,13 @@ def api_location_ping(request):
             altitude = altitude_from_barometric_pressure(pressure_val)
         except (ValueError, TypeError):
             pass
+
+    try:
+        accuracy_meters = float(data.get('accuracy_meters')) if data.get('accuracy_meters') is not None else None
+        if accuracy_meters is not None and (not math.isfinite(accuracy_meters) or accuracy_meters < 0):
+            return JsonResponse({'status': 'error', 'message': 'Invalid GPS accuracy'}, status=400)
+    except (ValueError, TypeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid GPS accuracy'}, status=400)
 
     # 3. Spoofed Timestamp Protection
     client_ts_raw = data.get('timestamp')
@@ -208,6 +245,7 @@ def api_location_ping(request):
         pilgrim=pilgrim,
         lat=lat,
         lng=lng,
+        accuracy_meters=accuracy_meters,
         altitude=altitude,
         floor_level=floor_level,
         zone=assigned_zone

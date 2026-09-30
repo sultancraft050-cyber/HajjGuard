@@ -103,6 +103,22 @@
         border-radius: 50%;
         box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);
     }
+
+    .map-status-panel {
+        position: absolute;
+        top: 78px;
+        left: 16px;
+        z-index: 1000;
+        max-width: min(360px, calc(100vw - 32px));
+        background: rgba(255,255,255,.96);
+        border: 1px solid var(--dga-border);
+        border-radius: var(--dga-radius-md);
+        padding: 10px 14px;
+        box-shadow: var(--dga-shadow-lg);
+        font-size: .84rem;
+    }
+    .map-status-panel .status-value { font-weight: 700; }
+    .precision-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:5px; }
 </style>
 {% endblock %}
 
@@ -129,6 +145,12 @@
         <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
         <span>{% trans "Locate Me & Send Ping" %}</span>
     </button>
+
+    <div class="map-status-panel" role="status" aria-live="polite">
+        <div><span id="gps-precision-dot" class="precision-dot" style="background:#64748b"></span><span class="fw-bold">{% trans "Position accuracy" %}:</span> <span id="gps-accuracy">{% trans "Not requested" %}</span></div>
+        <div class="text-muted mt-1"><span class="fw-bold">{% trans "Map data" %}:</span> <span id="map-freshness">{% trans "Waiting for update" %}</span></div>
+        <div id="map-location-help" class="text-muted mt-1">{% trans "GPS accuracy depends on your device and surroundings. Keep location permission enabled." %}</div>
+    </div>
 
     <!-- Map Color Legend -->
     <div class="map-legend">
@@ -230,7 +252,13 @@
 <script>
     let map;
     let zoneLayers = {};
+    let corridorLayers = {};
     let userMarker = null;
+    let userAccuracyCircle = null;
+    let locationWatchId = null;
+    let lastPingAt = 0;
+    let hasCenteredOnUser = false;
+    let hasFitZones = false;
 
     // Initialize Leaflet Map centered between Haram & Jamarat
     function initMap() {
@@ -242,10 +270,15 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         // CartoDB Positron clean map tiles
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        const street = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
             attribution: '&copy; OpenStreetMap &copy; CARTO',
             maxZoom: 19
         }).addTo(map);
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19
+        });
+        L.control.layers({'{% trans "Clean map" %}': street, '{% trans "Street map" %}': osm}, null, {position: 'topright'}).addTo(map);
 
         // Load zone data and start polling
         refreshZoneData();
@@ -262,6 +295,13 @@
                 data.zones.forEach(zone => {
                     updateOrAddZoneCircle(zone);
                 });
+                data.corridors.forEach(updateOrAddCorridor);
+                updateMapFreshness(data.zones);
+                if (!hasFitZones && data.zones.length) {
+                    const bounds = L.latLngBounds(data.zones.map(z => [z.lat, z.lng]));
+                    map.fitBounds(bounds.pad(0.12), {maxZoom: 15, animate: false});
+                    hasFitZones = true;
+                }
             }
         } catch (error) {
             console.error("Error fetching live zone status:", error);
@@ -286,6 +326,7 @@
                     <span><b>Utilization:</b> ${z.capacity_pct}%</span>
                     <span><b>20m Forecast:</b> ${z.predicted_density_20m} p/m²</span>
                 </div>
+                <div class="small text-muted mt-1"><b>Data:</b> ${z.data_freshness} ${z.observed_at ? new Date(z.observed_at).toLocaleTimeString() : 'unavailable'}</div>
             </div>
         `;
 
@@ -311,6 +352,25 @@
         }
     }
 
+    function updateOrAddCorridor(c) {
+        const color = c.status === 'watch' ? '#d97706' : '#2563eb';
+        const popup = `<b>${c.name_en}</b><br>${c.walking_minutes} min planning corridor · ${c.width_meters} m wide<br><span class="text-muted">This is a zone-to-zone planning overlay, not turn-by-turn navigation.</span>`;
+        if (corridorLayers[c.id]) {
+            corridorLayers[c.id].setStyle({color});
+            corridorLayers[c.id].setPopupContent(popup);
+            return;
+        }
+        corridorLayers[c.id] = L.polyline(c.coordinates, {color, weight: 5, opacity: .72, dashArray: c.status === 'watch' ? '8 8' : null}).addTo(map).bindPopup(popup);
+    }
+
+    function updateMapFreshness(zones) {
+        const el = document.getElementById('map-freshness');
+        const values = zones.map(z => z.data_age_seconds).filter(v => v !== null);
+        if (!values.length) { el.textContent = 'No density observation available'; return; }
+        const age = Math.max(...values);
+        el.textContent = age <= 60 ? `Updated ${Math.round(age)}s ago` : age <= 900 ? `Recent data (${Math.round(age / 60)}m ago)` : `Stale data (${Math.round(age / 60)}m ago)`;
+    }
+
     // Smooth fly-to navigation
     function flyToLocation(lat, lng, zoom, btnElement) {
         map.flyTo([lat, lng], zoom, { duration: 1.5 });
@@ -319,18 +379,29 @@
     }
 
     // Geolocation locate pilgrim device & send telemetry ping
+    function getCsrfToken() {
+        const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : '';
+    }
+
     function locatePilgrimDevice() {
         if (!navigator.geolocation) {
-            alert("Geolocation is not supported by your browser.");
+            setLocationHelp('Location is not supported by this browser.');
             return;
         }
-
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+        if (locationWatchId !== null) navigator.geolocation.clearWatch(locationWatchId);
+        setLocationHelp('Requesting a precise device fix…');
+        locationWatchId = navigator.geolocation.watchPosition(async (pos) => {
             const lat = pos.coords.latitude;
             const lng = pos.coords.longitude;
+            const accuracy = Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null;
+            updateAccuracy(accuracy, pos.timestamp);
 
             // Fly map to user location
-            map.flyTo([lat, lng], 17);
+            if (!hasCenteredOnUser) {
+                map.flyTo([lat, lng], 17);
+                hasCenteredOnUser = true;
+            }
 
             // Draw or move user marker
             if (userMarker) {
@@ -344,29 +415,46 @@
                     })
                 }).addTo(map);
             }
+            if (userAccuracyCircle) userAccuracyCircle.setLatLng([lat, lng]).setRadius(accuracy || 25);
+            else userAccuracyCircle = L.circle([lat, lng], {radius: accuracy || 25, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: .14, weight: 1}).addTo(map);
 
+            // Send at a bounded cadence while continuing to refine the on-device position.
+            if (Date.now() - lastPingAt < 5000) return;
+            lastPingAt = Date.now();
             // Send ping to server
             try {
                 const res = await fetch("{% url 'zones:api_ping' %}", {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ lat: lat, lng: lng })
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ lat: lat, lng: lng, accuracy_meters: accuracy, timestamp: new Date(pos.timestamp || Date.now()).toISOString() })
                 });
                 const result = await res.json();
-
-                const locText = `${result.zone_name_en} (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+                if (!res.ok) throw new Error(result.message || 'Location sharing consent is required.');
+                const locText = `${result.zone_name_en} · ±${accuracy ? Math.round(accuracy) : '?'} m`;
                 document.getElementById('sos-location-text').innerText = locText;
                 userMarker.bindPopup(`<b>You are here:</b><br>${result.zone_name_en}`).openPopup();
+                setLocationHelp('Location shared for your active trip. You can stop sharing from the safety app.');
             } catch (e) {
-                console.error("Ping error:", e);
+                setLocationHelp(e.message || 'Location was not shared. Enable trip consent first.');
             }
         }, (err) => {
-            // Default fallback to Jamarat for demo testing if GPS permission denied in desktop browser
-            const demoLat = 21.41980;
-            const demoLng = 39.87150;
-            document.getElementById('sos-location-text').innerText = `Jamarat Bridge Level 2 (Demo GPS: 21.41980, 39.87150)`;
-        });
+            const messages = {1: 'Location permission was denied.', 2: 'Your device could not determine a location.', 3: 'Location request timed out.'};
+            setLocationHelp(messages[err.code] || 'Unable to determine your location.');
+            document.getElementById('gps-accuracy').textContent = 'Unavailable';
+        }, {enableHighAccuracy: true, maximumAge: 5000, timeout: 10000});
     }
+
+    function updateAccuracy(accuracy, timestamp) {
+        const label = document.getElementById('gps-accuracy');
+        const dot = document.getElementById('gps-precision-dot');
+        if (accuracy === null) { label.textContent = 'Unavailable'; dot.style.background = '#64748b'; return; }
+        const quality = accuracy <= 10 ? 'Excellent' : accuracy <= 30 ? 'Good' : 'Approximate';
+        label.textContent = `${quality} (±${Math.round(accuracy)} m)`;
+        dot.style.background = accuracy <= 10 ? '#198754' : accuracy <= 30 ? '#d97706' : '#dc3545';
+    }
+
+    function setLocationHelp(message) { document.getElementById('map-location-help').textContent = message; }
 
     // Live Haram CCTV Stream Modal Control
     function openHaramCctvModal() {
