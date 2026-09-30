@@ -437,6 +437,14 @@ window.toggleWalkMode = () => {
     }
     if (walkMode) canvas?.focus();
 };
+window.toggleTwinDetails = () => {
+    const panel = document.getElementById('hg-panel');
+    const button = document.getElementById('hg-details-button');
+    if (!panel || !button) return;
+    const hidden = panel.classList.toggle('is-hidden');
+    button.setAttribute('aria-label', hidden ? 'Show details panel' : 'Hide details panel');
+    button.title = hidden ? 'Show details panel' : 'Hide details panel';
+};
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && stage?.classList.contains('is-expanded')) window.toggleTwinExpanded();
 });
