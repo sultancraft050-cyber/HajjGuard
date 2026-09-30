@@ -131,12 +131,7 @@
     #map-tile-fallback .fallback-title { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#175e39; background:rgba(255,255,255,.9); padding:12px 18px; border-radius:12px; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.12); }
     #map-container.tiles-unavailable #map-tile-fallback { display:block; }
     #map-container.tiles-unavailable #hajj-map { background: transparent; }
-    #map-schematic { display:none; position:absolute; inset:0; z-index:0; pointer-events:none; background:linear-gradient(135deg,#eef7f1 0%,#dceee4 48%,#f8f1df 100%); }
-    #map-container.tiles-unavailable #map-schematic { display:block; }
     #map-tile-fallback .fallback-title { z-index:3; }
-    .schematic-road { position:absolute; height:10px; background:#fff; border:2px solid #b6d0be; border-radius:20px; transform-origin:left center; opacity:.9; }
-    .schematic-site { position:absolute; transform:translate(-50%,-50%); background:#0d5c3a; color:#fff; border:3px solid #fff; box-shadow:0 3px 12px #064e3b66; border-radius:999px; padding:7px 10px; font-size:11px; font-weight:800; white-space:nowrap; }
-    .schematic-site small { display:block; font-weight:500; opacity:.85; }
     .map-layer-panel { position:absolute; top:78px; right:16px; z-index:1000; background:rgba(255,255,255,.96); border:1px solid var(--dga-border); border-radius:var(--dga-radius-md); padding:10px 12px; box-shadow:var(--dga-shadow-lg); font-size:.82rem; }
     .map-layer-panel label { display:block; margin:4px 0; cursor:pointer; }
 </style>
@@ -156,16 +151,7 @@
     </div>
 
     <div id="map-tile-fallback" aria-live="polite">
-        <div class="fallback-title"><strong>{% trans "Holy Sites planning map" %}</strong><br><small>{% trans "Planning zones and safety points remain available without map tiles." %}</small></div>
-    </div>
-    <div id="map-schematic" aria-label="Holy Sites planning map fallback">
-        <div class="schematic-road" style="left:18%;top:55%;width:64%;transform:rotate(-18deg)"></div>
-        <div class="schematic-road" style="left:25%;top:33%;width:55%;transform:rotate(28deg)"></div>
-        <div class="schematic-site" style="left:28%;top:38%">🕋 Haram<small>Makkah</small></div>
-        <div class="schematic-site" style="left:55%;top:48%">⛰️ Jamarat<small>Bridge</small></div>
-        <div class="schematic-site" style="left:72%;top:62%">⛺ Mina<small>Camps</small></div>
-        <div class="schematic-site" style="left:48%;top:76%">🌌 Muzdalifah</div>
-        <div class="schematic-site" style="left:22%;top:78%">🏔️ Arafat</div>
+        <div class="fallback-title"><strong>{% trans "Street map unavailable" %}</strong><br><small>{% trans "Check your connection. Geographic markers are shown without street detail." %}</small></div>
     </div>
     <!-- Live Map Canvas -->
     <div id="hajj-map"></div>
@@ -188,7 +174,7 @@
         <label><input type="checkbox" checked onchange="togglePlanningLayer('services', this.checked)"> {% trans "Water, toilets, first aid" %}</label>
         <label><input type="checkbox" checked onchange="togglePlanningLayer('mobility', this.checked)"> {% trans "Wheelchair and rest points" %}</label>
         <label><input type="checkbox" checked onchange="togglePlanningLayer('meeting', this.checked)"> {% trans "Meeting points" %}</label>
-        <small class="text-muted">{% trans "Planning points; verify locally." %}</small>
+        <small id="facility-note" class="text-muted">{% trans "Loading verified facilities…" %}</small>
     </div>
 
     <!-- Map Color Legend -->
@@ -288,26 +274,29 @@
     function initMap() {
         map = L.map('hajj-map', {
             zoomControl: false
-        }).setView([21.4225, 39.8262], 14);
+        }).setView([21.4225, 39.8262], 15);
 
         // Add bottom-right zoom control
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // OpenStreetMap standard tiles do not require an application key.
-        const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors',
+        let failures = 0;
+        let loaded = 0;
+        const street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
+            referrerPolicy: 'origin',
             maxZoom: 19
-        }).on('tileerror', showTileFallback).addTo(map);
-        // Some proxies return an HTML 403 body with a successful HTTP status.
-        // Detect that case as well so the user never sees a broken tile page.
-        window.setTimeout(() => {
-            const broken = Array.from(document.querySelectorAll('.leaflet-tile')).some(tile => tile.complete && tile.naturalWidth < 100);
-            if (broken) showTileFallback();
-        }, 2500);
-        // The local academic demo may run behind a proxy that blocks public tiles.
-        // Keep the coordinate-based zone map usable there; deployed environments
-        // can display the external OSM layer normally.
-        if (['localhost', '127.0.0.1'].includes(window.location.hostname)) showTileFallback();
+        });
+        street.on('tileload', () => {
+            loaded++;
+            document.getElementById('map-container').classList.remove('tiles-unavailable');
+        });
+        street.on('tileerror', () => {
+            failures++;
+            if (failures >= 3 && loaded === 0) showTileFallback();
+        });
+        street.addTo(map);
+        L.control.scale({position:'bottomleft', imperial:false}).addTo(map);
+        window.setTimeout(() => { if (!loaded) showTileFallback(); }, 12000);
         addHolySiteLabels();
         addPlanningLayers();
 
@@ -320,7 +309,7 @@
 
     function showTileFallback() {
         document.getElementById('map-container').classList.add('tiles-unavailable');
-        document.querySelectorAll('.leaflet-tile-pane').forEach(pane => { pane.style.display = 'none'; });
+        document.getElementById('map-freshness').textContent = 'Street tiles unavailable. Geographic markers remain available; this is not a navigation map.';
     }
 
     function addHolySiteLabels() {
@@ -336,19 +325,23 @@
         }).addTo(map));
     }
 
-    function addPlanningLayers() {
-        const points = {
-            services: [[21.4229,39.8260,'💧 Water / toilets'],[21.4218,39.8270,'🩺 First aid'],[21.4198,39.8715,'💧 Water point']],
-            mobility: [[21.4222,39.8268,'♿ Accessible route'],[21.4160,39.8920,'🪑 Rest area']],
-            meeting: [[21.4232,39.8254,'📍 Group meeting point']]
-        };
-        Object.entries(points).forEach(([key, rows]) => {
-            planningLayers[key] = L.layerGroup(rows.map(([lat,lng,label]) => {
-                const icon = L.divIcon({className:'planning-poi', html:`<span title="${label}" style="display:grid;place-items:center;width:26px;height:26px;background:#fff;border:2px solid #0d5c3a;border-radius:50%;box-shadow:0 2px 7px #064e3b55;font-size:14px">${label.slice(0,2)}</span>`, iconSize:[26,26], iconAnchor:[13,13]});
-                return L.marker([lat,lng], {icon}).bindPopup(`<b>${label}</b><br><small>Planning point; verify availability on site.</small>`);
-            }));
-            planningLayers[key].addTo(map);
-        });
+    async function addPlanningLayers() {
+        ['services','mobility','meeting'].forEach(key => { planningLayers[key] = L.layerGroup().addTo(map); });
+        try {
+            const response = await fetch('/zones/api/safety-features/');
+            const data = await response.json();
+            for (const feature of data.features || []) {
+                const key = ['REST','WHEELCHAIR_ROUTE'].includes(feature.category) ? 'mobility' : 'services';
+                const title = document.createElement('div');
+                const heading = document.createElement('strong'); heading.textContent = feature.name;
+                title.append(heading, document.createElement('br'));
+                const note = document.createElement('span'); note.textContent = `Source: ${feature.source}. Verified ${new Date(feature.verified_at).toLocaleDateString()}. Check availability locally.`;
+                title.append(note);
+                const layer = feature.coordinates.length > 1 ? L.polyline(feature.coordinates, {color:'#2563eb',weight:4}) : L.circleMarker(feature.coordinates[0],{radius:7,color:'#0d5c3a',fillColor:'#fff',fillOpacity:1});
+                layer.bindPopup(title).addTo(planningLayers[key]);
+            }
+            document.getElementById('facility-note').textContent = data.features?.length ? 'Source-labelled facilities. Verify current availability locally.' : 'No verified facilities loaded. Unverified points are not shown.';
+        } catch (error) { document.getElementById('facility-note').textContent = 'Facility data unavailable.'; }
     }
     function togglePlanningLayer(key, visible) { if (!planningLayers[key]) return; visible ? planningLayers[key].addTo(map) : map.removeLayer(planningLayers[key]); }
     async function refreshSafetyStatus() {
@@ -358,7 +351,7 @@
             if (!trip.trip?.group_id) { el.textContent = ''; return; }
             const members = await fetch(`/api/groups/${trip.trip.group_id}/live-members/`, {credentials:'same-origin'}).then(r=>r.json());
             const stale = (members.members || []).filter(m => m.sharing && m.last_seen && (Date.now()-new Date(m.last_seen).getTime()) > 10*60*1000);
-            const alerts = await fetch('/api/groups/api/geofence-alerts/', {credentials:'same-origin'}).then(r=>r.json());
+            const alerts = await fetch('/groups/api/geofence-alerts/', {credentials:'same-origin'}).then(r=>r.json());
             if (alerts.alerts?.length) {
                 el.textContent = `⚠ ${alerts.alerts[0].reason} Check the timestamp before acting.`;
             } else {
@@ -381,7 +374,8 @@
                 updateMapFreshness(data.zones);
                 if (!hasFitZones && data.zones.length) {
                     const bounds = L.latLngBounds(data.zones.map(z => [z.lat, z.lng]));
-                    map.fitBounds(bounds.pad(0.12), {maxZoom: 15, animate: false});
+                    if (bounds.getNorthEast().equals(bounds.getSouthWest())) map.setView(bounds.getCenter(), 16);
+                    else map.fitBounds(bounds.pad(0.12), {maxZoom: 16, animate: false});
                     hasFitZones = true;
                 }
             }

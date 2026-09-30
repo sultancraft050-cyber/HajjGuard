@@ -224,8 +224,13 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("btn-site-pill", content)
         self.assertIn("map-legend", content)
         self.assertIn("tile.openstreetmap.org", content)
+        self.assertIn("referrerPolicy: 'origin'", content)
+        self.assertIn("fetch('/zones/api/safety-features/')", content)
         self.assertIn("map-tile-fallback", content)
         self.assertNotIn("basemaps.cartocdn.com", content)
+        self.assertNotIn("map-schematic", content)
+        self.assertNotIn("if (['localhost', '127.0.0.1'].includes(window.location.hostname))", content)
+        self.assertIn("No verified facilities loaded. Unverified points are not shown.", content)
         self.assertNotIn("موقع حكومي رسمي موثّق", content)
 
     # 6. WINDOW 6: Smart Guidance & Detour (guidance.html)
