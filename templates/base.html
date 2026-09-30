@@ -633,6 +633,11 @@
 
     <!-- Global Interactive Script -->
     <script>
+        function getCsrfToken() {
+            const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
         function openEmergencyModal() {
             var myModal = new bootstrap.Modal(document.getElementById('globalSosModal'));
             myModal.show();
@@ -671,42 +676,62 @@
         function sendGlobalSos(category, number) {
             const statusBox = document.getElementById('sos-dispatch-status');
             statusBox.classList.remove('d-none');
-            statusBox.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> {% trans "جاري تحديد إحداثيات GPS وإشعار غرفة القيادة الميدانية..." %}';
+            statusBox.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> {% trans "جاري تحديد إحداثيات GPS وتسجيل طلب المساعدة..." %}';
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
                     function(pos) {
                         dispatchSosPayload(category, number, pos.coords.latitude, pos.coords.longitude);
                     },
-                    function() {
-                        dispatchSosPayload(category, number, 21.4225, 39.8262);
-                    },
+                    function() { dispatchSosPayload(category, number, null, null); },
                     { timeout: 5000 }
                 );
             } else {
-                dispatchSosPayload(category, number, 21.4225, 39.8262);
+                dispatchSosPayload(category, number, null, null);
             }
         }
 
         function dispatchSosPayload(category, number, lat, lng) {
+            const payload = { category: category };
+            if (lat !== null && lng !== null) { payload.lat = lat; payload.lng = lng; }
             fetch('/safety/api/trigger-sos/', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category: category, lat: lat, lng: lng })
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
             })
-            .then(res => res.json())
+            .then(async res => {
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || 'Unable to create SOS');
+                return data;
+            })
             .then(data => {
                 const statusBox = document.getElementById('sos-dispatch-status');
                 const leaderLink = data.group_leader_call_url ?
                     ` <a class="btn btn-sm btn-outline-success ms-2" href="${data.group_leader_call_url}">اتصال بقائد المجموعة</a>` : '';
-                statusBox.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> تم توثيق البلاغ برقم #' + data.incident_id +
-                    ' - يرجى اختيار الاتصال بالطوارئ أو قائد المجموعة: ' +
-                    `<a class="btn btn-sm btn-danger ms-2" href="${data.emergency_call_url}">اتصال بالطوارئ ${data.emergency_number}</a>` + leaderLink;
+                const locationNotice = (!lat || !lng) ? ' لم يتم توفير موقع؛ يرجى ذكره للمجيب.' : '';
+                statusBox.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> تم تسجيل البلاغ برقم #' + data.incident_id +
+                    ' - اختر الاتصال يدويًا بعد التأكيد: ' +
+                    `<button class="btn btn-sm btn-danger ms-2" type="button" onclick="confirmEmergencyCall(${data.incident_id}, '${data.emergency_call_url}')">اتصال بالطوارئ ${data.emergency_number}</button>` + leaderLink +
+                    `<div class="small mt-2">${data.call_disclaimer || 'سيتم فتح شاشة الاتصال في هاتفك، ولا يستطيع HajjGuard التحقق من إجابة المكالمة.'}${locationNotice}</div>`;
             })
             .catch(err => {
                 statusBox.className = 'alert alert-warning mt-4 text-start small fw-bold';
                 statusBox.textContent = 'تعذر الوصول إلى الخادم. لم يتم تسليم الطلب؛ يرجى الاتصال بالطوارئ يدويًا.';
             });
+        }
+
+        async function confirmEmergencyCall(incidentId, callUrl) {
+            try {
+                const response = await fetch(`/safety/api/incidents/${incidentId}/call-intent/`, {
+                    method: 'POST', headers: {'X-CSRFToken': getCsrfToken()}, credentials: 'same-origin'
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || 'Call confirmation failed');
+                window.location.href = data.call_url || callUrl;
+            } catch (error) {
+                alert(error.message || 'Unable to record call confirmation. Please dial the number manually.');
+            }
         }
     </script>
 

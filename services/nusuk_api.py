@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 class NusukApiAdapter:
     """
-    Adapter for the Ministry of Hajj & Umrah B2B Nusuk Masar API.
+    Sandbox adapter shaped like a future pilgrimage provider API.
     
     Modes:
     1. Sandbox Mode (default): High-fidelity simulation returning complete demographic,
@@ -37,7 +37,7 @@ class NusukApiAdapter:
     @classmethod
     def query_pilgrim_permit(cls, identifier: str) -> Dict[str, Any]:
         """
-        Queries official permit status by tasreeh number or border/national ID.
+        Queries sandbox permit data by local test reference.
         """
         identifier = str(identifier).strip()
 
@@ -48,7 +48,7 @@ class NusukApiAdapter:
     @classmethod
     def _query_sandbox(cls, identifier: str) -> Dict[str, Any]:
         """
-        High-fidelity mock sandbox providing realistic Saudi Hajj Ministry data.
+        High-fidelity local sandbox providing synthetic pilgrimage data.
         """
         # Built-in mock dataset
         mock_registry = {
@@ -185,7 +185,7 @@ class NusukApiAdapter:
     @classmethod
     def _query_live(cls, identifier: str) -> Dict[str, Any]:
         """
-        Sends HTTPS request to official Nusuk gateway with 5s timeout and error handling.
+        Sends a request only when an explicitly configured provider endpoint exists.
         """
         url = f"{cls.get_api_url()}/{identifier}/"
         headers = {
@@ -251,7 +251,7 @@ class NusukApiAdapter:
     @classmethod
     def sync_pilgrim_data(cls, user: User, permit_identifier: str) -> Tuple[bool, str]:
         """
-        Fetches official Nusuk data and syncs to PilgrimProfile, HajjCampaign, and NusukCard.
+        Fetches authorized provider data and syncs only approved fields.
         """
         res = cls.query_pilgrim_permit(permit_identifier)
         if not res["success"]:
@@ -321,4 +321,4 @@ class NusukApiAdapter:
         NusukService.generate_nusuk_qr(card)
         card.save()
 
-        return True, f"Successfully synced official Nusuk permit {card.tasreeh_no}"
+        return True, f"Successfully synced sandbox permit reference {card.tasreeh_no}"

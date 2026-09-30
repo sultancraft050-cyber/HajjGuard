@@ -24,7 +24,7 @@
                     {% trans "المساعد الشرعي الذكي (Nusuk AI Copilot)" %}
                 </h6>
                 <div style="font-size: 0.68rem; color: #f7d58b;">
-                    <i class="bi bi-patch-check-fill"></i> {% trans "فتاوى وأحكام معتمدة من هيئة كبار العلماء" %}
+                    <i class="bi bi-info-circle"></i> {% trans "Informational guidance; consult a qualified scholar for personal rulings" %}
                 </div>
             </div>
         </div>
@@ -73,7 +73,7 @@
     <!-- Typing Indicator -->
     <div id="nusukAiTyping" class="px-3 py-2 bg-light text-muted small d-none" style="font-size: 0.75rem;">
         <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
-        <span class="ms-1">{% trans "جاري مراجعة الفتاوى الرسمية المعتمدة..." %}</span>
+        <span class="ms-1">{% trans "Preparing informational guidance..." %}</span>
     </div>
 
     <!-- Chat Input Form -->
@@ -170,7 +170,7 @@
                 </div>
                 <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 85%;">
                     <div class="fw-bold text-success mb-1" style="font-size: 0.8rem;">
-                        ${escapeHtml(data.title || '{% trans "الفتوى الشرعية المعتمدة" %}')}
+                        ${escapeHtml(data.title || '{% trans "Informational ritual guidance" %}')}
                     </div>
                     <div style="line-height: 1.6;">${formattedAns}</div>
                     ${actionHtml}

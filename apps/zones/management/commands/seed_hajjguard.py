@@ -76,7 +76,7 @@ class Command(BaseCommand):
                 number=item['number'],
                 defaults=item
             )
-        self.stdout.write(self.style.SUCCESS(f'Successfully loaded {len(emergency_data)} official Saudi emergency hotlines.'))
+        self.stdout.write(self.style.SUCCESS(f'Successfully loaded {len(emergency_data)} configured emergency contact numbers.'))
 
         # 2. HOLY SITES ZONES (Accurate GPS coordinates & capacities)
         zones_data = [

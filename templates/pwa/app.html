@@ -49,7 +49,7 @@ async function removeQueued(id){ const db=await dbPromise; db.transaction('outbo
 document.querySelector('#large-text').onclick=()=>document.body.classList.toggle('large-text');
 document.querySelector('#high-contrast').onclick=()=>document.body.classList.toggle('high-contrast');
 document.querySelector('#reduced-motion').onclick=()=>document.body.classList.toggle('reduced-motion');
-async function flushOutbox(){ for(const item of await queuedItems()){ if(item.type!=='SOS') continue; const send=async(pos)=>{ const p={...item.payload,lat:pos?.coords?.latitude ?? 21.4198,lng:pos?.coords?.longitude ?? 39.8715}; const result=await api('/safety/api/trigger-sos/',{method:'POST',headers:jsonHeaders,body:JSON.stringify(p)}); if(result.incident_id) await removeQueued(item.id); }; if(navigator.geolocation) navigator.geolocation.getCurrentPosition(send,()=>send(null),{timeout:3000}); else await send(null); } }
+async function flushOutbox(){ for(const item of await queuedItems()){ if(item.type!=='SOS') continue; const send=async(pos)=>{ if(!pos) return; const p={...item.payload,lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy_meters:pos.coords.accuracy}; const result=await api('/safety/api/trigger-sos/',{method:'POST',headers:jsonHeaders,body:JSON.stringify(p)}); if(result.incident_id) await removeQueued(item.id); }; if(navigator.geolocation) navigator.geolocation.getCurrentPosition(send,()=>{}, {enableHighAccuracy:true,timeout:10000,maximumAge:5000}); } }
 async function refresh() {
   const s=await api('/api/trip/location-sharing/status');
   document.querySelector('#sharing-status').textContent=s.enabled ? `Enabled until ${s.expires_at}` : 'Not sharing';

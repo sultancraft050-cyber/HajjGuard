@@ -7,7 +7,7 @@ from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.contrib.auth.decorators import login_required, user_passes_test
-from .models import SosIncident, EmergencyContact, FieldUnit, Alert
+from .models import SosIncident, SosCallIntent, IntegrationProvider, EmergencyContact, FieldUnit, Alert
 from zones.models import Zone, DensityRecord, LocationPing
 from accounts.models import PilgrimProfile, AuditLog, NotificationEvent
 from nusuk.models import NusukCard
@@ -68,6 +68,24 @@ def operations_dashboard(request):
         'weather': weather,
     })
 
+
+@staff_required
+def integration_status_view(request):
+    """Shows provider state and authorization evidence to staff only."""
+    providers = list(IntegrationProvider.objects.order_by('display_name'))
+    known = {p.key: p for p in providers}
+    defaults = [
+        ('nafath', 'External identity provider'),
+        ('nusuk_ministry', 'Pilgrimage provider'),
+        ('scada_cctv', 'Operations telemetry'),
+        ('emergency_gateway', 'Emergency incident gateway'),
+        ('wallet', 'Safety wallet pass'),
+    ]
+    for key, name in defaults:
+        if key not in known:
+            providers.append(IntegrationProvider(key=key, display_name=name, state='DISABLED'))
+    return render(request, 'safety/integration_status.html', {'providers': sorted(providers, key=lambda p: p.display_name)})
+
 @require_GET
 def api_live_weather(request):
     """
@@ -89,8 +107,10 @@ def api_trigger_sos(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON payload.'}, status=400)
     try:
         category = data.get('category', 'GENERAL')
-        lat = float(data.get('lat', 21.4198)) if data.get('lat') is not None else 21.4198
-        lng = float(data.get('lng', 39.8715)) if data.get('lng') is not None else 39.8715
+        if data.get('lat') is None or data.get('lng') is None:
+            return JsonResponse({'status': 'error', 'message': 'A device location is required; no fallback location is used.'}, status=400)
+        lat = float(data.get('lat'))
+        lng = float(data.get('lng'))
     except (TypeError, ValueError):
         return JsonResponse({'status': 'error', 'message': 'Invalid emergency payload.'}, status=400)
     valid_categories = {choice[0] for choice in SosIncident.CATEGORY_CHOICES}
@@ -110,7 +130,9 @@ def api_trigger_sos(request):
         prior = SosIncident.objects.filter(pilgrim=pilgrim, idempotency_key=idempotency_key).first()
         if prior:
             return JsonResponse({'status': 'duplicate', 'incident_id': prior.id, 'emergency_number': prior.called_number,
-                                 'emergency_call_url': f'tel:{prior.called_number}', 'group_leader_phone': '', 'group_leader_call_url': None})
+                                 'emergency_call_url': f'tel:{prior.called_number}', 'group_leader_phone': '', 'group_leader_call_url': None,
+                                 'call_confirmation_required': True,
+                                 'call_disclaimer': 'Your phone will open its call screen. HajjGuard cannot verify that the call was answered.'})
 
     battery_level = None
     try:
@@ -174,6 +196,8 @@ def api_trigger_sos(request):
             'emergency_call_url': f'tel:{emergency_number}',
             'group_leader_phone': leader_phone,
             'group_leader_call_url': f'tel:{leader_phone}' if leader_phone else None,
+            'call_confirmation_required': True,
+            'call_disclaimer': 'Your phone will open its call screen. HajjGuard cannot verify that the call was answered.',
         })
 
     incident = SosIncident.objects.create(
@@ -220,7 +244,24 @@ def api_trigger_sos(request):
         'emergency_call_url': f'tel:{emergency_number}',
         'group_leader_phone': leader_phone,
         'group_leader_call_url': f'tel:{leader_phone}' if leader_phone else None,
+        'call_confirmation_required': True,
+        'call_disclaimer': 'Your phone will open its call screen. HajjGuard cannot verify that the call was answered.',
     })
+
+
+@login_required(login_url='/accounts/login/')
+@require_POST
+def api_record_call_intent(request, incident_id):
+    """Audit the explicit user action immediately before opening the phone dialer."""
+    incident = get_object_or_404(SosIncident, id=incident_id)
+    profile = getattr(request.user, 'profile', None)
+    if not request.user.is_staff and (profile is None or incident.pilgrim_id != profile.id):
+        return JsonResponse({'status': 'error', 'message': 'You cannot confirm a call for this incident.'}, status=403)
+    if not incident.called_number:
+        return JsonResponse({'status': 'error', 'message': 'No emergency number is assigned.'}, status=400)
+    row = SosCallIntent.objects.create(incident=incident, requested_by=request.user, number=incident.called_number)
+    AuditLog.objects.create(user=request.user, action='SOS_CALL_INTENT', target=f'Incident #{incident.id} number {incident.called_number}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'recorded', 'call_intent_id': row.id, 'call_url': f'tel:{incident.called_number}', 'message': 'Call handoff recorded; your phone will open the dialer.'})
 
 @staff_required
 @require_POST

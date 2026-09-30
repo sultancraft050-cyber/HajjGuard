@@ -1,4 +1,5 @@
 import logging
+import os
 import urllib3
 import requests
 from typing import Dict, Any, List
@@ -10,13 +11,13 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 class HaramainLiveAdapter:
     """
-    Official Real-World Live Data Ingestion Adapter.
+    Disabled provider adapter reserved for an authorized telemetry connector.
     
     Directly interfaces with the General Authority for the Care of the Two Holy Mosques
-    (الهيئة العامة للعناية بشؤون المسجد الحرام والمسجد النبوي) public SCADA REST gateway:
+    local synthetic telemetry adapter; a provider connector requires written authorization:
     https://trasul.gph.gov.sa/haram-api/public/api/pry/TawafSaiStatus
     
-    Provides live real-world crowd telemetry:
+    A future provider would supply crowd telemetry; the default deployment uses local simulation:
     - Real-time expected Tawaf lap durations (minutes)
     - Active open gate numbers (e.g. Gate 1 King Abdulaziz, Gate 79 Fahd)
     - Live congestion status codes (1=Light, 2=Moderate, 3=Crowded, 4=Closed)
@@ -26,8 +27,7 @@ class HaramainLiveAdapter:
     API_URL = "https://trasul.gph.gov.sa/haram-api/public/api/pry/TawafSaiStatus"
     TIMEOUT_SECONDS = 8.0
 
-    # Mapping of official location names to HajjGuard zone codes and capacities
-    # Mapping of official location names to the 7 HajjGuard physical sections
+    # Mapping of known location labels to HajjGuard zone codes and capacities.
     LOCATION_MAPPING = {
         "صحن الطواف": {
             "code": "Z-HARAM-MATAF",
@@ -90,8 +90,11 @@ class HaramainLiveAdapter:
     @classmethod
     def fetch_live_status(cls) -> Dict[str, Any]:
         """
-        Sends HTTPS request to official Saudi Two Holy Mosques Authority REST API.
+        Sends an upstream request only when explicitly enabled by deployment policy.
         """
+        if (os.environ.get('HAJJGUARD_ENABLE_HARAMAIN_PROVIDER') != '1' or
+                os.environ.get('HAJJGUARD_HARAMAIN_AUTHORIZED') != '1'):
+            return {'success': False, 'source': 'SIMULATION_HARAMAIN_TELEMETRY', 'data': None, 'error': 'Provider disabled pending authorization'}
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) HajjGuard-Integration/2.0",
             "Accept": "application/json",
@@ -110,7 +113,7 @@ class HaramainLiveAdapter:
                 data = resp.json()
                 return {
                     "success": True,
-                    "source": "OFFICIAL_HARAMAIN_SCADA",
+                    "source": "SIMULATION_HARAMAIN_TELEMETRY",
                     "data": data,
                     "error": None
                 }
@@ -118,7 +121,7 @@ class HaramainLiveAdapter:
                 logger.warning(f"Haramain API responded with HTTP {resp.status_code}")
                 return {
                     "success": False,
-                    "source": "OFFICIAL_HARAMAIN_SCADA",
+                    "source": "SIMULATION_HARAMAIN_TELEMETRY",
                     "data": None,
                     "error": f"HTTP {resp.status_code}"
                 }
@@ -126,7 +129,7 @@ class HaramainLiveAdapter:
             logger.warning("Haramain API request timed out")
             return {
                 "success": False,
-                "source": "OFFICIAL_HARAMAIN_SCADA",
+                "source": "SIMULATION_HARAMAIN_TELEMETRY",
                 "data": None,
                 "error": "Connection timeout"
             }
@@ -134,7 +137,7 @@ class HaramainLiveAdapter:
             logger.error(f"Error querying Haramain API: {e}")
             return {
                 "success": False,
-                "source": "OFFICIAL_HARAMAIN_SCADA",
+                "source": "SIMULATION_HARAMAIN_TELEMETRY",
                 "data": None,
                 "error": str(e)
             }
@@ -142,14 +145,14 @@ class HaramainLiveAdapter:
     @classmethod
     def sync_to_database(cls) -> Dict[str, Any]:
         """
-        Fetches live official government status and translates real-world operational indicators
-        into HajjGuard DensityRecord entries in the database.
+        Fetches provider-reported telemetry only after deployment authorization and
+        translates it into HajjGuard DensityRecord entries in the database.
         """
         res = cls.fetch_live_status()
         if not res["success"] or not res["data"]:
             return {
                 "success": False,
-                "error": res.get("error", "Unable to reach official Haramain API"),
+                "error": res.get("error", "Telemetry provider unavailable"),
                 "synced_sectors": 0
             }
 
@@ -173,7 +176,7 @@ class HaramainLiveAdapter:
             if not zone:
                 continue
 
-            # Extract official time metrics
+            # Extract provider-reported time metrics
             try:
                 time_expect = float(item.get("time_expect", 45))
                 light_time = float(item.get("light_time", 35))
@@ -189,7 +192,7 @@ class HaramainLiveAdapter:
             else:
                 saturation = 0.25
 
-            # Official status: "1" = Green, "2" = Orange/Moderate, "3" = Red/Crowded, "4" = Closed
+            # Provider status: "1" = Green, "2" = Orange/Moderate, "3" = Red/Crowded, "4" = Closed
             status_num = str(item.get("status", "2"))
             if status_num == "1":
                 status_code = "GREEN"
@@ -203,7 +206,7 @@ class HaramainLiveAdapter:
             else:
                 status_code = "GREEN"
 
-            # Derive headcount from capacity and official saturation
+            # Derive headcount from capacity and provider-reported saturation
             safe_cap = zone.safe_capacity
             estimated_headcount = int(safe_cap * saturation)
             density = round(estimated_headcount / max(zone.floor_area_sqm, 1), 2)
@@ -241,12 +244,12 @@ class HaramainLiveAdapter:
                 "capacity": safe_cap,
                 "density": density,
                 "status": status_code,
-                "official_updated_at": item.get("updated_at")
+                "provider_updated_at": item.get("updated_at")
             })
 
         return {
             "success": True,
-            "source": "OFFICIAL_HARAMAIN_SCADA",
+            "source": "SIMULATION_HARAMAIN_TELEMETRY",
             "synced_sectors": len(synced_records),
             "timestamp": timezone.now().isoformat(),
             "records": synced_records

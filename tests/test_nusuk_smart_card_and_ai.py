@@ -99,7 +99,7 @@ class NusukSmartCardAndAITests(TestCase):
         self.assertEqual(res['status'], 'success')
         self.assertEqual(res['category'], 'TAWAF_DOUBT')
         self.assertIn("البناء على اليقين", res['answer'])
-        self.assertIn("وزارة الحج والعمرة", res['source'])
+        self.assertIn("إرشاد معلوماتي محلي", res['source'])
 
     def test_fiqh_ai_proxy_jamarat_stoning(self):
         """Test 6: Fiqh AI validates proxy stoning concession (Tawkīl) for sick and elderly."""

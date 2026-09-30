@@ -201,20 +201,8 @@
                     </div>
                 </div>
 
-                <div class="d-grid gap-2">
-                    <a href="tel:911" class="btn btn-danger btn-lg py-3 fw-bold shadow-sm d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-telephone-fill fs-4"></i> {% trans "Unified Security (طوارئ مكة)" %}</span>
-                        <span class="badge bg-white text-danger fs-5 px-3 py-1">911</span>
-                    </a>
-                    <a href="tel:997" class="btn btn-outline-danger btn-lg py-3 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-heart-pulse-fill fs-4"></i> {% trans "Red Crescent Ambulance (الهلال الأحمر)" %}</span>
-                        <span class="badge bg-danger text-white fs-5 px-3 py-1">997</span>
-                    </a>
-                    <a href="tel:998" class="btn btn-outline-warning text-dark btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-fire fs-4 text-danger"></i> {% trans "Civil Defense (الدفاع المدني)" %}</span>
-                        <span class="badge bg-dark text-white fs-6 px-3 py-1">998</span>
-                    </a>
-                </div>
+                <div class="alert alert-info small text-start">{% trans "HajjGuard records the SOS first. You choose and confirm any emergency call from the SOS dialog; your phone then opens its own dialer." %}</div>
+                <button type="button" class="btn btn-danger btn-lg fw-bold" data-bs-dismiss="modal" onclick="openEmergencyModal()">{% trans "Open SOS and choose a service" %}</button>
             </div>
         </div>
     </div>
@@ -228,7 +216,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <span class="fs-4">🕋</span>
                     <div>
-                        <h6 class="modal-title fw-bold mb-0">{% trans "Live Haram & Kaaba CCTV Camera" %}</h6>
+                        <h6 class="modal-title fw-bold mb-0">{% trans "External Haram video source" %}</h6>
                         <small class="text-white-50">{% trans "External video source; not operated or verified by HajjGuard" %}</small>
                     </div>
                 </div>

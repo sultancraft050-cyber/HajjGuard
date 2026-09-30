@@ -22,8 +22,8 @@ class NusukFiqhAI:
     4. Dual-Engine resilient execution (Autonomous Local Engine + Gemini API fallback).
     """
 
-    OFFICIAL_SOURCE = "وفقاً لضوابط وزارة الحج والعمرة واللجنة الدائمة للبحوث العلمية والإفتاء (هيئة كبار العلماء بالمملكة العربية السعودية)"
-    OFFICIAL_SOURCE_EN = "Accredited per the rulings of the Saudi Council of Senior Scholars & Ministry of Hajj and Umrah"
+    OFFICIAL_SOURCE = "إرشاد معلوماتي محلي؛ يرجى استشارة عالم مؤهل للأحكام الشخصية"
+    OFFICIAL_SOURCE_EN = "Local informational guidance; consult a qualified scholar for personal rulings"
 
     # Embedded Knowledge Categories
     KNOWLEDGE_BASE = [
@@ -97,7 +97,7 @@ class NusukFiqhAI:
             'answer_en': (
                 "Sa'i MUST begin at **Mount Safa** and conclude at **Mount Marwah**.\n\n"
                 "• If you mistakenly started at Marwah, that first leg to Safa is **void and discounted**.\n"
-                "• Your official count begins once you reach Safa, ending at Marwah on the 7th trip."
+                "• The count begins once you reach Safa and ends at Marwah on the 7th trip."
             ),
             'action_label_ar': 'دليل خطوات السعي',
             'action_label_en': 'Sa\'i Guidance',
@@ -291,7 +291,7 @@ class NusukFiqhAI:
             "In Islamic jurisprudence, the foundational rule of Hajj & Umrah is ease and removal of hardship (Lā Haraj).\n\n"
             "• If your question is regarding doubting Tawaf/Sa'i count, build on the lesser number.\n"
             "• If regarding sequencing of rites on Eid day, your Hajj is valid with no penalty.\n"
-            "• For complex personal jurisprudence inquiries, contact the official 24/7 Islamic Guidance Hotline for the Holy Mosques at **8001222444** (Available in 10 languages)."
+            "• For complex personal jurisprudence inquiries, consult a qualified scholar or an appropriate local guidance service."
         )
         return {
             'status': 'success',
@@ -374,8 +374,8 @@ class NusukFiqhAI:
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         
         system_instruction = (
-            "You are Nusuk AI, an official Islamic jurisprudence assistant for Hajj and Umrah pilgrims in Saudi Arabia. "
-            "Base all answers strictly on the rulings of the Saudi Council of Senior Scholars and the Ministry of Hajj & Umrah. "
+            "You are an informational Hajj and Umrah guidance assistant. "
+            "Do not claim official authority; encourage a qualified scholar for personal rulings. "
             "Prioritize concessions (Rukhsah) and safety. Keep answers clear, compassionate, bulleted, and cite 'وفقاً لهيئة كبار العلماء'."
         )
         

@@ -8,14 +8,14 @@ from nusuk.models import HajjCampaign, NusukCard
 class NusukService:
     """
     Nusuk Masar API Service Adapter.
-    Simulates the official Ministry of Hajj & Umrah B2B API gateway
+    Provides local prototype card behavior; it does not connect to a government API.
     with exact production payload structures.
     """
 
     @staticmethod
     def generate_nusuk_qr(nusuk_card):
         """
-        Generates a high-resolution QR code PNG containing the official Nusuk card payload
+        Generates a high-resolution QR code PNG containing an opaque local card token.
         """
         payload = nusuk_card.generate_qr_payload()
         

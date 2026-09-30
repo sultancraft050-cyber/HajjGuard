@@ -99,6 +99,56 @@ class SosIncident(models.Model):
         return f"SOS #{self.id} - {self.pilgrim.user.get_full_name() or self.pilgrim.user.username} ({self.category}) [{self.status}] {unit_str}"
 
 
+class SosCallIntent(models.Model):
+    """Records the pilgrim's explicit request to open the device dialer."""
+    incident = models.ForeignKey(SosIncident, on_delete=models.CASCADE, related_name='call_intents')
+    requested_by = models.ForeignKey('auth.User', on_delete=models.PROTECT, related_name='sos_call_intents')
+    number = models.CharField(max_length=15)
+    requested_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['incident', 'requested_at'])]
+
+
+class IntegrationProvider(models.Model):
+    """Provider registry; live use remains disabled until authorization is recorded."""
+    ENVIRONMENTS = [('SANDBOX', 'Sandbox'), ('STAGING', 'Staging'), ('PRODUCTION', 'Production')]
+    STATES = [('DISABLED', 'Disabled'), ('SANDBOX', 'Sandbox'), ('STAGING', 'Staging'), ('PRODUCTION', 'Production'), ('DEGRADED', 'Degraded'), ('REVOKED', 'Revoked')]
+    key = models.CharField(max_length=80, unique=True)
+    display_name = models.CharField(max_length=160)
+    environment = models.CharField(max_length=20, choices=ENVIRONMENTS, default='SANDBOX')
+    state = models.CharField(max_length=20, choices=STATES, default='DISABLED')
+    capabilities = models.JSONField(default=list, blank=True)
+    authorization_evidence = models.TextField(blank=True)
+    last_health_check = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class IntegrationAuthorization(models.Model):
+    provider = models.ForeignKey(IntegrationProvider, on_delete=models.CASCADE, related_name='authorizations')
+    subject_reference = models.CharField(max_length=180, blank=True)
+    scopes = models.JSONField(default=list, blank=True)
+    policy_version = models.CharField(max_length=40)
+    consented_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class IntegrationEvent(models.Model):
+    provider = models.ForeignKey(IntegrationProvider, on_delete=models.PROTECT, related_name='events')
+    direction = models.CharField(max_length=20, choices=[('INBOUND', 'Inbound'), ('OUTBOUND', 'Outbound')])
+    event_type = models.CharField(max_length=80)
+    idempotency_key = models.CharField(max_length=100, unique=True)
+    external_reference = models.CharField(max_length=180, blank=True)
+    status = models.CharField(max_length=30, default='PENDING')
+    error_category = models.CharField(max_length=80, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+
+
 class Alert(models.Model):
     """
     KSU Specification Section 6 & 7:

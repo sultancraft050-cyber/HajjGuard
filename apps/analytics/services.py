@@ -53,7 +53,8 @@ class CrowdSimulator:
     def reset_all_zones_normal():
         """
         Resets Holy Sites and Haram to their authentic real-world state:
-        - Haram zones: Synced live from official Saudi SCADA (active Umrah season).
+        - Haram zones: locally generated or provider-reported telemetry when an
+          authorized adapter is enabled; otherwise synthetic demonstration data.
         - Holy Sites (Mina, Jamarat, Muzdalifah, Arafat): Set to 0 (Off-Season / Closed outside of 8-13 Dhul-Hijjah).
         """
         from services.haramain_adapter import HaramainLiveAdapter
