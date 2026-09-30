@@ -99,6 +99,15 @@ function addHolySiteMasses(parent) {
     kaaba.material.roughness = 0.55;
     const goldBand = addBox(haram, 0, 21, 13.8, 22, 3, 1, 0xc5a059);
     goldBand.material.metalness = 0.6;
+    [42, 62, 82].forEach((radius, index) => {
+        const tawafRing = new THREE.Mesh(
+            new THREE.TorusGeometry(radius, index === 2 ? 2.8 : 2, 12, 96),
+            new THREE.MeshStandardMaterial({ color: index === 2 ? 0xc5a059 : 0x94a3b8, roughness: 0.7, metalness: index === 2 ? 0.35 : 0.05 })
+        );
+        tawafRing.rotation.x = Math.PI / 2;
+        tawafRing.position.y = 8 + index * 2;
+        haram.add(tawafRing);
+    });
     for (let i = 0; i < 8; i += 1) {
         const angle = (i / 8) * Math.PI * 2;
         const x = Math.cos(angle) * 122;
@@ -122,6 +131,16 @@ function addHolySiteMasses(parent) {
         addBox(haram, x, 16, z, 42, 32, 22, 0x9ca3af);
     }
     addSiteLabel(haram, 'Masjid al-Haram', 0, 104, 0);
+    const sai = new THREE.Group();
+    sai.position.set(0, 0, 235);
+    haram.add(sai);
+    addBox(sai, 0, 14, 0, 230, 28, 42, 0xb6c0cb);
+    addBox(sai, 0, 30, 0, 210, 4, 36, 0xe5e7eb);
+    for (let i = 0; i < 9; i += 1) {
+        addBox(sai, i * 24 - 96, 20, -18, 5, 18, 5, 0x64748b);
+        addBox(sai, i * 24 - 96, 20, 18, 5, 18, 5, 0x64748b);
+    }
+    addSiteLabel(sai, 'Sa’i corridor', 0, 54, 0);
 
     const mina = new THREE.Group();
     mina.position.set(330, 0, 35);
@@ -253,10 +272,13 @@ function buildScene(data) {
         const from = zones.get(corridor.from_zone)?.mesh?.position;
         const to = zones.get(corridor.to_zone)?.mesh?.position;
         if (!from || !to) return;
-        const points = [new THREE.Vector3(from.x, 4, from.z), new THREE.Vector3(to.x, 4, to.z)];
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.65 }));
-        contentRoot.add(line);
+        const points = [new THREE.Vector3(from.x, 5, from.z), new THREE.Vector3(to.x, 5, to.z)];
+        const curve = new THREE.LineCurve3(points[0], points[1]);
+        const corridorWidth = Number(corridor.width_meters) || 6;
+        const geometry = new THREE.TubeGeometry(curve, 12, Math.max(2.5, Math.min(8, corridorWidth / 2)), 8, false);
+        const road = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.9, transparent: true, opacity: 0.82 }));
+        road.receiveShadow = true;
+        contentRoot.add(road);
     });
     stage.dataset.zoneMeshes = 'ready';
     canvas.addEventListener('pointerdown', () => { canvas.dataset.dragging = 'true'; });
