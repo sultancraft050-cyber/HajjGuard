@@ -1,731 +1,91 @@
 {% extends 'base.html' %}
 {% load i18n static %}
 
-{% block title %}{% trans "HajjGuard | خلق رحلة روحانية خالدة - كود المنصات" %}{% endblock %}
+{% block title %}HajjGuard | Intelligent guidance and safety{% endblock %}
 
 {% block extra_head %}
 <style>
-    /* Figma 'قالب الحج' - Hajj Template Modern Styling */
-    .hero-hajj-template {
-        background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
-        border-bottom: 1px solid var(--dga-border);
-        padding: 56px 0 64px 0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .hero-pill-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background-color: var(--dga-green-mint);
-        border: 1px solid rgba(0, 108, 53, 0.2);
-        color: var(--dga-green-dark);
-        border-radius: var(--dga-radius-pill);
-        padding: 6px 16px;
-        font-size: 0.84rem;
-        font-weight: 700;
-        margin-bottom: 20px;
-    }
-
-    .hero-title-main {
-        font-size: 3.1rem;
-        font-weight: 800;
-        color: var(--dga-text-primary);
-        line-height: 1.25;
-        letter-spacing: -0.5px;
-        margin-bottom: 18px;
-    }
-    .hero-title-main span.text-emerald {
-        color: var(--dga-green);
-    }
-
-    @media (max-width: 992px) {
-        .hero-title-main { font-size: 2.2rem; }
-    }
-
-    .hero-lead-text {
-        font-size: 1.15rem;
-        color: var(--dga-text-muted);
-        line-height: 1.7;
-        margin-bottom: 32px;
-        max-width: 620px;
-    }
-
-    /* Asymmetric Visual Image Composition */
-    .hero-visual-frame {
-        position: relative;
-        border-radius: 28px;
-        overflow: hidden;
-        box-shadow: 0 20px 40px -10px rgba(0, 108, 53, 0.15), 0 0 0 1px var(--dga-border);
-        background: #ffffff;
-    }
-    .hero-visual-img {
-        width: 100%;
-        height: 420px;
-        object-fit: cover;
-        display: block;
-        transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-    }
-    .hero-visual-frame:hover .hero-visual-img {
-        transform: scale(1.03);
-    }
-    .hero-visual-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, rgba(0,0,0,0) 50%, rgba(11, 46, 27, 0.85) 100%);
-        display: flex;
-        align-items: flex-end;
-        padding: 24px;
-        color: #ffffff;
-    }
-
-    /* 4 Circular Mint Metric Cards (قسم من نحن) */
-    .metric-icon-circle {
-        width: 64px;
-        height: 64px;
-        border-radius: 50%;
-        background-color: var(--dga-green-mint);
-        border: 2px solid rgba(16, 185, 129, 0.25);
-        color: var(--dga-green);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.75rem;
-        margin: 0 auto 16px auto;
-        transition: all 0.3s ease;
-    }
-    .metric-card-dga {
-        background: #ffffff;
-        border: 1px solid var(--dga-border);
-        border-radius: var(--dga-radius-xl);
-        padding: 28px 20px;
-        text-align: center;
-        transition: all 0.25s ease;
-        height: 100%;
-    }
-    .metric-card-dga:hover {
-        transform: translateY(-5px);
-        box-shadow: var(--dga-shadow-lg);
-        border-color: rgba(0, 108, 53, 0.3);
-    }
-    .metric-card-dga:hover .metric-icon-circle {
-        background-color: var(--dga-green);
-        color: #ffffff;
-        transform: scale(1.1);
-    }
-    .metric-counter {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: var(--dga-text-primary);
-        line-height: 1.1;
-        margin-bottom: 6px;
-    }
-    .metric-label {
-        font-size: 0.95rem;
-        font-weight: 600;
-        color: var(--dga-text-muted);
-    }
-
-    /* Services Grid Cards (قسم الخدمات) */
-    .service-card-dga {
-        background: #ffffff;
-        border: 1px solid var(--dga-border);
-        border-radius: var(--dga-radius-xl);
-        padding: 28px;
-        height: 100%;
-        display: flex;
-        flex-column;
-        justify-content: space-between;
-        transition: all 0.28s ease;
-        position: relative;
-        text-decoration: none;
-        color: inherit;
-    }
-    .service-card-dga:hover {
-        transform: translateY(-6px);
-        border-color: var(--dga-green);
-        box-shadow: 0 16px 32px -4px rgba(0, 108, 53, 0.12);
-        color: inherit;
-    }
-    .service-icon-box {
-        width: 52px;
-        height: 52px;
-        border-radius: 14px;
-        background-color: var(--dga-green-mint);
-        color: var(--dga-green);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-bottom: 20px;
-        transition: all 0.25s ease;
-    }
-    .service-card-dga:hover .service-icon-box {
-        background-color: var(--dga-green);
-        color: #ffffff;
-    }
-
-    /* Interactive Aerial Haram Explorer Frame */
-    .haram-explorer-card {
-        background: #ffffff;
-        border: 1.5px solid var(--dga-border);
-        border-radius: 24px;
-        box-shadow: var(--dga-shadow-lg);
-        overflow: hidden;
-    }
-    .haram-photo-viewport {
-        position: relative;
-        width: 100%;
-        max-height: 580px;
-        background: #0f172a;
-        overflow: hidden;
-        cursor: crosshair;
-    }
-    .haram-photo-img {
-        width: 100%;
-        height: auto;
-        display: block;
-        transition: transform 0.4s ease;
-    }
-
-    /* Hotspot Pulsing Pins */
-    .hotspot-pin {
-        position: absolute;
-        transform: translate(-50%, -50%);
-        z-index: 20;
-        cursor: pointer;
-        transition: all 0.25s ease;
-    }
-    .hotspot-pin:hover {
-        transform: translate(-50%, -50%) scale(1.18);
-        z-index: 30;
-    }
-    .hotspot-badge {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border-radius: 20px;
-        color: #ffffff;
-        font-weight: 700;
-        font-size: 0.76rem;
-        box-shadow: 0 4px 14px rgba(0,0,0,0.45);
-        border: 2px solid #ffffff;
-        white-space: nowrap;
-        backdrop-filter: blur(8px);
-    }
-    .hotspot-pin-green .hotspot-badge { background: rgba(0, 108, 53, 0.92); }
-    .hotspot-pin-orange .hotspot-badge { background: rgba(217, 119, 6, 0.92); }
-    .hotspot-pin-red .hotspot-badge { background: rgba(220, 38, 38, 0.95); }
-
-    .pulse-ring {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 100%;
-        height: 100%;
-        border-radius: 20px;
-        border: 2px solid currentColor;
-        animation: pulseAnimation 2s infinite;
-        pointer-events: none;
-    }
-    @keyframes pulseAnimation {
-        0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0; }
-    }
-
-    /* Synchronized Mini Sector Cards below photo */
-    .sector-quick-card {
-        background: #ffffff;
-        border: 1px solid var(--dga-border);
-        border-radius: var(--dga-radius-md);
-        padding: 12px 14px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .sector-quick-card:hover, .sector-quick-card.active {
-        border-color: var(--dga-green);
-        background-color: var(--dga-green-mint);
-        transform: translateY(-2px);
-    }
+:root{--hg-ink:#0f172a;--hg-muted:#64748b;--hg-line:#e5e7eb;--hg-green:#006c35;--hg-green-soft:#ecfdf5;--hg-gold:#c5a059;--hg-red:#dc2626;--hg-bg:#f8fafc}
+body{background:#fff;color:var(--hg-ink)}
+/* The landing page has its own calm shell while the shared authenticated shell remains available elsewhere. */
+.navbar-dga,.dga-footer{display:none!important}
+main{min-height:100vh}
+.hg-shell{max-width:1440px;margin:0 auto;padding:18px clamp(18px,4vw,60px) 56px}
+.hg-nav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:4px 0 22px;border-bottom:1px solid var(--hg-line)}
+.hg-brand{display:flex;align-items:center;gap:11px;color:var(--hg-ink);text-decoration:none;font-weight:800;letter-spacing:-.02em}
+.hg-mark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--hg-green);color:#fff;box-shadow:0 8px 20px #006c3530}
+.hg-brand small{display:block;color:var(--hg-muted);font-weight:500;letter-spacing:0;font-size:.72rem;margin-top:1px}
+.hg-navlinks{display:flex;align-items:center;gap:20px;font-size:.86rem;color:#475569}
+.hg-navlinks a{color:inherit;text-decoration:none}.hg-navlinks a:hover{color:var(--hg-green)}
+.hg-nav-actions{display:flex;align-items:center;gap:9px}.hg-link{color:#334155;text-decoration:none;font-size:.85rem;font-weight:700;padding:9px 12px;border-radius:11px}.hg-link:hover{background:#f1f5f9}
+.hg-sos{border:0;border-radius:999px;background:var(--hg-red);color:#fff;padding:10px 16px;font-weight:800;font-size:.82rem;box-shadow:0 7px 18px #dc262635;cursor:pointer}.hg-sos:focus-visible,.hg-cta:focus-visible,.hg-iconbtn:focus-visible,.hg-zonebtn:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}
+.hg-hero{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr);gap:clamp(24px,5vw,72px);align-items:center;padding:clamp(32px,7vw,88px) 0 44px}
+.hg-eyebrow{display:flex;align-items:center;gap:8px;color:var(--hg-green);font-size:.76rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.hg-eyebrow i{font-size:1rem}
+.hg-title{font-size:clamp(2.5rem,5vw,5.35rem);line-height:.98;letter-spacing:-.065em;margin:16px 0 20px;max-width:720px}.hg-title em{font-style:normal;color:var(--hg-green)}
+.hg-copy{font-size:1.05rem;line-height:1.75;color:var(--hg-muted);max-width:550px;margin:0 0 28px}.hg-ctas{display:flex;flex-wrap:wrap;align-items:center;gap:11px}.hg-cta{display:inline-flex;align-items:center;gap:9px;text-decoration:none;border-radius:999px;padding:12px 17px;font-size:.87rem;font-weight:800}.hg-cta.primary{background:var(--hg-green);color:#fff;box-shadow:0 9px 22px #006c3530}.hg-cta.secondary{color:#334155;background:#fff;border:1px solid var(--hg-line)}.hg-cta.secondary:hover{background:#f8fafc}
+.hg-meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:30px;color:var(--hg-muted);font-size:.78rem}.hg-meta strong{color:var(--hg-ink);display:block;font-size:.9rem}
+.hg-stage-wrap{position:relative;min-height:520px}.hg-stage{position:relative;min-height:520px;border:1px solid #dce7e1;border-radius:30px;background:radial-gradient(circle at 45% 38%,#ffffff 0,#f2faf6 38%,#e8f3ed 100%);overflow:hidden;box-shadow:0 22px 50px #164e3b14}
+.hg-stage:before,.hg-stage:after{content:"";position:absolute;border:1px solid #006c3518;border-radius:50%;inset:12% 9%;transform:rotate(-18deg);pointer-events:none}.hg-stage:after{inset:22% 17%;transform:rotate(25deg);border-color:#c5a05938}
+.hg-stage-label{position:absolute;top:18px;left:20px;z-index:4;color:#52635a;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.hg-stage-label span{color:var(--hg-green)}
+.hg-stage-tools{position:absolute;top:15px;right:15px;z-index:5;display:flex;gap:6px}.hg-iconbtn{width:34px;height:34px;border:1px solid #dce7e1;background:#ffffffd9;color:#36544a;border-radius:11px;cursor:pointer}.hg-iconbtn:hover{background:#fff}
+.hg-twin{position:absolute;inset:65px 24px 22px;display:grid;place-items:center;perspective:1100px;overflow:hidden}.hg-twin-inner{width:min(92%,650px);aspect-ratio:1.18;position:relative;transform:rotateX(58deg) rotateZ(-18deg) rotateY(0deg);transform-style:preserve-3d;transition:transform .55s cubic-bezier(.2,.8,.2,1)}
+.hg-ground{position:absolute;inset:8% 3%;border-radius:32% 46% 37% 52%;background:linear-gradient(135deg,#dff2e8,#b9dfca);border:1px solid #9bc8ae;box-shadow:inset -22px -22px 40px #6b9e7a25,0 26px 30px #365c4830;transform:translateZ(-10px)}
+.hg-ground:after{content:"";position:absolute;inset:18%;border:2px solid #fff9;border-radius:48%;box-shadow:0 0 0 26px #ffffff20,0 0 0 52px #ffffff15}
+.hg-zonebtn{position:absolute;transform:translate(-50%,-50%) rotateZ(18deg) rotateX(-58deg);z-index:3;border:1px solid #fff;background:#fff;color:var(--hg-ink);border-radius:999px;padding:8px 11px;box-shadow:0 8px 16px #164e3b24;cursor:pointer;white-space:nowrap;font-size:.72rem;font-weight:800;transition:transform .2s,box-shadow .2s}.hg-zonebtn:hover,.hg-zonebtn[aria-pressed=true]{transform:translate(-50%,-50%) rotateZ(18deg) rotateX(-58deg) scale(1.08);box-shadow:0 0 0 4px #c5a05955,0 10px 22px #164e3b35}.hg-zonebtn[data-status=red]{border-color:#fecaca;background:#fff7f7}.hg-zonebtn[data-status=orange]{border-color:#fde68a;background:#fffbeb}.hg-zonebtn[data-status=green]{border-color:#bbf7d0;background:#f0fdf4}
+.hg-kaaba{position:absolute;left:48%;top:50%;width:82px;height:82px;transform:translate(-50%,-50%) rotateZ(18deg) rotateX(-58deg) translateZ(20px);background:linear-gradient(135deg,#0f172a,#334155);border:7px solid #c5a059;box-shadow:0 20px 25px #0f172a55;z-index:2}.hg-kaaba:after{content:"";position:absolute;left:8px;right:8px;top:24px;border-top:4px solid #c5a059}.hg-path{position:absolute;height:4px;background:linear-gradient(90deg,#006c35,#c5a059);border-radius:999px;transform-origin:left center;opacity:.75;z-index:1;box-shadow:0 0 12px #006c3560}.p1{left:30%;top:61%;width:270px;transform:rotate(-18deg)}.p2{left:47%;top:51%;width:260px;transform:rotate(22deg)}.p3{left:54%;top:50%;width:210px;transform:rotate(-34deg)}
+.hg-panel{position:absolute;right:18px;bottom:18px;z-index:6;width:min(300px,calc(100% - 36px));background:#ffffffee;border:1px solid #dfe9e3;border-radius:19px;padding:16px;box-shadow:0 15px 35px #164e3b22;backdrop-filter:blur(13px)}.hg-panel h3{font-size:1rem;margin:0 0 3px}.hg-panel .sub{font-size:.73rem;color:var(--hg-muted)}.hg-panel-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:13px}.hg-stat{padding:9px;border-radius:12px;background:#f8fafc}.hg-stat small{display:block;color:var(--hg-muted);font-size:.68rem}.hg-stat strong{display:block;font-size:.9rem;margin-top:2px}.hg-panel-actions{display:flex;gap:7px;margin-top:12px}.hg-panel-actions a{flex:1;text-align:center;text-decoration:none;color:var(--hg-green);font-size:.73rem;font-weight:800;border:1px solid #b7dcca;border-radius:9px;padding:8px}.hg-panel-note{font-size:.68rem;color:#64748b;margin-top:10px}
+.hg-section{padding:28px 0}.hg-section-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:16px}.hg-section-head h2{font-size:1.55rem;letter-spacing:-.04em;margin:0}.hg-section-head p{color:var(--hg-muted);font-size:.86rem;margin:5px 0 0}.hg-intel{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.hg-card{border:1px solid var(--hg-line);border-radius:18px;padding:18px;background:#fff;min-height:150px}.hg-card .icon{width:35px;height:35px;border-radius:11px;display:grid;place-items:center;color:var(--hg-green);background:var(--hg-green-soft);margin-bottom:12px}.hg-card h3{margin:0 0 5px;font-size:1rem}.hg-card p{margin:0;color:var(--hg-muted);font-size:.83rem;line-height:1.55}
+.hg-planner{display:grid;grid-template-columns:1.05fr .95fr;gap:15px}.hg-planner-card{border-radius:20px;background:#f8fafc;border:1px solid var(--hg-line);padding:20px}.hg-planner-card h3{font-size:1.05rem;margin:0 0 14px}.hg-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.hg-field label{display:block;color:#64748b;font-size:.7rem;font-weight:800;margin-bottom:5px}.hg-field select{width:100%;border:1px solid #d9e2dd;border-radius:10px;padding:10px;background:#fff;color:#334155;font:inherit;font-size:.82rem}.hg-route-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.hg-route{border:1px solid #dbe7e0;border-radius:11px;background:#fff;padding:10px;font-size:.75rem;color:#475569;cursor:pointer;text-align:left}.hg-route strong{display:block;color:#0f172a;font-size:.8rem;margin-bottom:3px}.hg-route.active{border-color:#006c35;background:#f0fdf4;box-shadow:0 0 0 2px #006c3515}.hg-planner-status{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #dbe5df;font-size:.78rem}.hg-planner-status span{color:#64748b}.hg-mini-map{position:relative;min-height:220px;border-radius:15px;background:linear-gradient(135deg,#e6f4ec,#f8f3e6);overflow:hidden}.hg-mini-map:before,.hg-mini-map:after{content:"";position:absolute;background:#fff;border:2px solid #bdd7c6;height:8px;border-radius:99px;transform:rotate(24deg);left:5%;right:3%;top:44%}.hg-mini-map:after{transform:rotate(-28deg);top:62%;left:23%;right:5%}.hg-mini-map span{position:absolute;z-index:2;border:2px solid #fff;background:#006c35;color:#fff;border-radius:999px;padding:6px 9px;font-size:.66rem;box-shadow:0 5px 10px #164e3b2d}.hg-mini-map .m1{left:21%;top:32%}.hg-mini-map .m2{left:65%;top:52%;background:#c47b00}.hg-mini-map .m3{left:42%;top:72%;background:#475569}
+.hg-disclaimer{margin-top:24px;font-size:.72rem;color:#64748b;display:flex;gap:8px;align-items:flex-start}.hg-disclaimer i{color:var(--hg-gold)}
+@media(max-width:1000px){.hg-hero{grid-template-columns:1fr}.hg-stage-wrap{min-height:480px}.hg-intel{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.hg-shell{padding-inline:14px}.hg-navlinks{display:none}.hg-nav{padding-bottom:14px}.hg-brand{font-size:.92rem}.hg-nav-actions .hg-link{display:none}.hg-hero{padding-top:30px}.hg-stage{min-height:470px}.hg-twin{inset:64px 6px 24px}.hg-panel{right:12px;bottom:12px}.hg-intel,.hg-planner{grid-template-columns:1fr}.hg-route-options{grid-template-columns:1fr}.hg-fields{grid-template-columns:1fr}.hg-section-head{display:block}.hg-section-head a{display:inline-block;margin-top:10px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 </style>
 {% endblock %}
 
 {% block content %}
+<div class="hg-shell">
+  <nav class="hg-nav" aria-label="Primary navigation">
+    <a class="hg-brand" href="{% url 'home' %}"><span class="hg-mark"><i class="bi bi-shield-check"></i></span><span>HajjGuard<small>حارس الحج · pilgrim safety</small></span></a>
+    <div class="hg-navlinks"><a href="#explore">Explore</a><a href="{% url 'zones:live_map' %}">Live safety</a><a href="{% url 'zones:guidance' %}">Guidance</a><a href="{% url 'groups:my_group' %}">My journey</a></div>
+    <div class="hg-nav-actions"><a class="hg-link" href="{% url 'accounts:login' %}">Log in</a><button class="hg-sos" type="button" onclick="openEmergencyModal()"><i class="bi bi-shield-exclamation"></i> Emergency SOS</button></div>
+  </nav>
 
-<!-- 1. FIGMA 'قالب الحج' ASYMMETRIC HERO SECTION -->
-<section class="hero-hajj-template">
-    <div class="container px-3 px-lg-4">
-        <div class="row align-items-center g-5">
-            
-            <!-- Left Column: Authoritative Saudi Typography & Actions -->
-            <div class="col-lg-6">
-                
-                <!-- Live Verification & Weather Pill -->
-                <div class="d-flex align-items-center flex-wrap gap-2 mb-3">
-                    <span class="hero-pill-badge">
-                        <i class="bi bi-shield-check text-success"></i>
-                        <span>{% trans "HAJJGUARD 2026 | حارس الحج الموحد" %}</span>
-                    </span>
-                    {% if weather %}
-                    <span class="hero-pill-badge" style="background-color: #f0f9ff; border-color: #bae6fd; color: #0369a1;">
-                        <i class="bi bi-cloud-sun"></i>
-                        <span>{% trans "مكة المكرمة:" %} {{ weather.temperature }}°C | {{ weather.condition }}</span>
-                    </span>
-                    {% endif %}
-                </div>
-
-                <!-- Main Display Headline (Figma Template Exact Title) -->
-                <h1 class="hero-title-main">
-                    {% trans "خلق رحلة" %}<br>
-                    <span class="text-emerald">{% trans "روحانية خالدة" %}</span>
-                </h1>
-
-                <!-- Subtitle (Figma Template Exact Copy) -->
-                <p class="hero-lead-text">
-                    {% trans "رؤيتنا خلق رحلة روحانية خالدة تفوق تطلعات ضيوف الرحمن عبر أحدث تقنيات الذكاء الاصطناعي، الرصد الهيدروديناميكي ثلاثي الأبعاد، وإدارة التدفق المكاني المتزن بجميع قطاعات المسجد الحرام والمشاعر المقدسة." %}
-                </p>
-
-                <!-- Dual Gateway Action Buttons -->
-                <div class="d-flex align-items-center flex-wrap gap-3 mb-4">
-                    <a href="{% url 'accounts:pilgrim_portal' %}" class="btn btn-dga-primary btn-lg px-4 py-3">
-                        <i class="bi bi-person-badge fs-5"></i>
-                        <span>{% trans "دخول بوابة ضيف الرحمن" %}</span>
-                        <i class="bi bi-arrow-left ms-1"></i>
-                    </a>
-                    <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-dga-outline btn-lg px-4 py-3">
-                        <i class="bi bi-cpu fs-5"></i>
-                        <span>{% trans "غرفة العمليات والتحكم" %}</span>
-                    </a>
-                </div>
-
-                <!-- Trust Badges Row -->
-                <div class="d-flex align-items-center gap-4 pt-2 text-muted small">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-patch-check-fill text-success fs-5"></i>
-                        <span>{% trans "معتمد من وزارة الحج" %}</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-qr-code-scan text-success fs-5"></i>
-                        <span>{% trans "بطاقة نسك الرقمية الموحدة" %}</span>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Right Column: Asymmetric Spiritual Artwork Composition -->
-            <div class="col-lg-6">
-                <div class="hero-visual-frame">
-                    <img src="{% static 'images/haram_aerial.jpg' %}" alt="{% trans 'Al-Masjid Al-Haram Aerial' %}" class="hero-visual-img">
-                    <div class="hero-visual-overlay">
-                        <div>
-                            <span class="badge bg-warning text-dark fw-bold mb-2">{% trans "بث مباشر وتليمترية لحظية" %}</span>
-                            <h4 class="fw-bold mb-1 text-white">{% trans "المسجد الحرام وصحن المطاف" %}</h4>
-                            <p class="small text-white-50 mb-0">{% trans "تحديث تجريبي لمعدل التدفق والكثافة — الدقة الميدانية غير مقاسة" %}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+  <section class="hg-hero" id="explore">
+    <div>
+      <div class="hg-eyebrow"><i class="bi bi-compass"></i> HajjGuard exploration view</div>
+      <h1 class="hg-title">A safer journey through <em>Makkah</em>.</h1>
+      <p class="hg-copy">Explore Holy Site zones, understand crowd pressure before you move, and stay connected to the people travelling with you.</p>
+      <div class="hg-ctas"><a class="hg-cta primary" href="{% url 'zones:live_map' %}">Explore Holy Sites <i class="bi bi-arrow-up-right"></i></a><a class="hg-cta secondary" href="{% url 'accounts:register' %}">Start a journey</a></div>
+      <div class="hg-meta"><span><strong>7</strong> Holy Site zones</span><span><strong>20 min</strong> forecast horizon</span><span><strong>24/7</strong> emergency access</span></div>
     </div>
-</section>
-
-<!-- 2. INTERACTIVE HARAM AERIAL EXPLORER & REAL-TIME HEADCOUNT SECTION -->
-<section class="py-5" style="background-color: #ffffff;">
-    <div class="container px-3 px-lg-4">
-        
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-            <div>
-                <span class="text-success fw-bold small text-uppercase">{% trans "الرصد المكاني الهيدروديناميكي" %}</span>
-                <h2 class="fw-bold text-dark mb-1">{% trans "المستكشف التفاعلي للمسجد الحرام وقطاعاته السبعة" %}</h2>
-                <p class="text-muted small mb-0">
-                    {% trans "انقر فوق أي قطاع بالصورة الجوية لاستعراض الكثافة الآنية، عدد الرؤوس، ومطابقة الرؤية الحاسوبية من المآذن." %}
-                </p>
-            </div>
-            <div class="d-flex align-items-center gap-2">
-                <div class="badge bg-success bg-opacity-10 text-success p-2 px-3 rounded-pill fw-bold border border-success">
-                    <i class="bi bi-people-fill me-1"></i> {% trans "إجمالي المتواجدين:" %} <strong>{{ total_headcount|default:"132,450" }}</strong> {% trans "حاج" %}
-                </div>
-                <button type="button" class="btn btn-dga-outline btn-sm" onclick="resetExplorerZoom()">
-                    <i class="bi bi-arrows-fullscreen"></i> {% trans "إعادة ضبط العرض" %}
-                </button>
-            </div>
-        </div>
-
-        <!-- The Photo Explorer Card with Hotspots -->
-        <div class="haram-explorer-card mb-4">
-            <div class="haram-photo-viewport" id="haramViewport">
-                <img src="{% static 'images/haram_aerial.jpg' %}" alt="Haram Aerial Precision Telemetry" class="haram-photo-img" id="haramAerialImg">
-
-                <!-- 7 Precision Telemetry Hotspot Pins -->
-                {% for sec in sections %}
-                <div class="hotspot-pin {% if sec.status_color == 'red' %}hotspot-pin-red{% elif sec.status_color == 'orange' %}hotspot-pin-orange{% else %}hotspot-pin-green{% endif %}"
-                     style="top: {{ sec.ui_top|default:'50' }}%; left: {{ sec.ui_left|default:'50' }}%;"
-                     onclick="inspectSectionFromPin('{{ sec.code }}')"
-                     title="{{ sec.name_ar }}">
-                    <div class="hotspot-badge">
-                        <span class="pulse-ring"></span>
-                        <i class="bi bi-circle-fill fs-6"></i>
-                        <span>{{ sec.name_ar }}</span>
-                        <span class="opacity-75">({{ sec.congestion_pct }}%)</span>
-                    </div>
-                </div>
-                {% empty %}
-                <!-- Fallback interactive pins if empty -->
-                <div class="hotspot-pin hotspot-pin-green" style="top: 50%; left: 50%;" onclick="inspectFallbackSection('صحن المطاف', 88, '18,500')">
-                    <div class="hotspot-badge">
-                        <span class="pulse-ring"></span>
-                        <i class="bi bi-circle-fill"></i> صحن المطاف (88%)
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Synchronized Quick Selector Grid Below Photo -->
-            <div class="p-3 bg-light border-top">
-                <div class="row g-2">
-                    {% for sec in sections %}
-                    <div class="col-lg col-md-4 col-6">
-                        <div class="sector-quick-card text-center" onclick="inspectSectionFromPin('{{ sec.code }}')">
-                            <div class="fw-bold text-dark small mb-1">{{ sec.name_ar }}</div>
-                            <div class="badge {% if sec.status_color == 'red' %}bg-danger{% elif sec.status_color == 'orange' %}bg-warning text-dark{% else %}bg-success{% endif %} rounded-pill px-2 py-1">
-                                {{ sec.congestion_pct }}% {% trans "كثافة" %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
-
+    <div class="hg-stage-wrap" aria-label="Interactive Holy Sites digital twin">
+      <div class="hg-stage" id="hg-stage">
+        <div class="hg-stage-label"><span>Explore</span> · Holy Sites digital twin · Simulation Mode</div>
+        <div class="hg-stage-tools"><button class="hg-iconbtn" type="button" aria-label="Rotate model left" onclick="rotateTwin(-12)"><i class="bi bi-arrow-counterclockwise"></i></button><button class="hg-iconbtn" type="button" aria-label="Rotate model right" onclick="rotateTwin(12)"><i class="bi bi-arrow-clockwise"></i></button><button class="hg-iconbtn" type="button" aria-label="Reset model" onclick="resetTwin()"><i class="bi bi-aspect-ratio"></i></button></div>
+        <div class="hg-twin"><div class="hg-twin-inner" id="hg-twin-inner"><div class="hg-ground"></div><div class="hg-kaaba" aria-label="Kaaba area"></div><div class="hg-path p1"></div><div class="hg-path p2"></div><div class="hg-path p3"></div>{% for section in sections %}<button class="hg-zonebtn" data-code="{{ section.code }}" data-status="{{ section.status_color|default:'green' }}" style="left:{% cycle '25%' '66%' '76%' '37%' '23%' '58%' '47%' %};top:{% cycle '43%' '34%' '62%' '73%' '26%' '78%' '52%' %}" onclick="selectZone('{{ section.code|escapejs }}')" aria-pressed="false">{{ section.name_en|default:section.code }}</button>{% endfor %}</div></div>
+        <aside class="hg-panel" id="hg-panel" aria-live="polite"><h3 id="hg-panel-title">Masjid al-Haram</h3><div class="sub" id="hg-panel-sub">Select a zone to inspect its current picture</div><div class="hg-panel-grid"><div class="hg-stat"><small>Crowd status</small><strong id="hg-status">Select a zone</strong></div><div class="hg-stat"><small>Density</small><strong id="hg-density">--</strong></div><div class="hg-stat"><small>20-minute view</small><strong id="hg-prediction">--</strong></div><div class="hg-stat"><small>Risk score</small><strong id="hg-risk">--</strong></div></div><div class="hg-panel-actions"><a href="{% url 'zones:live_map' %}">Open live map</a><a href="{% url 'zones:guidance' %}">Plan route</a></div><div class="hg-panel-note"><i class="bi bi-info-circle"></i> Data is local or simulated unless a source is shown.</div></aside>
+      </div>
     </div>
-</section>
+  </section>
 
-<!-- 3. FIGMA 'قسم من نحن' (4 CIRCULAR MINT METRIC CARDS) -->
-<section class="py-5" style="background-color: #F8FAFC; border-bottom: 1px solid var(--dga-border);">
-    <div class="container px-3 px-lg-4">
-        
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
-            <div>
-                <span class="text-success fw-bold small text-uppercase">{% trans "الريادة الوطنية في سلامة الحشود" %}</span>
-                <h2 class="fw-bold text-dark mb-1">{% trans "قسم من نحن" %}</h2>
-                <p class="text-muted small mb-0">
-                    {% trans "هنا يمكنك الاطلاع على مؤشرات الأداء الحيوية في إدارة الحشود وتطبيق أحدث نماذج التنبؤ والاتزان المكاني الصادرة عن كود المنصات." %}
-                </p>
-            </div>
-            <a href="{% url 'analytics:reports' %}" class="btn btn-dga-outline">
-                <i class="bi bi-file-earmark-bar-graph"></i>
-                <span>{% trans "إبراء ذمة / التحقق الإحصائي" %}</span>
-            </a>
-        </div>
+  <section class="hg-section" aria-labelledby="intel-title"><div class="hg-section-head"><div><h2 id="intel-title">Intelligence that helps you decide</h2><p>Three simple answers before you move.</p></div><a class="hg-link" href="{% url 'zones:live_map' %}">View live safety <i class="bi bi-arrow-up-right"></i></a></div><div class="hg-intel"><article class="hg-card"><div class="icon"><i class="bi bi-graph-up-arrow"></i></div><h3>Predict</h3><p>See current zone conditions and the next 20-minute direction before you arrive.</p></article><article class="hg-card"><div class="icon"><i class="bi bi-sign-turn-right"></i></div><h3>Guide</h3><p>Compare a faster, cooler, less-crowded, or wheelchair-friendly journey.</p></article><article class="hg-card"><div class="icon"><i class="bi bi-people"></i></div><h3>Protect</h3><p>Keep your group connected with consent-based sharing and drift alerts.</p></article></div></section>
 
-        <div class="row g-4">
-            
-            <div class="col-lg-3 col-sm-6">
-                <div class="metric-card-dga">
-                    <div class="metric-icon-circle">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div class="metric-counter">{% trans "غير مقاس" %}</div>
-                    <div class="metric-label">{% trans "ضيف رُحمن مشمول بالرعاية الذكية" %}</div>
-                </div>
-            </div>
+  <section class="hg-section" aria-labelledby="planner-title"><div class="hg-section-head"><div><h2 id="planner-title">Plan your next transfer</h2><p>Choose what matters most for your journey.</p></div></div><div class="hg-planner"><div class="hg-planner-card"><h3>Journey preferences</h3><div class="hg-fields"><div class="hg-field"><label for="hg-from">Starting point</label><select id="hg-from"><option>Mina</option><option>Masjid al-Haram</option><option>Arafat</option><option>Muzdalifah</option></select></div><div class="hg-field"><label for="hg-to">Destination</label><select id="hg-to"><option>Jamarat Bridge</option><option>Masjid al-Haram</option><option>Mina</option><option>Arafat</option></select></div></div><div class="hg-route-options" role="group" aria-label="Route priority"><button class="hg-route active" type="button" onclick="chooseRoute(this)"><strong>Less crowded</strong>Spread the load</button><button class="hg-route" type="button" onclick="chooseRoute(this)"><strong>Cooler route</strong>Reduce heat</button><button class="hg-route" type="button" onclick="chooseRoute(this)"><strong>Accessible</strong>Wheelchair friendly</button></div><div class="hg-planner-status"><span id="hg-route-status">Suggested route uses local zone data.</span><a class="hg-cta primary" href="{% url 'zones:guidance' %}">Generate journey <i class="bi bi-arrow-up-right"></i></a></div></div><div class="hg-planner-card"><h3>Journey preview</h3><div class="hg-mini-map" aria-label="Illustrated journey preview"><span class="m1">Mina</span><span class="m2">Jamarat</span><span class="m3">Alternative</span></div></div></div></section>
 
-            <div class="col-lg-3 col-sm-6">
-                <div class="metric-card-dga">
-                    <div class="metric-icon-circle">
-                        <i class="bi bi-bullseye"></i>
-                    </div>
-                    <div class="metric-counter">{% trans "غير مقاس" %}</div>
-                    <div class="metric-label">{% trans "دقة الرصد والاتزان المكاني" %}</div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-sm-6">
-                <div class="metric-card-dga">
-                    <div class="metric-icon-circle">
-                        <i class="bi bi-lightning-charge-fill"></i>
-                    </div>
-                    <div class="metric-counter">{% trans "غير مقاس" %}</div>
-                    <div class="metric-label">{% trans "زمن استجابة وتوجيه الطوارئ" %}</div>
-                </div>
-            </div>
-
-            <div class="col-lg-3 col-sm-6">
-                <div class="metric-card-dga">
-                    <div class="metric-icon-circle">
-                        <i class="bi bi-grid-3x3-gap-fill"></i>
-                    </div>
-                    <div class="metric-counter">7</div>
-                    <div class="metric-label">{% trans "قطاعات مراقبة لحظية بالحرم" %}</div>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</section>
-
-<!-- 4. FIGMA 'قسم الخدمات' (6 STANDARDIZED ACTION CARDS) -->
-<section class="py-5" style="background-color: #ffffff;">
-    <div class="container px-3 px-lg-4">
-        
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-5">
-            <div>
-                <span class="text-success fw-bold small text-uppercase">{% trans "المنظومة الرقمية الشاملة" %}</span>
-                <h2 class="fw-bold text-dark mb-1">{% trans "قسم الخدمات" %}</h2>
-                <p class="text-muted small mb-0">
-                    {% trans "Independent academic safety tools for pilgrims and group leaders, using clearly labelled prototype data." %}
-                </p>
-            </div>
-            <a href="{% url 'accounts:pilgrim_portal' %}" class="btn btn-dga-outline">
-                <i class="bi bi-grid"></i>
-                <span>{% trans "عرض الكل" %}</span>
-            </a>
-        </div>
-
-        <div class="row g-4">
-            
-            <!-- Service 1: Pilgrim Smart Portal -->
-            <div class="col-lg-4 col-md-6">
-                <a href="{% url 'accounts:pilgrim_portal' %}" class="service-card-dga">
-                    <div>
-                        <div class="service-icon-box">
-                            <i class="bi bi-person-badge-fill"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{% trans "بوابة ضيف الرحمن الذكية" %}</h5>
-                        <p class="text-muted small mb-4">
-                            {% trans "لوحة القيادة الشخصية للحاج: متابعة مراحل المناسك اللحظية، جدول التفويج، وإرشادات الطواف والسعي." %}
-                        </p>
-                    </div>
-                    <div class="d-flex align-items-center text-success fw-bold small">
-                        <span>{% trans "دخول البوابة" %}</span>
-                        <i class="bi bi-arrow-left ms-2"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Service 2: Digital Smart Nusuk Card -->
-            <div class="col-lg-4 col-md-6">
-                <a href="{% url 'nusuk:digital_card' %}" class="service-card-dga">
-                    <div>
-                        <div class="service-icon-box">
-                            <i class="bi bi-person-vcard-fill"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{% trans "بطاقة نسك الرقمية (Smart ID)" %}</h5>
-                        <p class="text-muted small mb-4">
-                            {% trans "A local HajjGuard safety card with an encrypted QR token and emergency information. It is not an official permit." %}
-                        </p>
-                    </div>
-                    <div class="d-flex align-items-center text-success fw-bold small">
-                        <span>{% trans "استعراض البطاقة" %}</span>
-                        <i class="bi bi-arrow-left ms-2"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Service 3: Nusuk AI Ritual Copilot -->
-            <div class="col-lg-4 col-md-6">
-                <a href="javascript:void(0)" onclick="openNusukAiDrawer()" class="service-card-dga">
-                    <div>
-                        <div class="service-icon-box">
-                            <i class="bi bi-chat-quote-fill"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{% trans "المساعد الشرعي الذكي (Nusuk AI)" %}</h5>
-                        <p class="text-muted small mb-4">
-                            {% trans "An informational ritual assistant that provides source-labelled guidance and encourages consultation with a qualified scholar." %}
-                        </p>
-                    </div>
-                    <div class="d-flex align-items-center text-success fw-bold small">
-                        <span>{% trans "بدء المحادثة" %}</span>
-                        <i class="bi bi-arrow-left ms-2"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Service 4: Interactive Live Map -->
-            <div class="col-lg-4 col-md-6">
-                <a href="{% url 'zones:live_map' %}" class="service-card-dga">
-                    <div>
-                        <div class="service-icon-box">
-                            <i class="bi bi-map-fill"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{% trans "الخريطة المباشرة وتجنب الحشود" %}</h5>
-                        <p class="text-muted small mb-4">
-                            {% trans "خريطة جغرافية حرارية ترصد كثافات صحن المطاف، المسعى، وجسور الجمرات لتوجيه ضيوف الرحمن نحو المسارات الأقل ازدحاماً." %}
-                        </p>
-                    </div>
-                    <div class="d-flex align-items-center text-success fw-bold small">
-                        <span>{% trans "فتح الخريطة" %}</span>
-                        <i class="bi bi-arrow-left ms-2"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Service 5: Group Roster & Lost Radar -->
-            <div class="col-lg-4 col-md-6">
-                <a href="{% url 'groups:my_group' %}" class="service-card-dga">
-                    <div>
-                        <div class="service-icon-box">
-                            <i class="bi bi-radar"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{% trans "فوج الحاج ورادار المفقودين" %}</h5>
-                        <p class="text-muted small mb-4">
-                            {% trans "رادار ذكي يربط الحاج بمطوفه وأعضاء فوجه، مع إطلاق تنبيه فوري عند تخطي مسافة الأمان وطلب المساعدة الميدانية." %}
-                        </p>
-                    </div>
-                    <div class="d-flex align-items-center text-success fw-bold small">
-                        <span>{% trans "متابعة الفوج" %}</span>
-                        <i class="bi bi-arrow-left ms-2"></i>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Service 6: Operations Tactical Center -->
-            <div class="col-lg-4 col-md-6">
-                <a href="{% url 'safety:operations_dashboard' %}" class="service-card-dga">
-                    <div>
-                        <div class="service-icon-box">
-                            <i class="bi bi-shield-lock-fill"></i>
-                        </div>
-                        <h5 class="fw-bold text-dark mb-2">{% trans "مركز العمليات والتحكم التكتيكي" %}</h5>
-                        <p class="text-muted small mb-4">
-                            {% trans "غرفة قيادة أمنية متكاملة لفرق الدفاع المدني وإدارة الحشود: مؤشرات التدفق، مصفوفة المخاطر، وتوجيه فرق الإسعاف." %}
-                        </p>
-                    </div>
-                    <div class="d-flex align-items-center text-success fw-bold small">
-                        <span>{% trans "لوحة القيادة التكتيكية" %}</span>
-                        <i class="bi bi-arrow-left ms-2"></i>
-                    </div>
-                </a>
-            </div>
-
-        </div>
-
-    </div>
-</section>
-
-<!-- 5. REAL-TIME SECTOR TELEMETRY INSPECTOR MODAL -->
-<div class="modal fade" id="telemetryModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content rounded-4 border-0 shadow-lg">
-            <div class="modal-header border-0 py-3 bg-success text-white">
-                <h5 class="modal-title fw-bold d-flex align-items-center gap-2" id="modalSectionTitle">
-                    <i class="bi bi-building"></i>
-                    <span>{% trans "تليمترية القطاع اللحظية" %}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                
-                <div class="row g-4 mb-4">
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3 border">
-                            <span class="text-muted small d-block mb-1">{% trans "معادلة اتزان التدفق اللحظي (Conservation of Flow)" %}</span>
-                            <div class="fs-4 fw-bold text-dark mb-1" id="modalHeadcountDisplay">0 {% trans "حاج" %}</div>
-                            <div class="small text-success fw-bold" id="modalFlowEquation">ΔN = (Qin - Qout) × Δt</div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="p-3 bg-light rounded-3 border">
-                            <span class="text-muted small d-block mb-1">{% trans "مستوى الإشغال وحالة الكثافة" %}</span>
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <span class="fs-4 fw-bold" id="modalCongestionText">0%</span>
-                                <span class="badge bg-success rounded-pill px-3 py-1" id="modalStatusBadge">{% trans "آمن ومستقر" %}</span>
-                            </div>
-                            <div class="progress" style="height: 8px;">
-                                <div class="progress-bar bg-success" id="modalProgressBar" style="width: 0%;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Secondary details: Minaret Cross Validation & Sensor State -->
-                <div class="p-3 rounded-3 border bg-white mb-3">
-                    <div class="row g-3 small">
-                        <div class="col-sm-4">
-                            <div class="text-muted">{% trans "كاميرات المآذن (FIDTM):" %}</div>
-                            <div class="fw-bold text-success" id="modalMinaretStatus">{% trans "مطابقة بنسبة 99.4%" %}</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted">{% trans "أبواب الدخول / الخروج:" %}</div>
-                            <div class="fw-bold text-dark" id="modalGateStatus">{% trans "مفتوحة بانسيابية" %}</div>
-                        </div>
-                        <div class="col-sm-4">
-                            <div class="text-muted">{% trans "توصية التفويج الذكي:" %}</div>
-                            <div class="fw-bold text-primary" id="modalGuidanceTip">{% trans "مسار متاح وآمن" %}</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2">
-                    <a href="{% url 'zones:live_map' %}" class="btn btn-dga-outline btn-sm">
-                        <i class="bi bi-map"></i> {% trans "عرض على الخريطة التفاعلية" %}
-                    </a>
-                    <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-dga-primary btn-sm">
-                        <i class="bi bi-speedometer2"></i> {% trans "تفاصيل التحكم التكتيكي" %}
-                    </a>
-                </div>
-
-            </div>
-        </div>
-    </div>
+  <p class="hg-disclaimer"><i class="bi bi-info-circle"></i><span>HajjGuard is an independent academic safety prototype. It does not claim official government, Nusuk, CCTV, or emergency-service integration. Emergency call links are user-confirmed.</span></p>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // JSON Telemetry Matrix from Django Sectional Engine
-    const SECTIONS_DATA = {{ sections_json|safe|default:"[]" }};
-
-    function inspectSectionFromPin(code) {
-        const sec = SECTIONS_DATA.find(s => s.code === code);
-        if (!sec) return;
-
-        document.getElementById('modalSectionTitle').innerHTML = '<i class="bi bi-geo-alt-fill text-white"></i> ' + sec.name_ar + ' (' + sec.code + ')';
-        document.getElementById('modalHeadcountDisplay').innerText = Number(sec.headcount).toLocaleString() + ' {% trans "حاج" %}';
-        document.getElementById('modalFlowEquation').innerText = 'ΔN = (' + sec.inflow_rate + ' in - ' + sec.outflow_rate + ' out) p/s';
-        document.getElementById('modalCongestionText').innerText = sec.congestion_pct + '%';
-        
-        const badge = document.getElementById('modalStatusBadge');
-        const pbar = document.getElementById('modalProgressBar');
-        
-        pbar.style.width = sec.congestion_pct + '%';
-        if (sec.status_color === 'red') {
-            badge.className = 'badge bg-danger rounded-pill px-3 py-1';
-            badge.innerText = '{% trans "ازدحام حرج - تحويل مسارات" %}';
-            pbar.className = 'progress-bar bg-danger';
-        } else if (sec.status_color === 'orange') {
-            badge.className = 'badge bg-warning text-dark rounded-pill px-3 py-1';
-            badge.innerText = '{% trans "كثافة متوسطة - تفويج منظم" %}';
-            pbar.className = 'progress-bar bg-warning';
-        } else {
-            badge.className = 'badge bg-success rounded-pill px-3 py-1';
-            badge.innerText = '{% trans "انسيابية تامة" %}';
-            pbar.className = 'progress-bar bg-success';
-        }
-
-        const modal = new bootstrap.Modal(document.getElementById('telemetryModal'));
-        modal.show();
-    }
-
-    function inspectFallbackSection(name, pct, count) {
-        document.getElementById('modalSectionTitle').innerHTML = '<i class="bi bi-geo-alt-fill text-white"></i> ' + name;
-        document.getElementById('modalHeadcountDisplay').innerText = count + ' {% trans "حاج" %}';
-        document.getElementById('modalCongestionText').innerText = pct + '%';
-        const modal = new bootstrap.Modal(document.getElementById('telemetryModal'));
-        modal.show();
-    }
-
-    function resetExplorerZoom() {
-        const img = document.getElementById('haramAerialImg');
-        if (img) {
-            img.style.transform = 'scale(1)';
-        }
-    }
+const HG_SECTIONS={{ sections_json|safe|default:'[]' }};
+let hgRotation=0;
+function rotateTwin(delta){hgRotation+=delta;document.getElementById('hg-twin-inner').style.transform=`rotateX(58deg) rotateZ(${hgRotation-18}deg)`}
+function resetTwin(){hgRotation=0;document.getElementById('hg-twin-inner').style.transform='rotateX(58deg) rotateZ(-18deg)';}
+function displayStatus(s){const pct=Number(s?.congestion_pct??s?.occupancy_pct??0);return pct>=100?'CRITICAL':pct>=70?'HIGH':pct>=40?'MODERATE':'LOW'}
+function selectZone(code){const s=HG_SECTIONS.find(x=>x.code===code);if(!s)return;document.querySelectorAll('.hg-zonebtn').forEach(b=>b.setAttribute('aria-pressed',b.dataset.code===code?'true':'false'));document.getElementById('hg-panel-title').textContent=s.name_en||s.name||s.code;document.getElementById('hg-panel-sub').textContent=s.name_ar||'Holy Site zone';document.getElementById('hg-status').textContent=displayStatus(s);document.getElementById('hg-density').textContent=(s.density??s.congestion_pct??'--')+(s.density?' people/m²':'%');document.getElementById('hg-prediction').textContent=s.predicted_density??s.prediction??'Not measured';document.getElementById('hg-risk').textContent=s.risk_score??'Not measured';}
+function chooseRoute(btn){document.querySelectorAll('.hg-route').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById('hg-route-status').textContent=`Priority selected: ${btn.querySelector('strong').textContent}. Route remains a local recommendation.`;}
+if(HG_SECTIONS.length)selectZone(HG_SECTIONS[0].code);
 </script>
 {% endblock %}

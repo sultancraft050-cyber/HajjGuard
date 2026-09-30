@@ -158,33 +158,21 @@ class InteractiveUIOverhaulTests(TestCase):
 
     # 2. WINDOW 2: Public Landing Page (home.html)
     def test_public_landing_hajj_template(self):
-        """Verifies Figma 'قالب الحج' hero, interactive aerial Haram explorer, and metric cards."""
+        """Verifies the HajjGuard exploration landing experience and safety disclaimers."""
         res = self.client.get(reverse('home'))
         self.assertEqual(res.status_code, 200)
         content = res.content.decode('utf-8')
 
-        # Check Asymmetric Hero & Exact Figma Typography
-        self.assertIn("خلق رحلة", content)
-        self.assertIn("روحانية خالدة", content)
-        self.assertIn("رؤيتنا خلق رحلة روحانية خالدة", content)
-
-        # Check Interactive Aerial Haram Explorer & Photo
-        self.assertIn("haram_aerial.jpg", content)
-        self.assertIn("haram-photo-viewport", content)
-        self.assertIn("hotspot-pin", content)
-        self.assertIn("telemetryModal", content)
-        self.assertIn("ΔN = (Qin - Qout) × Δt", content)
-
-        # Check 'قسم من نحن' (4 circular mint metric cards)
-        self.assertIn("قسم من نحن", content)
-        self.assertIn("غير مقاس", content)
-        self.assertIn("7", content)
-
-        # Check 'قسم الخدمات' (Standardized service cards)
-        self.assertIn("قسم الخدمات", content)
-        self.assertIn("بوابة ضيف الرحمن الذكية", content)
-        self.assertIn("HajjGuard", content)
-        self.assertIn("المساعد الشرعي الذكي", content)
+        self.assertIn("A safer journey through", content)
+        self.assertIn("hg-stage", content)
+        self.assertIn("Holy Sites digital twin", content)
+        self.assertIn("Simulation Mode", content)
+        self.assertIn("selectZone", content)
+        self.assertIn("Intelligence that helps you decide", content)
+        self.assertIn("Plan your next transfer", content)
+        self.assertIn("Emergency SOS", content)
+        self.assertIn("does not claim official government", content)
+        self.assertNotIn("haram_aerial.jpg", content)
 
     # 3. WINDOW 3: Pilgrim Smart Portal (pilgrim_portal.html)
     def test_pilgrim_portal_window(self):
