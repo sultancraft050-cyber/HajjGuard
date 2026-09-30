@@ -14,6 +14,7 @@ let raycaster;
 let pointer;
 let selected;
 let frame;
+let contentRoot;
 
 function statusColor(status) {
     return { RED: 0xdc2626, ORANGE: 0xc47b00, GREEN: 0x475569 }[status] || 0x94a3b8;
@@ -34,8 +35,23 @@ function addBox(parent, x, y, z, width, height, depth, color = 0xe5e7eb) {
         new THREE.MeshStandardMaterial({ color, roughness: 0.82, metalness: 0.03 })
     );
     mesh.position.set(x, y, z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
     parent.add(mesh);
     return mesh;
+}
+
+function addDome(parent, x, y, z, radius, height, color) {
+    const dome = new THREE.Mesh(
+        new THREE.ConeGeometry(radius, height, 24),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.9 })
+    );
+    dome.position.set(x, y, z);
+    dome.rotation.y = Math.PI / 4;
+    dome.castShadow = true;
+    dome.receiveShadow = true;
+    parent.add(dome);
+    return dome;
 }
 
 function addHolySiteMasses(parent) {
@@ -62,7 +78,12 @@ function addHolySiteMasses(parent) {
             new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 0.7 })
         );
         minaret.position.set(x, 36, z);
+        minaret.castShadow = true;
         haram.add(minaret);
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(7, 16, 8), new THREE.MeshStandardMaterial({ color: 0xc5a059, metalness: 0.5, roughness: 0.4 }));
+        cap.scale.y = 0.55;
+        cap.position.set(x, 74, z);
+        haram.add(cap);
     }
     for (let i = 0; i < 14; i += 1) {
         const angle = (i / 14) * Math.PI * 2;
@@ -74,12 +95,12 @@ function addHolySiteMasses(parent) {
     const mina = new THREE.Group();
     mina.position.set(330, 0, 35);
     parent.add(mina);
-    for (let row = 0; row < 4; row += 1) {
-        for (let col = 0; col < 8; col += 1) {
-            const tent = addBox(mina, col * 22 - 77, 7, row * 20 - 30, 16, 13, 13, 0xcbd5e1);
-            tent.rotation.y = Math.PI / 4;
+    for (let row = 0; row < 5; row += 1) {
+        for (let col = 0; col < 10; col += 1) {
+            addDome(mina, col * 20 - 90, 10, row * 18 - 36, 9, 15, row % 2 ? 0xdbe3ea : 0xcbd5e1);
         }
     }
+    addBox(mina, 0, 3, 63, 230, 6, 7, 0x94a3b8);
 
     const jamarat = new THREE.Group();
     jamarat.position.set(400, 0, -170);
@@ -87,29 +108,40 @@ function addHolySiteMasses(parent) {
     [-35, 0, 35].forEach((x) => {
         addBox(jamarat, x, 20, 0, 16, 40, 48, 0x9ca3af);
         addBox(jamarat, x, 44, 0, 26, 6, 58, 0x475569);
+        addBox(jamarat, x, 4, -34, 22, 8, 12, 0xcbd5e1);
     });
+    addBox(jamarat, 0, 3, 52, 150, 6, 14, 0x64748b);
 
     const arafat = new THREE.Group();
     arafat.position.set(-80, 0, 320);
     parent.add(arafat);
-    addBox(arafat, 0, 5, 0, 230, 10, 150, 0xd1d5db);
-    addBox(arafat, 0, 25, -15, 30, 40, 30, 0x94a3b8);
+    addBox(arafat, 0, 5, 0, 260, 10, 170, 0xd1d5db);
+    addBox(arafat, 0, 25, -15, 36, 40, 36, 0x94a3b8);
+    addBox(arafat, 0, 46, -15, 70, 8, 70, 0x64748b);
+    for (let row = 0; row < 3; row += 1) {
+        for (let col = 0; col < 8; col += 1) addDome(arafat, col * 28 - 98, 10, row * 30 + 22, 8, 13, 0xe2e8f0);
+    }
 
     const muzdalifah = new THREE.Group();
     muzdalifah.position.set(170, 0, 230);
     parent.add(muzdalifah);
-    addBox(muzdalifah, 0, 3, 0, 180, 6, 110, 0xe5e7eb);
+    addBox(muzdalifah, 0, 3, 0, 210, 6, 130, 0xe5e7eb);
+    for (let row = 0; row < 3; row += 1) {
+        for (let col = 0; col < 8; col += 1) addBox(muzdalifah, col * 24 - 84, 7, row * 30 - 35, 14, 8, 10, 0xcbd5e1);
+    }
 }
 
 function buildScene(data) {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xeef2f5);
-    scene.fog = new THREE.Fog(0xeef2f5, 900, 1900);
+    scene.background = new THREE.Color(0xdfe5eb);
+    scene.fog = new THREE.Fog(0xdfe5eb, 1050, 2200);
     camera = new THREE.PerspectiveCamera(42, 1, 1, 3000);
     camera.position.set(720, 580, 820);
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 0, 60);
     controls.enableDamping = true;
@@ -120,25 +152,30 @@ function buildScene(data) {
     raycaster = new THREE.Raycaster();
     pointer = new THREE.Vector2();
 
-    scene.add(new THREE.HemisphereLight(0xffffff, 0xcbd5e1, 2.2));
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x64748b, 2.1));
     const sun = new THREE.DirectionalLight(0xffffff, 2.4);
     sun.position.set(500, 900, 300);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(1024, 1024);
     scene.add(sun);
     const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(1800, 1800),
-        new THREE.MeshStandardMaterial({ color: 0xd1d5db, roughness: 0.95 })
+        new THREE.MeshStandardMaterial({ color: 0xbcc6d1, roughness: 0.95 })
     );
     ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
     scene.add(ground);
-    const grid = new THREE.GridHelper(1500, 30, 0x9ca3af, 0xcbd5e1);
+    const grid = new THREE.GridHelper(1800, 36, 0x64748b, 0xaeb9c5);
     grid.position.y = 1;
     scene.add(grid);
 
+    contentRoot = new THREE.Group();
+    scene.add(contentRoot);
     const masses = new THREE.Group();
     addHolySiteMasses(masses);
-    scene.add(masses);
+    contentRoot.add(masses);
     const zoneGroup = new THREE.Group();
-    scene.add(zoneGroup);
+    contentRoot.add(zoneGroup);
     const zoneMeshes = [];
     data.zones.forEach((zone) => {
         const p = project(zone.center_lat, zone.center_lng);
@@ -164,7 +201,7 @@ function buildScene(data) {
         const points = [new THREE.Vector3(from.x, 4, from.z), new THREE.Vector3(to.x, 4, to.z)];
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
         const line = new THREE.Line(geometry, new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.65 }));
-        scene.add(line);
+        contentRoot.add(line);
     });
     stage.dataset.zoneMeshes = 'ready';
     canvas.addEventListener('pointerdown', () => { canvas.dataset.dragging = 'true'; });
@@ -180,7 +217,23 @@ function buildScene(data) {
     renderZoneList(data.zones);
     if (data.zones.length) selectZone(data.zones[0].code);
     resize();
+    fitCameraToContent();
     animate();
+}
+
+function fitCameraToContent() {
+    if (!contentRoot || !camera || !controls) return;
+    const bounds = new THREE.Box3().setFromObject(contentRoot);
+    const center = bounds.getCenter(new THREE.Vector3());
+    const size = bounds.getSize(new THREE.Vector3());
+    const span = Math.max(size.x, size.y, size.z, 500);
+    const distance = Math.min(1550, Math.max(620, span * 1.08));
+    controls.target.copy(center).setY(0);
+    camera.position.set(center.x + distance * 0.78, distance * 0.66, center.z + distance * 0.82);
+    camera.near = Math.max(0.5, distance / 2000);
+    camera.far = Math.max(3000, distance * 4);
+    camera.updateProjectionMatrix();
+    controls.update();
 }
 
 function renderZoneList(items) {
@@ -235,16 +288,10 @@ function showFallback() {
 }
 
 window.resetTwin = () => {
-    if (!camera || !controls) return;
-    camera.position.set(860, 720, 980);
-    controls.target.set(0, 0, 60);
-    controls.update();
+    fitCameraToContent();
 };
 window.fitTwin = () => {
-    if (!camera || !controls) return;
-    camera.position.set(900, 760, 900);
-    controls.target.set(0, 0, 60);
-    controls.update();
+    fitCameraToContent();
 };
 window.selectZone = selectZone;
 window.addEventListener('resize', resize);
