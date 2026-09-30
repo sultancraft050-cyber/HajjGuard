@@ -58,6 +58,29 @@ function addDome(parent, x, y, z, radius, height, color) {
     return dome;
 }
 
+function addSiteLabel(parent, text, x, y, z) {
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width = 512;
+    labelCanvas.height = 96;
+    const context = labelCanvas.getContext('2d');
+    context.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    if (typeof context.roundRect === 'function') context.roundRect(4, 4, 504, 88, 18);
+    else context.rect(4, 4, 504, 88);
+    context.fill();
+    context.font = '700 34px Arial, sans-serif';
+    context.fillStyle = '#ffffff';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, 256, 48);
+    const texture = new THREE.CanvasTexture(labelCanvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false }));
+    sprite.position.set(x, y, z);
+    sprite.scale.set(120, 22.5, 1);
+    parent.add(sprite);
+    return sprite;
+}
+
 function addHolySiteMasses(parent) {
     // Lightweight recognizable masses, intentionally labelled as a digital twin.
     const haram = new THREE.Group();
@@ -95,6 +118,7 @@ function addHolySiteMasses(parent) {
         const z = Math.sin(angle) * 165;
         addBox(haram, x, 16, z, 42, 32, 22, 0x9ca3af);
     }
+    addSiteLabel(haram, 'Masjid al-Haram', 0, 104, 0);
 
     const mina = new THREE.Group();
     mina.position.set(330, 0, 35);
@@ -105,6 +129,7 @@ function addHolySiteMasses(parent) {
         }
     }
     addBox(mina, 0, 3, 63, 230, 6, 7, 0x94a3b8);
+    addSiteLabel(mina, 'Mina', 0, 46, 70);
 
     const jamarat = new THREE.Group();
     jamarat.position.set(400, 0, -170);
@@ -115,6 +140,7 @@ function addHolySiteMasses(parent) {
         addBox(jamarat, x, 4, -34, 22, 8, 12, 0xcbd5e1);
     });
     addBox(jamarat, 0, 3, 52, 150, 6, 14, 0x64748b);
+    addSiteLabel(jamarat, 'Jamarat', 0, 80, 20);
 
     const arafat = new THREE.Group();
     arafat.position.set(-80, 0, 320);
@@ -125,6 +151,7 @@ function addHolySiteMasses(parent) {
     for (let row = 0; row < 3; row += 1) {
         for (let col = 0; col < 8; col += 1) addDome(arafat, col * 28 - 98, 10, row * 30 + 22, 8, 13, 0xe2e8f0);
     }
+    addSiteLabel(arafat, 'Arafat', 0, 72, 0);
 
     const muzdalifah = new THREE.Group();
     muzdalifah.position.set(170, 0, 230);
@@ -133,6 +160,7 @@ function addHolySiteMasses(parent) {
     for (let row = 0; row < 3; row += 1) {
         for (let col = 0; col < 8; col += 1) addBox(muzdalifah, col * 24 - 84, 7, row * 30 - 35, 14, 8, 10, 0xcbd5e1);
     }
+    addSiteLabel(muzdalifah, 'Muzdalifah', 0, 42, 0);
 }
 
 function buildScene(data) {
