@@ -47,6 +47,22 @@ def live_map_view(request):
         'zones': zones,
     })
 
+
+@require_GET
+def api_safety_features(request):
+    from .models import SafetyMapFeature
+    rows = SafetyMapFeature.objects.filter(enabled=True, verified_at__isnull=False)
+    features = []
+    for row in rows:
+        from django.core.exceptions import ValidationError
+        try:
+            row.full_clean()
+        except ValidationError:
+            continue
+        features.append({'id': row.pk, 'name': row.name, 'category': row.category,
+                         'coordinates': row.coordinates, 'source': row.source, 'verified_at': row.verified_at})
+    return JsonResponse({'features': features, 'note': 'Only source-labelled verified records are shown. Verify current availability on site.'})
+
 @require_GET
 def api_zones_status(request):
     """

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .pwa_views import live_members, messages, create_message, list_geofences, phone_ping, acknowledge_geofence
+from .pwa_views import live_members, messages, create_message, list_geofences, phone_ping, acknowledge_geofence, my_geofence_alerts
 
 app_name = 'groups'
 
@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/groups/<int:group_id>/geofences/', list_geofences, name='list_geofences'),
     path('api/groups/<int:group_id>/members/<int:member_id>/ping/', phone_ping, name='phone_ping'),
     path('api/geofences/<int:geofence_id>/acknowledge/', acknowledge_geofence, name='acknowledge_geofence'),
+    path('api/geofence-alerts/', my_geofence_alerts, name='my_geofence_alerts'),
 ]

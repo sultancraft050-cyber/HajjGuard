@@ -102,6 +102,16 @@ class PhaseAPwaTests(TransactionTestCase):
         self.assertEqual(self.client.get('/manifest.webmanifest').status_code, 200)
         self.assertEqual(self.client.get('/service-worker.js').status_code, 200)
 
+    def test_owner_offline_card_is_private_and_medical_fields_are_opt_in(self):
+        response = self.client.get('/api/offline-card/')
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['owner_id'], self.u1.pk)
+        self.assertIsNone(payload['medical'])
+        self.assertIn('qr_image', payload)
+        medical = self.client.get('/api/offline-card/?include_medical=true').json()
+        self.assertEqual(medical['medical']['condition'], 'NONE')
+
     def test_websocket_accepts_member_and_rejects_outsider(self):
         session = SessionStore()
         session['_auth_user_id'] = str(self.u1.pk)

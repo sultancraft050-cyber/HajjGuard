@@ -151,3 +151,37 @@ class CameraSnapshot(models.Model):
     def __str__(self):
         return f"Snapshot @ {self.zone.code} ({self.taken_at.strftime('%H:%M:%S')}): {self.people_counted} detected"
 
+
+class SafetyMapFeature(models.Model):
+    CATEGORIES = [(k, k.replace('_', ' ').title()) for k in (
+        'TOILET', 'WATER', 'MEDICAL', 'FIRST_AID', 'WHEELCHAIR_ROUTE',
+        'REST', 'ENTRANCE', 'EXIT', 'SHUTTLE', 'TRAIN', 'RESTRICTED')]
+    name = models.CharField(max_length=160)
+    category = models.CharField(max_length=25, choices=CATEGORIES)
+    coordinates = models.JSONField(help_text='One or more [latitude, longitude] pairs. Routes require at least two.')
+    source = models.CharField(max_length=250, help_text='Survey or public dataset reference; no personal data.')
+    verified_at = models.DateTimeField(null=True, blank=True)
+    enabled = models.BooleanField(default=False)
+
+    def clean(self):
+        import math
+        from django.core.exceptions import ValidationError
+        super().clean()
+        try:
+            if not self.coordinates or not isinstance(self.coordinates, list):
+                raise ValueError()
+            for pair in self.coordinates:
+                if len(pair) != 2 or any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in pair):
+                    raise ValueError()
+                if not -90 <= pair[0] <= 90 or not -180 <= pair[1] <= 180:
+                    raise ValueError()
+            if self.category == 'WHEELCHAIR_ROUTE' and len(self.coordinates) < 2:
+                raise ValueError()
+        except (TypeError, ValueError):
+            raise ValidationError({'coordinates': 'Supply finite coordinates within valid ranges.'})
+        if self.enabled and (not self.source.strip() or self.verified_at is None):
+            raise ValidationError('Enabled features require a source and verification timestamp.')
+
+    def __str__(self):
+        return self.name
+

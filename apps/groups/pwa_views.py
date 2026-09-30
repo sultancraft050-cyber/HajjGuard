@@ -13,7 +13,7 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from accounts.models import AuditLog, GuardianRelationship, NotificationEvent, PushSubscription
-from .models import GroupGeofence, GroupMessage, GroupMembership, LocationShareGrant, PhonePingRequest, PilgrimTrip
+from .models import GeofenceAlert, GroupGeofence, GroupMessage, GroupMembership, LocationShareGrant, PhonePingRequest, PilgrimTrip
 from zones.models import LocationPing
 from zones.utils import haversine_distance
 
@@ -31,7 +31,9 @@ def _trip(profile):
 
 @login_required(login_url='/accounts/login/')
 def pwa_shell(request):
-    return render(request, 'pwa/app.html', {'vapid_public_key': settings.WEB_PUSH_PUBLIC_KEY})
+    response = render(request, 'pwa/app.html', {'vapid_public_key': settings.WEB_PUSH_PUBLIC_KEY, 'offline_owner': request.user.pk})
+    response['Cache-Control'] = 'no-store'
+    return response
 
 
 def manifest(request):
@@ -61,6 +63,44 @@ def current_trip(request):
         'ends_at': trip.ends_at, 'status': trip.status,
         'sharing_enabled': bool(grant and grant.is_active),
     }})
+
+
+@login_required(login_url='/accounts/login/')
+@require_GET
+def offline_card(request):
+    """Owner-only snapshot. Medical fields require a separate explicit choice."""
+    import base64
+    import io
+    import qrcode
+    profile = _profile(request)
+    if not profile:
+        return JsonResponse({'message': 'Profile required.'}, status=404)
+    trip = _trip(profile) or PilgrimTrip.objects.filter(pilgrim=profile).select_related('group__leader__user').order_by('-ends_at').first()
+    group = trip.group if trip else None
+    member = group and GroupMembership.objects.filter(group=group, pilgrim=profile, is_active=True).exists()
+    card = getattr(profile, 'nusuk_card', None)
+    png = ''
+    if card and card.is_valid:
+        buf = io.BytesIO()
+        qrcode.make(json.dumps({'type': 'HAJJGUARD_SAFETY_CARD', 'version': 1, 'token': card.qr_token})).save(buf, format='PNG')
+        png = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
+    payload = {
+        'owner_id': request.user.pk, 'saved_at': timezone.now(),
+        'name': request.user.get_full_name() or request.user.username,
+        'group_name': group.name if member else '',
+        'leader_phone': group.leader.phone if member else '',
+        'leader_name': (group.leader.user.get_full_name() or group.leader.user.username) if member else '',
+        'emergency_contact_name': profile.emergency_contact_name,
+        'emergency_contact_phone': profile.emergency_contact_phone,
+        'trip': {'starts_at': trip.starts_at, 'ends_at': trip.ends_at, 'status': trip.status} if trip else None,
+        'qr_image': png, 'medical': None,
+    }
+    if request.GET.get('include_medical') == 'true':
+        payload['medical'] = {'condition': profile.chronic_condition, 'wheelchair': profile.is_wheelchair_user}
+    AuditLog.objects.create(user=request.user, action='VIEW_PILGRIM', target='OWNER_OFFLINE_CARD')
+    response = JsonResponse(payload)
+    response['Cache-Control'] = 'no-store, private'
+    return response
 
 
 @login_required(login_url='/accounts/login/')
@@ -180,7 +220,7 @@ def create_message(request, group_id):
 def list_geofences(request, group_id):
     if not _group_member(request, group_id):
         return JsonResponse({'status': 'error', 'message': 'Group membership required.'}, status=403)
-    rows = GroupGeofence.objects.filter(group_id=group_id, enabled=True)
+    rows = GroupGeofence.objects.filter(group_id=group_id, enabled=True, trip__ends_at__gt=timezone.now(), trip__status__in=['PLANNED', 'ACTIVE'])
     return JsonResponse({'status': 'success', 'geofences': [{'id': g.id, 'name': g.name, 'lat': g.center_lat, 'lng': g.center_lng, 'radius_meters': g.radius_meters} for g in rows]})
 
 
@@ -240,6 +280,45 @@ def acknowledge_geofence(request, geofence_id):
     alert.acknowledged_at = timezone.now()
     alert.save(update_fields=['acknowledged_at'])
     return JsonResponse({'status': 'success'})
+
+
+@login_required(login_url='/accounts/login/')
+@require_GET
+def my_geofence_alerts(request):
+    """Return the current pilgrim's own unacknowledged safety alerts only."""
+    profile = _profile(request)
+    now = timezone.now()
+    trip = _trip(profile) if profile else None
+    grant = LocationShareGrant.objects.filter(trip=trip, pilgrim=profile).first() if trip else None
+    alerts = []
+    if not grant or not grant.is_active:
+        return JsonResponse({'status': 'success', 'alerts': [], 'sharing': False})
+    rows = GeofenceAlert.objects.filter(pilgrim=profile, acknowledged_at__isnull=True, occurred_at__gte=now-timedelta(hours=24)).select_related('geofence').order_by('-occurred_at')[:10]
+    alerts.extend([{
+        'id': row.id, 'geofence_id': row.geofence_id, 'name': row.geofence.name,
+        'event_type': row.event_type, 'occurred_at': row.occurred_at,
+        'freshness': 'current' if (now-row.occurred_at).total_seconds() <= 120 else 'stale',
+        'reason': f"{'You left' if row.event_type == 'EXIT' else 'You entered'} the meeting area: {row.geofence.name}.",
+        'evidence': 'Validated device locations crossed the configured meeting-area radius.',
+        'action': 'Return to the agreed meeting point or contact your leader.',
+    } for row in rows])
+    remaining = (grant.expires_at-now).total_seconds()
+    if remaining <= 1800:
+        alerts.append({'event_type': 'SHARING_EXPIRY', 'reason': 'Location sharing expires within 30 minutes.', 'evidence': 'Your consent expiry timestamp.', 'occurred_at': now, 'freshness': 'current'})
+    own = LocationPing.objects.filter(pilgrim=profile).order_by('-timestamp').first()
+    leader_grant = LocationShareGrant.objects.filter(pilgrim=trip.group.leader, trip__group=trip.group, trip__starts_at__lte=now, trip__ends_at__gt=now, trip__status__in=['PLANNED','ACTIVE']).first()
+    leader = LocationPing.objects.filter(pilgrim=trip.group.leader).order_by('-timestamp').first() if leader_grant and leader_grant.is_active else None
+    if own and leader and profile.pk != trip.group.leader_id:
+        fresh = all((now-p.timestamp).total_seconds() <= 120 for p in (own, leader))
+        uncertainty = max(own.accuracy_meters or 0, leader.accuracy_meters or 0)
+        distance = haversine_distance(own.lat, own.lng, leader.lat, leader.lng)
+        if not fresh:
+            alerts.append({'event_type':'STALE', 'reason':'Location is stale; group separation cannot be confirmed.', 'evidence':'One or both locations are older than two minutes.', 'freshness':'stale', 'occurred_at':own.timestamp})
+        elif distance > 50 + uncertainty:
+            alerts.append({'event_type':'DRIFT', 'reason':'You are separating from your group leader.', 'evidence':f'Fresh consented device fixes are {round(distance)} m apart; accuracy allowance {round(uncertainty)} m.', 'freshness':'current', 'occurred_at':own.timestamp, 'action':'Return to your meeting point or contact your leader.'})
+    for alert in alerts:
+        alert['disable'] = 'Stop location sharing in the safety app to stop new location alerts.'
+    return JsonResponse({'status': 'success', 'alerts': alerts, 'sharing': True})
 
 
 @login_required(login_url='/accounts/login/')
@@ -317,13 +396,19 @@ def evaluate_geofences(pilgrim, lat, lng):
     from accounts.models import NotificationEvent
     from services.push import send_notification
     now = timezone.now()
+    trip = _trip(pilgrim)
+    grant = LocationShareGrant.objects.filter(trip=trip, pilgrim=pilgrim).first() if trip else None
+    if not grant or not grant.is_active:
+        return
     memberships = GroupMembership.objects.filter(pilgrim=pilgrim, is_active=True).select_related('group')
     for membership in memberships:
-        for fence in GroupGeofence.objects.filter(group=membership.group, enabled=True, trip__pilgrim=pilgrim, trip__status__in=['PLANNED', 'ACTIVE'], trip__ends_at__gt=now):
+        for fence in GroupGeofence.objects.filter(group=membership.group, enabled=True, trip__status__in=['PLANNED', 'ACTIVE'], trip__ends_at__gt=now):
             inside = haversine_distance(fence.center_lat, fence.center_lng, lat, lng) <= fence.radius_meters
             recent_pings = list(LocationPing.objects.filter(pilgrim=pilgrim).order_by('-timestamp')[:2])
             previous = recent_pings[1] if len(recent_pings) > 1 else None
             if previous is None:
+                continue
+            if (now-previous.timestamp).total_seconds() > 120:
                 continue
             was_inside = haversine_distance(fence.center_lat, fence.center_lng, previous.lat, previous.lng) <= fence.radius_meters
             event_type = 'ENTER' if inside and not was_inside else ('EXIT' if was_inside and not inside else None)
@@ -333,5 +418,6 @@ def evaluate_geofences(pilgrim, lat, lng):
             if recent:
                 continue
             alert = GeofenceAlert.objects.create(pilgrim=pilgrim, geofence=fence, event_type=event_type)
-            event = NotificationEvent.objects.create(recipient=pilgrim.user, event_type='GEOFENCE', payload={'title': fence.name, 'body': f'Geofence {event_type.lower()} alert.', 'data': {'alert_id': alert.id}})
+            AuditLog.objects.create(user=pilgrim.user, action='GEOFENCE_ALERT', target=f'Alert {alert.pk} {event_type}')
+            event = NotificationEvent.objects.create(recipient=pilgrim.user, event_type='GEOFENCE', payload={'title': 'HajjGuard meeting-area alert', 'body': f'You {"left" if event_type == "EXIT" else "entered"} a meeting area. Open the safety app for timestamp, reason and sharing controls.', 'data': {'alert_id': alert.id}})
             send_notification(event)

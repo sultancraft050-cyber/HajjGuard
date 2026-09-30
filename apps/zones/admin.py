@@ -1,5 +1,10 @@
 from django.contrib import admin
-from zones.models import Zone, Corridor, LocationPing, DensityRecord, CameraSnapshot
+from zones.models import Zone, Corridor, LocationPing, DensityRecord, CameraSnapshot, SafetyMapFeature
+
+@admin.register(SafetyMapFeature)
+class SafetyMapFeatureAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'source', 'verified_at', 'enabled')
+    list_filter = ('category', 'enabled')
 
 @admin.register(Zone)
 class ZoneAdmin(admin.ModelAdmin):

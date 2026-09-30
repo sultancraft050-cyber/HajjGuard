@@ -24,7 +24,10 @@
   <h1>HajjGuard</h1><p><button id="large-text">A+</button> <button id="high-contrast">Contrast</button> <button id="reduced-motion">Reduce motion</button></p>
   <p class="muted">{% trans "Safety, group coordination, and essential guidance." %}</p>
   <section class="card" aria-labelledby="offline-title"><h2 id="offline-title">{% trans "Offline emergency card" %}</h2>
+    <div id="offline-card-details" class="status" aria-live="polite">{% trans "Loading your trip card…" %}</div>
+    <img id="offline-qr" alt="HajjGuard safety QR" style="display:none;max-width:150px;margin:.75rem auto">
     <p>{% trans "Emergency services: 997 medical · 998 rescue · 911 security/general" %}</p>
+    <p><a href="tel:997">997 {% trans "Medical" %}</a> · <a href="tel:998">998 {% trans "Rescue" %}</a> · <a href="tel:911">911 {% trans "Security/general" %}</a></p>
     <p>{% trans "Your SOS is queued when offline and is marked undelivered until the server confirms receipt." %}</p>
     <button class="danger" id="sos-button">{% trans "Queue SOS" %}</button>
   </section>
@@ -50,14 +53,24 @@ document.querySelector('#large-text').onclick=()=>document.body.classList.toggle
 document.querySelector('#high-contrast').onclick=()=>document.body.classList.toggle('high-contrast');
 document.querySelector('#reduced-motion').onclick=()=>document.body.classList.toggle('reduced-motion');
 async function flushOutbox(){ for(const item of await queuedItems()){ if(item.type!=='SOS') continue; const send=async(pos)=>{ if(!pos) return; const p={...item.payload,lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy_meters:pos.coords.accuracy}; const result=await api('/safety/api/trigger-sos/',{method:'POST',headers:jsonHeaders,body:JSON.stringify(p)}); if(result.incident_id) await removeQueued(item.id); }; if(navigator.geolocation) navigator.geolocation.getCurrentPosition(send,()=>{}, {enableHighAccuracy:true,timeout:10000,maximumAge:5000}); } }
+function renderOfflineCard(data) {
+  if (!data?.name) return;
+  localStorage.setItem('hajjguard-offline-card', JSON.stringify(data));
+  const t=data.trip||{};
+  document.querySelector('#offline-card-details').innerHTML = `<strong>${data.name||'Pilgrim'}</strong><br>${data.group_name||'No active group'} · ${data.leader_name||'No leader'} <a href="tel:${data.leader_phone||''}">${data.leader_phone||''}</a><br><span class="muted">${t.ends_at ? `Trip ends ${new Date(t.ends_at).toLocaleString()}` : 'Trip details unavailable'}</span>${data.medical ? `<br><span>Accessibility/medical: ${[data.medical.condition,data.medical.wheelchair?'wheelchair access':''].filter(Boolean).join(', ')}</span>` : ''}<br><span class="muted">QR safety card cached privately on this device.</span>`;
+  const qr=document.querySelector('#offline-qr'); if(data.qr_image){qr.src=data.qr_image;qr.style.display='block';}
+}
+function restoreOfflineCard(){ try { const data=JSON.parse(localStorage.getItem('hajjguard-offline-card')||'null'); if(data) renderOfflineCard(data); } catch(e){} }
 async function refresh() {
+  const card=await api('/api/offline-card/'); if(card.name) renderOfflineCard(card);
+  const t=await api('/api/trip/current');
   const s=await api('/api/trip/location-sharing/status');
   document.querySelector('#sharing-status').textContent=s.enabled ? `Enabled until ${s.expires_at}` : 'Not sharing';
-  const t=await api('/api/trip/current'); if(t.group_id){ const m=await api(`/api/groups/${t.group_id}/live-members/`); document.querySelector('#members').textContent = m.members?.map(x=>`${x.name}: ${x.last_seen||'not seen'}`).join(' · ') || 'No consented members'; }
+  if(t.trip?.group_id){ const m=await api(`/api/groups/${t.trip.group_id}/live-members/`); document.querySelector('#members').textContent = m.members?.map(x=>`${x.name}: ${x.last_seen||'not seen'}`).join(' · ') || 'No consented members'; }
 }
 document.querySelector('#enable-sharing').onclick=async()=>{ if(!document.querySelector('#consent').checked){alert('Explicit consent is required.');return;} await api('/api/trip/location-sharing/enable',{method:'POST',headers:jsonHeaders,body:JSON.stringify({consent_given:true,consent_version:'phase-a-1'})}); refresh(); };
 document.querySelector('#revoke-sharing').onclick=async()=>{await api('/api/trip/location-sharing/revoke',{method:'POST',headers:jsonHeaders,body:'{}'});refresh();};
 document.querySelector('#sos-button').onclick=async()=>{ const id=crypto.randomUUID(); await queueItem({id,type:'SOS',payload:{category:'GENERAL',idempotency_key:id}}); if(navigator.onLine) flushOutbox(); alert('SOS queued; it is not delivered until connectivity returns.'); };
-window.addEventListener('online',flushOutbox); if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').then(reg=>{reg.sync?.register('hajjguard-outbox'); registerPush().catch(()=>{});}); navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='flush-outbox') flushOutbox();}); refresh();
+window.addEventListener('online',flushOutbox); restoreOfflineCard(); if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').then(reg=>{reg.sync?.register('hajjguard-outbox'); registerPush().catch(()=>{});}); navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='flush-outbox') flushOutbox();}); refresh().catch(()=>restoreOfflineCard());
 </script>
 </body></html>

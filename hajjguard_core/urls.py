@@ -37,6 +37,7 @@ urlpatterns = [
     path('manifest.webmanifest', pwa_views.manifest, name='manifest'),
     path('service-worker.js', pwa_views.service_worker, name='service_worker'),
     path('api/trip/current', pwa_views.current_trip, name='current_trip'),
+    path('api/offline-card/', pwa_views.offline_card, name='offline_card'),
     path('api/trip/location-sharing/status', pwa_views.sharing_status, name='sharing_status'),
     path('api/trip/location-sharing/enable', pwa_views.enable_sharing, name='enable_sharing'),
     path('api/trip/location-sharing/revoke', pwa_views.revoke_sharing, name='revoke_sharing'),
