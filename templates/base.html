@@ -289,34 +289,7 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-    <!-- 1. DGA Official Saudi Government Verification Ribbon -->
-    <div class="dga-gov-ribbon">
-        <div class="container-fluid px-3 px-lg-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="dga-saudi-badge">
-                        <span>🇸🇦</span>
-                        <span class="fw-bold">{% trans "المملكة العربية السعودية" %}</span>
-                    </span>
-                    <span class="d-none d-sm-inline opacity-75">|</span>
-                    <span class="small">
-                        {% trans "موقع حكومي رسمي موثّق لدى هيئة الحكومة الرقمية (كود المنصات)" %}
-                    </span>
-                </div>
-                <div class="d-flex align-items-center gap-3 small">
-                    <a href="javascript:void(0)" onclick="openGovVerificationModal()" class="text-white-50">
-                        <i class="bi bi-shield-check text-success"></i> {% trans "كيف تتحقق؟" %}
-                    </a>
-                    <span class="text-white-50 d-none d-md-inline">•</span>
-                    <span class="text-white-50 d-none d-md-inline">
-                        <i class="bi bi-clock-history"></i> {% trans "موسم حج 1447هـ / 2026م" %}
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. Unified Navigation Header (Figma 'قالب الحج' Standard) -->
+    <!-- Navigation header for the independent HajjGuard prototype -->
     <nav class="navbar navbar-expand-lg navbar-dga sticky-top">
         <div class="container-fluid px-3 px-lg-4">
             
@@ -495,12 +468,8 @@
                         <h5 class="fw-bold text-white mb-0">HajjGuard | حارس الحج</h5>
                     </div>
                     <p class="small text-muted mb-3">
-                        {% trans "المنصة الوطنية الموحدة لإدارة الحشود وحماية ضيوف الرحمن بالحرم المكي والمشاعر المقدسة عبر الرصد الهيدروديناميكي المكاني ونماذج الاتزان اللحظي." %}
+                        {% trans "Independent academic safety prototype for pilgrim groups, emergency guidance, and consent-controlled location sharing." %}
                     </p>
-                    <div class="d-flex align-items-center gap-2 small text-success">
-                        <i class="bi bi-check-circle-fill"></i>
-                        <span>{% trans "متوافق مع معايير هيئة الحكومة الرقمية ونظام حماية البيانات الشخصية (PDPL)" %}</span>
-                    </div>
                 </div>
 
                 <div class="col-lg-2 col-md-3 col-6">
@@ -566,7 +535,7 @@
                 <div class="d-flex align-items-center gap-3">
                     <a href="{% url 'accounts:profile' %}">{% trans "سياسة الخصوصية وحماية البيانات" %}</a>
                     <span>•</span>
-                    <a href="javascript:void(0)" onclick="openGovVerificationModal()">{% trans "اعتماد كود المنصات" %}</a>
+                    <span>{% trans "Academic prototype · synthetic data unless labelled otherwise" %}</span>
                 </div>
             </div>
         </div>
@@ -603,42 +572,6 @@
                             <span class="badge bg-light text-dark">{% trans "استجابة ميدانية" %}</span>
                         </a>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Official DGA Verification Explainer Modal -->
-    <div class="modal fade" id="dgaVerificationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg">
-                <div class="modal-header bg-success text-white border-0 py-3">
-                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                        <i class="bi bi-patch-check-fill fs-4"></i>
-                        <span>{% trans "التوثيق الرقمي الحكومي الموحد" %}</span>
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4 text-center">
-                    <div class="mb-3 text-success fs-1"><i class="bi bi-shield-shaded"></i></div>
-                    <h5 class="fw-bold mb-2">{% trans "منصة حكومية معتمدة وفق كود المنصات" %}</h5>
-                    <p class="text-muted small mb-4">
-                        {% trans "تم بناء واجهة HajjGuard وفق نظام التصميم الوطني الموحد (كود المنصات) الصادر عن هيئة الحكومة الرقمية بالمملكة العربية السعودية، مما يضمن أعلى معايير أمن المعلومات، التشفير الشامل للبيانات الشخصية، وسلاسة الوصول لكافة الحجاج والجهات المشرفة." %}
-                    </p>
-                    <div class="p-3 bg-light rounded-3 text-start small">
-                        <div class="d-flex align-items-center gap-2 mb-2 text-success fw-bold">
-                            <i class="bi bi-lock-fill"></i> {% trans "اتصال مشفر 256-bit SSL/TLS" %}
-                        </div>
-                        <div class="d-flex align-items-center gap-2 mb-2 text-success fw-bold">
-                            <i class="bi bi-database-check"></i> {% trans "التوافق التام مع نظام حماية البيانات الشخصية (PDPL)" %}
-                        </div>
-                        <div class="d-flex align-items-center gap-2 text-success fw-bold">
-                            <i class="bi bi-cpu-fill"></i> {% trans "ربط خوارزمي لحظي مع غرفة عمليات المشاعر المقدسة" %}
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 p-3">
-                    <button type="button" class="btn btn-dga-primary w-100" data-bs-dismiss="modal">{% trans "فهمت ذلك، استمرار" %}</button>
                 </div>
             </div>
         </div>
@@ -702,11 +635,6 @@
     <script>
         function openEmergencyModal() {
             var myModal = new bootstrap.Modal(document.getElementById('globalSosModal'));
-            myModal.show();
-        }
-
-        function openGovVerificationModal() {
-            var myModal = new bootstrap.Modal(document.getElementById('dgaVerificationModal'));
             myModal.show();
         }
 

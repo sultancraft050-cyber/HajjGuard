@@ -119,6 +119,18 @@
     }
     .map-status-panel .status-value { font-weight: 700; }
     .precision-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:5px; }
+    #map-tile-fallback {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-color: #eef6f0;
+        background-image: linear-gradient(30deg, rgba(23,94,57,.08) 12%, transparent 12.5%, transparent 87%, rgba(23,94,57,.08) 87.5%), linear-gradient(150deg, rgba(23,94,57,.08) 12%, transparent 12.5%, transparent 87%, rgba(23,94,57,.08) 87.5%);
+        background-size: 56px 56px;
+    }
+    #map-tile-fallback .fallback-title { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#175e39; background:rgba(255,255,255,.9); padding:12px 18px; border-radius:12px; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.12); }
+    #map-container.tiles-unavailable #map-tile-fallback { display:block; }
+    #map-container.tiles-unavailable #hajj-map { background: transparent; }
 </style>
 {% endblock %}
 
@@ -132,11 +144,11 @@
         <button class="btn-site-pill" onclick="flyToLocation(21.4160, 39.8920, 16, this)">⛺ {% trans "Mina Camps" %}</button>
         <button class="btn-site-pill" onclick="flyToLocation(21.3910, 39.9070, 15, this)">🌌 {% trans "Muzdalifah" %}</button>
         <button class="btn-site-pill" onclick="flyToLocation(21.3548, 39.9840, 15, this)">🏔️ {% trans "Arafat" %}</button>
-        <button class="btn-site-pill text-danger fw-bold" onclick="openHaramCctvModal()">
-            <i class="bi bi-camera-video-fill text-danger me-1"></i> {% trans "Live Haram Cam" %}
-        </button>
     </div>
 
+    <div id="map-tile-fallback" aria-live="polite">
+        <div class="fallback-title"><strong>{% trans "Holy Sites planning map" %}</strong><br><small>{% trans "External map tiles are unavailable; zone overlays remain available." %}</small></div>
+    </div>
     <!-- Live Map Canvas -->
     <div id="hajj-map"></div>
 
@@ -202,10 +214,6 @@
                         <span class="d-flex align-items-center gap-2"><i class="bi bi-fire fs-4 text-danger"></i> {% trans "Civil Defense (الدفاع المدني)" %}</span>
                         <span class="badge bg-dark text-white fs-6 px-3 py-1">998</span>
                     </a>
-                    <a href="tel:1966" class="btn btn-outline-success btn-lg py-2 fw-bold d-flex justify-content-between align-items-center px-4">
-                        <span class="d-flex align-items-center gap-2"><i class="bi bi-building-check fs-4"></i> {% trans "Ministry of Hajj Care (رعاية التائهين)" %}</span>
-                        <span class="badge bg-success text-white fs-6 px-3 py-1">1966</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -221,7 +229,7 @@
                     <span class="fs-4">🕋</span>
                     <div>
                         <h6 class="modal-title fw-bold mb-0">{% trans "Live Haram & Kaaba CCTV Camera" %}</h6>
-                        <small class="text-white-50">{% trans "Saudi Quran TV 24/7 Official Broadcast Stream" %}</small>
+                        <small class="text-white-50">{% trans "External video source; not operated or verified by HajjGuard" %}</small>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeHaramCctv()"></button>
@@ -269,20 +277,26 @@
         // Add bottom-right zoom control
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // CartoDB Positron clean map tiles
-        const street = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap &copy; CARTO',
-            maxZoom: 19
-        }).addTo(map);
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // OpenStreetMap standard tiles do not require an application key.
+        const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; OpenStreetMap contributors',
             maxZoom: 19
-        });
-        L.control.layers({'{% trans "Clean map" %}': street, '{% trans "Street map" %}': osm}, null, {position: 'topright'}).addTo(map);
+        }).on('tileerror', showTileFallback).addTo(map);
+        // Some proxies return an HTML 403 body with a successful HTTP status.
+        // Detect that case as well so the user never sees a broken tile page.
+        window.setTimeout(() => {
+            const broken = Array.from(document.querySelectorAll('.leaflet-tile')).some(tile => tile.complete && tile.naturalWidth < 100);
+            if (broken) showTileFallback();
+        }, 2500);
 
         // Load zone data and start polling
         refreshZoneData();
         setInterval(refreshZoneData, 8000); // 8-second live telemetry refresh
+    }
+
+    function showTileFallback() {
+        document.getElementById('map-container').classList.add('tiles-unavailable');
+        document.querySelectorAll('.leaflet-tile-pane').forEach(pane => { pane.style.display = 'none'; });
     }
 
     // Fetch live zone status from API

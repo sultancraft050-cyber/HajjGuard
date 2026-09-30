@@ -142,15 +142,10 @@ class InteractiveUIOverhaulTests(TestCase):
 
     # 1. WINDOW 1: Global Platform Shell (base.html)
     def test_global_shell_dga_standards(self):
-        """Verifies that base.html includes the Saudi DGA Government Ribbon and Unified Header."""
+        """Verifies the shared shell without implying government affiliation."""
         res = self.client.get(reverse('home'))
         self.assertEqual(res.status_code, 200)
         content = res.content.decode('utf-8')
-        
-        # Check DGA verification ribbon
-        self.assertIn("dga-gov-ribbon", content)
-        self.assertIn("هيئة الحكومة الرقمية", content)
-        self.assertIn("كيف تتحقق؟", content)
         
         # Check Unified Nav Header
         self.assertIn("navbar-dga", content)
@@ -158,6 +153,8 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("globalSearchModal", content)
         self.assertIn("globalSosModal", content)
         self.assertIn("dga-footer", content)
+        self.assertIn("Independent academic safety prototype", content)
+        self.assertNotIn("موقع حكومي رسمي موثّق", content)
 
     # 2. WINDOW 2: Public Landing Page (home.html)
     def test_public_landing_hajj_template(self):
@@ -226,6 +223,10 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("map-floating-controls", content)
         self.assertIn("btn-site-pill", content)
         self.assertIn("map-legend", content)
+        self.assertIn("tile.openstreetmap.org", content)
+        self.assertIn("map-tile-fallback", content)
+        self.assertNotIn("basemaps.cartocdn.com", content)
+        self.assertNotIn("موقع حكومي رسمي موثّق", content)
 
     # 6. WINDOW 6: Smart Guidance & Detour (guidance.html)
     def test_smart_guidance_window(self):
