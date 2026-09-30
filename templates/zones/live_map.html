@@ -343,7 +343,10 @@
             meeting: [[21.4232,39.8254,'📍 Group meeting point']]
         };
         Object.entries(points).forEach(([key, rows]) => {
-            planningLayers[key] = L.layerGroup(rows.map(([lat,lng,label]) => L.marker([lat,lng], {icon:L.divIcon({className:'site-label',html:`<span style="background:#fff;border:1px solid #0d5c3a;border-radius:8px;padding:3px 6px;color:#0d5c3a;font-size:11px;font-weight:700;white-space:nowrap">${label}</span>`,iconAnchor:[0,0]})}).bindPopup(`<b>${label}</b><br><small>Planning point; verify availability on site.</small>`)));
+            planningLayers[key] = L.layerGroup(rows.map(([lat,lng,label]) => {
+                const icon = L.divIcon({className:'planning-poi', html:`<span title="${label}" style="display:grid;place-items:center;width:26px;height:26px;background:#fff;border:2px solid #0d5c3a;border-radius:50%;box-shadow:0 2px 7px #064e3b55;font-size:14px">${label.slice(0,2)}</span>`, iconSize:[26,26], iconAnchor:[13,13]});
+                return L.marker([lat,lng], {icon}).bindPopup(`<b>${label}</b><br><small>Planning point; verify availability on site.</small>`);
+            }));
             planningLayers[key].addTo(map);
         });
     }
