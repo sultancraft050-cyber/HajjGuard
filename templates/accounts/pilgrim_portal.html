@@ -204,14 +204,14 @@
             </div>
         </div>
 
-        <!-- 5. Live Haram & Kaaba Crowd Camera (Real-Time Visual Awareness) -->
+        <!-- 5. Public Haram broadcast (visual awareness only) -->
         <div class="dga-card overflow-hidden mb-4">
             <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <span class="fs-4">🕋</span>
                     <div>
-                        <h6 class="fw-bold mb-0 text-dark">{% trans "بث مباشر: كاميرات مراقبة وتدفق الحرم" %}</h6>
-                        <small class="text-muted">{% trans "رؤية بصرية حية لصحن المطاف والمسجد النبوي الشريف" %}</small>
+                        <h6 class="fw-bold mb-0 text-dark">{% trans "مشاهدة بث الحرم" %}</h6>
+                        <small class="text-muted">{% trans "مشاهدة بصرية عامة؛ لا تُستخدم لقياس الكثافة" %}</small>
                     </div>
                 </div>
                 <button class="btn btn-dga-outline btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#cctvCollapse" aria-expanded="false">
@@ -234,35 +234,16 @@
                 <div class="ratio ratio-16x9 bg-dark">
                     <iframe id="haramCamIframe"
                             src="" 
-                            data-makkah="https://www.youtube-nocookie.com/embed/qXFQhMDCHZg?autoplay=1&mute=1"
-                            data-madinah="https://www.youtube-nocookie.com/embed/5F2v_2t7Fv4?autoplay=1&mute=1"
+                            data-makkah="https://services.prh.gov.sa/ordo/enlive.php"
+                            data-madinah="https://services.prh.gov.sa/ordo/enlive.php"
                             title="Haram Live Stream" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowfullscreen></iframe>
                 </div>
 
-                <!-- Real-Time Optical & Gate Telemetry HUD -->
-                <div class="p-3 bg-white">
-                    <div class="row g-2 text-center">
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3 border">
-                                <small class="text-muted d-block">{% trans "متوسط زمن الطواف" %}</small>
-                                <span class="fw-bold text-success fs-6">~45 {% trans "دقيقة" %}</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3 border">
-                                <small class="text-muted d-block">{% trans "حالة تدفق الحشود" %}</small>
-                                <span class="badge bg-success rounded-pill">{% trans "تدفق صفيحي مستقر" %}</span>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="p-2 bg-light rounded-3 border">
-                                <small class="text-muted d-block">{% trans "أبواب الدخول المتاحة" %}</small>
-                                <span class="fw-bold text-dark fs-6">1, 79, 84</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="p-3 bg-white small text-muted">
+                    {% trans "This is an external public broadcast. HajjGuard does not operate or verify the camera, and the view may not represent conditions at your destination." %}
+                    <a class="d-block mt-2" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% trans "Open the broadcast source" %}</a>
                 </div>
             </div>
         </div>

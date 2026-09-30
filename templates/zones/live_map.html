@@ -144,6 +144,7 @@
         <button class="btn-site-pill" onclick="flyToLocation(21.4160, 39.8920, 16, this)">⛺ {% trans "Mina Camps" %}</button>
         <button class="btn-site-pill" onclick="flyToLocation(21.3910, 39.9070, 15, this)">🌌 {% trans "Muzdalifah" %}</button>
         <button class="btn-site-pill" onclick="flyToLocation(21.3548, 39.9840, 15, this)">🏔️ {% trans "Arafat" %}</button>
+        <button class="btn-site-pill" type="button" onclick="openHaramCctvModal()">📺 {% trans "Watch Haram broadcast" %}</button>
     </div>
 
     <div id="map-tile-fallback" aria-live="polite">
@@ -226,7 +227,7 @@
                 <div class="ratio ratio-16x9">
                     <iframe id="mapHaramCamIframe"
                             src=""
-                            data-src="https://www.youtube-nocookie.com/embed/qXFQhMDCHZg?autoplay=1&mute=1"
+                            data-src="https://services.prh.gov.sa/ordo/enlive.php"
                             title="Kaaba Live Stream" 
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                             allowfullscreen></iframe>
@@ -234,8 +235,8 @@
             </div>
             <div class="modal-footer bg-light py-2 px-3 d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-success rounded-pill px-3 py-1"><i class="bi bi-broadcast me-1"></i> LIVE CROWD</span>
-                    <small class="text-muted">{% trans "Synthetic crowd estimate; field verification not measured" %}</small>
+                    <small class="text-muted">{% trans "Public broadcast for visual awareness only. HajjGuard does not measure or verify crowd conditions from this video." %}</small>
+                    <a class="btn btn-outline-success btn-sm rounded-pill" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% trans "Open source" %}</a>
                 </div>
                 <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal" onclick="closeHaramCctv()">{% trans "Close" %}</button>
             </div>
