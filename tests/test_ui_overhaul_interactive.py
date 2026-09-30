@@ -171,6 +171,7 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("Holy Sites digital twin", content)
         self.assertIn("Simulation Mode", content)
         self.assertIn("Drag to orbit", content)
+        self.assertIn("Jump to a Holy Site", content)
         self.assertIn("hg-zone-list", content)
         self.assertIn("Intelligence that helps you decide", content)
         self.assertIn("Plan your next transfer", content)

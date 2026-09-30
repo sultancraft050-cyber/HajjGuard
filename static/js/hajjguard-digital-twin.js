@@ -15,6 +15,7 @@ let pointer;
 let selected;
 let frame;
 let contentRoot;
+const siteGroups = new Map();
 
 function statusColor(status) {
     return { RED: 0xdc2626, ORANGE: 0xc47b00, GREEN: 0x475569 }[status] || 0x94a3b8;
@@ -86,6 +87,7 @@ function addHolySiteMasses(parent) {
     const haram = new THREE.Group();
     haram.position.set(-250, 0, -110);
     parent.add(haram);
+    siteGroups.set('haram', haram);
     const courtyard = new THREE.Mesh(
         new THREE.CylinderGeometry(105, 105, 5, 64),
         new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.7 })
@@ -123,6 +125,7 @@ function addHolySiteMasses(parent) {
     const mina = new THREE.Group();
     mina.position.set(330, 0, 35);
     parent.add(mina);
+    siteGroups.set('mina', mina);
     for (let row = 0; row < 5; row += 1) {
         for (let col = 0; col < 10; col += 1) {
             addDome(mina, col * 20 - 90, 10, row * 18 - 36, 9, 15, row % 2 ? 0xdbe3ea : 0xcbd5e1);
@@ -134,6 +137,7 @@ function addHolySiteMasses(parent) {
     const jamarat = new THREE.Group();
     jamarat.position.set(400, 0, -170);
     parent.add(jamarat);
+    siteGroups.set('jamarat', jamarat);
     [-35, 0, 35].forEach((x) => {
         addBox(jamarat, x, 20, 0, 16, 40, 48, 0x9ca3af);
         addBox(jamarat, x, 44, 0, 26, 6, 58, 0x475569);
@@ -145,6 +149,7 @@ function addHolySiteMasses(parent) {
     const arafat = new THREE.Group();
     arafat.position.set(-80, 0, 320);
     parent.add(arafat);
+    siteGroups.set('arafat', arafat);
     addBox(arafat, 0, 5, 0, 260, 10, 170, 0xd1d5db);
     addBox(arafat, 0, 25, -15, 36, 40, 36, 0x94a3b8);
     addBox(arafat, 0, 46, -15, 70, 8, 70, 0x64748b);
@@ -156,6 +161,7 @@ function addHolySiteMasses(parent) {
     const muzdalifah = new THREE.Group();
     muzdalifah.position.set(170, 0, 230);
     parent.add(muzdalifah);
+    siteGroups.set('muzdalifah', muzdalifah);
     addBox(muzdalifah, 0, 3, 0, 210, 6, 130, 0xe5e7eb);
     for (let row = 0; row < 3; row += 1) {
         for (let col = 0; col < 8; col += 1) addBox(muzdalifah, col * 24 - 84, 7, row * 30 - 35, 14, 8, 10, 0xcbd5e1);
@@ -164,6 +170,7 @@ function addHolySiteMasses(parent) {
 }
 
 function buildScene(data) {
+    siteGroups.clear();
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xdfe5eb);
     scene.fog = new THREE.Fog(0xdfe5eb, 1050, 2200);
@@ -320,6 +327,18 @@ function selectZone(code) {
     }
 }
 
+function focusSite(siteKey) {
+    const group = siteGroups.get(siteKey);
+    if (!group || !camera || !controls) return;
+    const bounds = new THREE.Box3().setFromObject(group);
+    const center = bounds.getCenter(new THREE.Vector3());
+    const size = bounds.getSize(new THREE.Vector3());
+    const distance = Math.max(230, Math.min(700, Math.max(size.x, size.z) * 2.5));
+    controls.target.copy(center).setY(0);
+    camera.position.set(center.x + distance * 0.8, distance * 0.65, center.z + distance * 0.8);
+    controls.update();
+}
+
 function resize() {
     if (!renderer || !camera) return;
     const rect = canvas.getBoundingClientRect();
@@ -347,6 +366,7 @@ window.fitTwin = () => {
     fitCameraToContent();
 };
 window.selectZone = selectZone;
+window.focusSite = focusSite;
 window.addEventListener('resize', resize);
 
 if (!canvas || !window.WebGLRenderingContext) {
