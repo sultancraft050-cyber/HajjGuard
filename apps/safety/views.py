@@ -9,7 +9,7 @@ from django.utils.translation import gettext as _
 from django.contrib.auth.decorators import login_required, user_passes_test
 from .models import SosIncident, EmergencyContact, FieldUnit, Alert
 from zones.models import Zone, DensityRecord, LocationPing
-from accounts.models import PilgrimProfile, AuditLog
+from accounts.models import PilgrimProfile, AuditLog, NotificationEvent
 from nusuk.models import NusukCard
 from services.weather import get_live_makkah_weather
 
@@ -89,8 +89,8 @@ def api_trigger_sos(request):
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON payload.'}, status=400)
     try:
         category = data.get('category', 'GENERAL')
-        lat = float(data.get('lat', 21.4198))
-        lng = float(data.get('lng', 39.8715))
+        lat = float(data.get('lat', 21.4198)) if data.get('lat') is not None else 21.4198
+        lng = float(data.get('lng', 39.8715)) if data.get('lng') is not None else 39.8715
     except (TypeError, ValueError):
         return JsonResponse({'status': 'error', 'message': 'Invalid emergency payload.'}, status=400)
     valid_categories = {choice[0] for choice in SosIncident.CATEGORY_CHOICES}
@@ -104,6 +104,13 @@ def api_trigger_sos(request):
     pilgrim = getattr(request.user, 'profile', None)
     if pilgrim is None or pilgrim.role != 'pilgrim':
         return JsonResponse({'status': 'error', 'message': 'A pilgrim account is required.'}, status=403)
+
+    idempotency_key = str(data.get('idempotency_key', '')).strip()[:64]
+    if idempotency_key:
+        prior = SosIncident.objects.filter(pilgrim=pilgrim, idempotency_key=idempotency_key).first()
+        if prior:
+            return JsonResponse({'status': 'duplicate', 'incident_id': prior.id, 'emergency_number': prior.called_number,
+                                 'emergency_call_url': f'tel:{prior.called_number}', 'group_leader_phone': '', 'group_leader_call_url': None})
 
     battery_level = None
     try:
@@ -178,8 +185,30 @@ def api_trigger_sos(request):
         battery_level=battery_level,
         called_number=emergency_number,
         status='OPEN',
-        notes=notes_text.strip()
+        notes=notes_text.strip(),
+        idempotency_key=idempotency_key,
     )
+
+    # Notify only active, consented group members; delivery is best effort.
+    from groups.models import GroupMembership, LocationShareGrant
+    from services.push import send_notification
+    recipients = GroupMembership.objects.filter(
+        group__members__pilgrim=pilgrim, group__members__is_active=True,
+        is_active=True,
+    ).exclude(pilgrim=pilgrim).select_related('pilgrim__user').distinct()
+    for membership in recipients:
+        active_grant = LocationShareGrant.objects.filter(
+            pilgrim=membership.pilgrim, trip__group=membership.group,
+            enabled=True, consent_given=True, revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+        ).exists()
+        if not active_grant:
+            continue
+        event = NotificationEvent.objects.create(
+            recipient=membership.pilgrim.user, event_type='SOS',
+            payload={'title': 'HajjGuard SOS', 'body': f'Group member requested help ({category}).', 'data': {'incident_id': incident.id}},
+        )
+        send_notification(event)
 
     return JsonResponse({
         'status': 'success',

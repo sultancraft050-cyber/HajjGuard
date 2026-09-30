@@ -85,12 +85,14 @@ class SosIncident(models.Model):
     called_number = models.CharField(max_length=15, blank=True, help_text="Direct emergency number dialed (e.g. 911, 997)")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='OPEN')
     notes = models.TextField(blank=True)
+    idempotency_key = models.CharField(max_length=64, blank=True, db_index=True)
     
     created_at = models.DateTimeField(auto_now_add=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [models.UniqueConstraint(fields=['pilgrim', 'idempotency_key'], condition=~models.Q(idempotency_key=''), name='unique_sos_idempotency')]
 
     def __str__(self):
         unit_str = f"-> {self.assigned_unit.name}" if self.assigned_unit else "Unassigned"

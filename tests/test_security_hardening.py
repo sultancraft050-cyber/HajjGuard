@@ -51,6 +51,8 @@ class SecurityHardeningTests(TestCase):
         self.assertNotContains(response, self.other.phone)
 
     def test_telemetry_requires_session_and_ignores_identity_substitution(self):
+        from tests.phase_a_helpers import consented_trip
+        consented_trip(self.profile)
         payload = {'lat': 21.42, 'lng': 39.82, 'pilgrim_id': self.other.id}
         anonymous = self.client.post('/api/telemetry/ping/', data=json.dumps(payload), content_type='application/json')
         self.assertIn(anonymous.status_code, (403, 302))

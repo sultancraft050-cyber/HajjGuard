@@ -5,3 +5,7 @@ networkx>=3.0
 qrcode[pil]>=8.0
 requests>=2.0
 psycopg[binary]>=3.2
+channels>=4.2,<5
+channels-redis>=4.2,<5
+daphne>=4.1,<5
+pywebpush>=2.0,<3

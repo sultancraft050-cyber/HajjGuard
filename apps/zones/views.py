@@ -174,6 +174,17 @@ def api_location_ping(request):
     if not pilgrim:
         return JsonResponse({'status': 'error', 'message': 'A registered pilgrim profile is required'}, status=403)
 
+    from groups.models import LocationShareGrant
+    grant = LocationShareGrant.objects.filter(
+        pilgrim=pilgrim, enabled=True, consent_given=True, revoked_at__isnull=True,
+        consent_timestamp__isnull=False, expires_at__gt=now,
+        trip__starts_at__lte=now, trip__ends_at__gt=now,
+        trip__status__in=['PLANNED', 'ACTIVE'],
+        trip__group__members__pilgrim=pilgrim, trip__group__members__is_active=True,
+    ).first()
+    if grant is None:
+        return JsonResponse({'status': 'error', 'message': 'Active trip location consent is required.'}, status=403)
+
     # 5. Mobile Ingestion Throttling Check
     last_ping = LocationPing.objects.filter(pilgrim=pilgrim).order_by('-timestamp').first()
     if last_ping:
@@ -201,6 +212,8 @@ def api_location_ping(request):
         floor_level=floor_level,
         zone=assigned_zone
     )
+    from groups.pwa_views import evaluate_geofences
+    evaluate_geofences(pilgrim, lat, lng)
 
     # Compute Adaptive Telemetry Engine parameters (Heartbeat interval & Jitter)
     rec = assigned_zone.density_records.first() if assigned_zone else None

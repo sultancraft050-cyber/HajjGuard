@@ -651,13 +651,13 @@
                 <div class="modal-header bg-danger text-white border-0 py-3">
                     <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
                         <i class="bi bi-shield-exclamation fs-4"></i>
-                        <span>{% trans "إرسال نداء استغاثة فوري (SOS Dispatch)" %}</span>
+                        <span>{% trans "تسجيل طلب مساعدة (SOS)" %}</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
                     <p class="text-muted small mb-4">
-                        {% trans "اختر نوع الحالة الطارئة أدناه. سيتم فوراً بث موقعك الجغرافي الدقيق إلى غرفة العمليات الموحدة وتوجيه أقرب فرقة استجابة ميدانية." %}
+                        {% trans "اختر نوع الحالة. سيُسجّل الطلب لحسابك، ثم يمكنك الاتصال بالطوارئ أو قائد مجموعتك يدويًا." %}
                     </p>
 
                     <div class="row g-3">
@@ -668,21 +668,21 @@
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-warning w-100 p-3 rounded-4 fw-bold text-dark shadow-sm" onclick="sendGlobalSos('HEAT', '937')">
+                            <button type="button" class="btn btn-outline-warning w-100 p-3 rounded-4 fw-bold text-dark shadow-sm" onclick="sendGlobalSos('HEAT', '997')">
                                 <i class="bi bi-thermometer-sun fs-2 d-block mb-1 text-warning"></i>
-                                {% trans "ضربة شمس / إجهاد" %}<br><small class="text-muted fw-normal">صحة (937)</small>
+                                {% trans "ضربة شمس / إجهاد" %}<br><small class="text-danger fw-normal">إسعاف (997)</small>
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('CRUSH', '911')">
+                            <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('CRUSH', '998')">
                                 <i class="bi bi-people-fill fs-2 d-block mb-1"></i>
-                                {% trans "تدافع / زحام حرج" %}<br><small class="text-danger fw-normal">عمليات (911)</small>
+                                {% trans "تدافع / زحام حرج" %}<br><small class="text-danger fw-normal">إنقاذ (998)</small>
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-primary w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('LOST', '1966')">
+                            <button type="button" class="btn btn-outline-primary w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('LOST', '911')">
                                 <i class="bi bi-geo-alt-fill fs-2 d-block mb-1"></i>
-                                {% trans "حاج تائه عن فوجه" %}<br><small class="text-primary fw-normal">إرشاد (1966)</small>
+                                {% trans "حاج تائه عن فوجه" %}<br><small class="text-primary fw-normal">أمن (911)</small>
                             </button>
                         </div>
                     </div>
@@ -776,7 +776,8 @@
                     `<a class="btn btn-sm btn-danger ms-2" href="${data.emergency_call_url}">اتصال بالطوارئ ${data.emergency_number}</a>` + leaderLink;
             })
             .catch(err => {
-                window.location.href = 'tel:' + number;
+                statusBox.className = 'alert alert-warning mt-4 text-start small fw-bold';
+                statusBox.textContent = 'تعذر الوصول إلى الخادم. لم يتم تسليم الطلب؛ يرجى الاتصال بالطوارئ يدويًا.';
             });
         }
     </script>

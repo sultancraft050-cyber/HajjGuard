@@ -2,6 +2,7 @@ import secrets
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from accounts.models import PilgrimProfile
+from django.core.validators import MinValueValidator, MaxValueValidator
 from nusuk.models import HajjCampaign
 
 class PilgrimGroup(models.Model):
@@ -67,3 +68,90 @@ class GroupMembership(models.Model):
 
     def __str__(self):
         return f"{self.pilgrim.user.get_full_name() or self.pilgrim.user.username} in {self.group.name} ({self.role})"
+
+
+class PilgrimTrip(models.Model):
+    STATUS_CHOICES = [('PLANNED', _('Planned')), ('ACTIVE', _('Active')), ('ENDED', _('Ended')), ('CANCELLED', _('Cancelled'))]
+    pilgrim = models.ForeignKey(PilgrimProfile, on_delete=models.CASCADE, related_name='trips')
+    group = models.ForeignKey(PilgrimGroup, on_delete=models.CASCADE, related_name='trips')
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default='PLANNED')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['pilgrim', 'status', 'ends_at']), models.Index(fields=['group', 'status', 'ends_at'])]
+
+
+class LocationShareGrant(models.Model):
+    pilgrim = models.ForeignKey(PilgrimProfile, on_delete=models.CASCADE, related_name='location_share_grants')
+    trip = models.OneToOneField(PilgrimTrip, on_delete=models.CASCADE, related_name='location_share')
+    consent_given = models.BooleanField(default=False)
+    consent_version = models.CharField(max_length=30, blank=True)
+    consent_timestamp = models.DateTimeField(null=True, blank=True)
+    enabled = models.BooleanField(default=False)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        indexes = [models.Index(fields=['pilgrim', 'enabled', 'expires_at'])]
+
+    @property
+    def is_active(self):
+        from django.utils import timezone
+        return self.enabled and self.consent_given and not self.revoked_at and self.expires_at > timezone.now()
+
+
+class GroupMessage(models.Model):
+    group = models.ForeignKey(PilgrimGroup, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(PilgrimProfile, on_delete=models.PROTECT, related_name='group_messages')
+    text = models.TextField(max_length=2000)
+    image = models.ImageField(upload_to='group_messages/%Y/%m/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    reported = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [models.Index(fields=['group', 'created_at'])]
+
+
+class GroupGeofence(models.Model):
+    group = models.ForeignKey(PilgrimGroup, on_delete=models.CASCADE, related_name='geofences')
+    trip = models.ForeignKey(PilgrimTrip, on_delete=models.CASCADE, related_name='geofences')
+    name = models.CharField(max_length=120)
+    center_lat = models.FloatField(validators=[MinValueValidator(-90), MaxValueValidator(90)])
+    center_lng = models.FloatField(validators=[MinValueValidator(-180), MaxValueValidator(180)])
+    radius_meters = models.PositiveIntegerField(default=100, validators=[MinValueValidator(20), MaxValueValidator(5000)])
+    enabled = models.BooleanField(default=True)
+    cooldown_seconds = models.PositiveIntegerField(default=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['group', 'enabled']), models.Index(fields=['trip', 'enabled'])]
+
+
+class GeofenceAlert(models.Model):
+    EVENT_CHOICES = [('ENTER', _('Entered')), ('EXIT', _('Exited'))]
+    pilgrim = models.ForeignKey(PilgrimProfile, on_delete=models.CASCADE, related_name='geofence_alerts')
+    geofence = models.ForeignKey(GroupGeofence, on_delete=models.CASCADE, related_name='alerts')
+    event_type = models.CharField(max_length=5, choices=EVENT_CHOICES)
+    occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['pilgrim', 'geofence', 'occurred_at'])]
+
+
+class PhonePingRequest(models.Model):
+    STATUS_CHOICES = [('PENDING', _('Pending')), ('DELIVERED', _('Delivered')), ('EXPIRED', _('Expired')), ('FAILED', _('Failed'))]
+    requester = models.ForeignKey(PilgrimProfile, on_delete=models.CASCADE, related_name='phone_ping_requests')
+    target = models.ForeignKey(PilgrimProfile, on_delete=models.CASCADE, related_name='phone_pings_received')
+    group = models.ForeignKey(PilgrimGroup, on_delete=models.CASCADE, related_name='phone_ping_requests')
+    reason = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [models.Index(fields=['target', 'status', 'expires_at']), models.Index(fields=['requester', 'created_at'])]

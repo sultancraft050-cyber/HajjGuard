@@ -57,6 +57,8 @@ class HajjGuardSystemIntegrityTests(TestCase):
             emergency_contact_phone="+966559876543"
         )
         self.client.force_login(self.user)
+        from tests.phase_a_helpers import consented_trip
+        consented_trip(self.profile)
 
         # Base Campaign
         self.campaign = HajjCampaign.objects.create(

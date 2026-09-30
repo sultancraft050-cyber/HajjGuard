@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     
     # HajjGuard Apps
     'accounts.apps.AccountsConfig',
@@ -84,6 +85,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'hajjguard_core.wsgi.application'
+ASGI_APPLICATION = 'hajjguard_core.asgi.application'
+
+if os.environ.get('REDIS_URL'):
+    CHANNEL_LAYERS = {'default': {'BACKEND': 'channels_redis.core.RedisChannelLayer', 'CONFIG': {'hosts': [os.environ['REDIS_URL']]}}}
+else:
+    CHANNEL_LAYERS = {'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer', 'CONFIG': {}}}
 
 
 # Database
@@ -146,7 +153,15 @@ LANGUAGES = [
     ('en', _('English')),
     ('ur', _('Urdu')),
     ('id', _('Indonesian')),
+    ('bn', _('Bengali')),
+    ('tr', _('Turkish')),
+    ('fr', _('French')),
+    ('ms', _('Malay')),
 ]
+
+WEB_PUSH_PUBLIC_KEY = os.environ.get('WEB_PUSH_PUBLIC_KEY', '')
+WEB_PUSH_PRIVATE_KEY = os.environ.get('WEB_PUSH_PRIVATE_KEY', '')
+WEB_PUSH_CONTACT = os.environ.get('WEB_PUSH_CONTACT', 'mailto:security@example.invalid')
 
 TIME_ZONE = 'Asia/Riyadh'
 
