@@ -24,6 +24,10 @@ function statusLabel(status) {
     return { RED: 'CRITICAL', ORANGE: 'BUSY', GREEN: 'COMFORTABLE' }[status] || 'NOT MEASURED';
 }
 
+function statusHex(status) {
+    return statusColor(status);
+}
+
 function project(lat, lng) {
     const scale = 5200;
     return new THREE.Vector3((lng - 39.88) * scale, 0, -(lat - 21.40) * scale);
@@ -179,19 +183,34 @@ function buildScene(data) {
     const zoneMeshes = [];
     data.zones.forEach((zone) => {
         const p = project(zone.center_lat, zone.center_lng);
-        const radius = Math.max(12, Math.min(55, zone.radius_meters / 2));
+        const radius = Math.max(18, Math.min(70, zone.radius_meters / 1.8));
         const material = new THREE.MeshStandardMaterial({
             color: statusColor(zone.status),
             transparent: true,
-            opacity: 0.5,
+            opacity: 0.35,
             roughness: 0.7,
             metalness: 0.05,
         });
-        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 10, 32), material);
+        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, 14, 40), material);
         mesh.position.set(p.x, 7, p.z);
         mesh.userData.zone = zone;
         zoneGroup.add(mesh);
-        zoneMeshes.push(mesh);
+        const ring = new THREE.Mesh(
+            new THREE.RingGeometry(radius * 0.78, radius, 40),
+            new THREE.MeshBasicMaterial({ color: statusHex(zone.status), transparent: true, opacity: 0.82, side: THREE.DoubleSide })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(p.x, 15, p.z);
+        ring.userData.zone = zone;
+        zoneGroup.add(ring);
+        const beacon = new THREE.Mesh(
+            new THREE.CylinderGeometry(2.5, 2.5, 30, 12),
+            new THREE.MeshStandardMaterial({ color: statusHex(zone.status), emissive: statusHex(zone.status), emissiveIntensity: 0.15 })
+        );
+        beacon.position.set(p.x, 22, p.z);
+        beacon.castShadow = true;
+        zoneGroup.add(beacon);
+        zoneMeshes.push(mesh, ring);
         zones.set(zone.code, { zone, mesh });
     });
     data.corridors.forEach((corridor) => {
@@ -265,6 +284,12 @@ function selectZone(code) {
     document.getElementById('hg-prediction').textContent = zone.predicted_density_20m == null ? 'Not measured' : `${zone.predicted_density_20m} people/m²`;
     document.getElementById('hg-risk').textContent = zone.risk_score == null ? 'Not measured' : `${zone.risk_score}/100`;
     document.querySelectorAll('.hg-zone-list-item').forEach((item) => item.setAttribute('aria-current', item.dataset.code === code ? 'true' : 'false'));
+    if (controls && camera) {
+        const target = selected.mesh.position.clone();
+        target.y = 0;
+        controls.target.lerp(target, 0.42);
+        controls.update();
+    }
 }
 
 function resize() {

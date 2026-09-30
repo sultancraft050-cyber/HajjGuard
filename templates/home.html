@@ -63,7 +63,7 @@ main{min-height:100vh}
     </div>
     <div class="hg-stage-wrap" aria-label="Interactive Holy Sites digital twin">
       <div class="hg-stage" id="hg-stage">
-        <div class="hg-stage-label"><span>Explore</span> · Holy Sites digital twin · Simulation Mode</div>
+        <div class="hg-stage-label"><span>Explore</span> · Holy Sites digital twin · Simulation Mode · Drag to orbit · Scroll to zoom</div>
         <div class="hg-stage-tools"><button class="hg-iconbtn" type="button" aria-label="Reset model" onclick="resetTwin()"><i class="bi bi-aspect-ratio"></i></button><button class="hg-iconbtn" type="button" aria-label="Fit all Holy Sites" onclick="fitTwin()"><i class="bi bi-arrows-fullscreen"></i></button></div>
         <canvas id="hg-3d-canvas" class="hg-canvas" aria-label="Interactive 3D Holy Sites model"></canvas>
         <div id="hg-fallback" class="hg-fallback" hidden><div><strong>3D view unavailable on this device.</strong><br><span>Use the geographic map to inspect HajjGuard zones.</span><br><a href="{% url 'zones:live_map' %}">Open geographic map</a></div></div>
