@@ -63,6 +63,39 @@ def api_safety_features(request):
                          'coordinates': row.coordinates, 'source': row.source, 'verified_at': row.verified_at})
     return JsonResponse({'features': features, 'note': 'Only source-labelled verified records are shown. Verify current availability on site.'})
 
+
+@require_GET
+def api_digital_twin(request):
+    """Return the public, non-personal data needed by the 3D explorer."""
+    zones = []
+    for zone in Zone.objects.all().order_by('site_type', 'floor_level', 'name_en'):
+        record = zone.density_records.first()
+        zones.append({
+            'code': zone.code,
+            'name_ar': zone.name_ar,
+            'name_en': zone.name_en,
+            'site_type': zone.site_type,
+            'center_lat': zone.center_lat,
+            'center_lng': zone.center_lng,
+            'radius_meters': zone.radius_meters,
+            'floor_level': zone.floor_level,
+            'density_per_sqm': record.density_per_sqm if record else None,
+            'status': record.status if record else None,
+            'predicted_density_20m': record.predicted_density_20m if record else None,
+            'risk_score': record.risk_score if record else None,
+            'data_timestamp': record.timestamp.isoformat() if record else None,
+            'provenance': 'local_record' if record else 'unavailable',
+        })
+    corridors = [{
+        'id': corridor.pk,
+        'name_en': corridor.name_en,
+        'from_zone': corridor.from_zone.code,
+        'to_zone': corridor.to_zone.code,
+        'walking_minutes': corridor.base_walking_minutes,
+        'width_meters': corridor.width_meters,
+    } for corridor in Corridor.objects.filter(is_active=True).select_related('from_zone', 'to_zone')]
+    return JsonResponse({'zones': zones, 'corridors': corridors, 'mode': 'local_digital_twin'})
+
 @require_GET
 def api_zones_status(request):
     """

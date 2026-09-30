@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from accounts.models import PilgrimProfile
 from nusuk.models import HajjCampaign, NusukCard
-from zones.models import Zone, LocationPing
+from zones.models import Zone, LocationPing, DensityRecord, Corridor
 from safety.models import SosIncident, FieldUnit
 
 
@@ -165,15 +165,49 @@ class InteractiveUIOverhaulTests(TestCase):
 
         self.assertIn("A safer journey through", content)
         self.assertIn("hg-stage", content)
-        self.assertIn("images/haram_aerial.jpg", content)
+        self.assertIn("hg-3d-canvas", content)
+        self.assertIn("js/hajjguard-digital-twin.js", content)
         self.assertIn("Holy Sites digital twin", content)
         self.assertIn("Simulation Mode", content)
-        self.assertIn("selectZone", content)
+        self.assertIn("hg-zone-list", content)
         self.assertIn("Intelligence that helps you decide", content)
         self.assertIn("Plan your next transfer", content)
         self.assertIn("Emergency SOS", content)
         self.assertIn("does not claim official government", content)
         self.assertNotIn("haram-photo-viewport", content)
+
+    def test_digital_twin_public_contract(self):
+        """The 3D scene receives only zone/corridor status data, never pilgrim records."""
+        DensityRecord.objects.create(
+            zone=self.zone_mataf,
+            density_per_sqm=1.4,
+            predicted_density_20m=1.7,
+            risk_score=22,
+            status='GREEN',
+            total_people=200,
+        )
+        Corridor.objects.create(
+            name_en='Mataf to Jamarat',
+            name_ar='المطاف إلى الجمرات',
+            from_zone=self.zone_mataf,
+            to_zone=self.zone_jamarat,
+            base_walking_minutes=18,
+            width_meters=12,
+        )
+        response = self.client.get(reverse('zones:api_digital_twin'))
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload['mode'], 'local_digital_twin')
+        self.assertEqual(len(payload['zones']), 3)
+        mataf = next(row for row in payload['zones'] if row['code'] == self.zone_mataf.code)
+        self.assertEqual(mataf['density_per_sqm'], 1.4)
+        self.assertEqual(mataf['provenance'], 'local_record')
+        mina = next(row for row in payload['zones'] if row['code'] == self.zone_mina.code)
+        self.assertIsNone(mina['density_per_sqm'])
+        self.assertEqual(mina['provenance'], 'unavailable')
+        self.assertEqual(len(payload['corridors']), 1)
+        self.assertNotIn('pilgrim', response.content.decode('utf-8').lower())
+        self.assertNotIn('qr_token', response.content.decode('utf-8').lower())
 
     # 3. WINDOW 3: Pilgrim Smart Portal (pilgrim_portal.html)
     def test_pilgrim_portal_window(self):

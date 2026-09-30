@@ -2,11 +2,11 @@
 
 ## Design philosophy
 
-The landing experience is organized around one decision: help a pilgrim understand a place before moving through it. The page uses a calm white and soft green visual system, large readable type, a single exploration surface, and a persistent emergency action. It is a HajjGuard safety experience rather than a travel booking page or a dense operations dashboard.
+The landing experience is organized around one decision: help a pilgrim understand a place before moving through it. The page uses a calm white, gray, charcoal, and red visual system, large readable type, a single exploration surface, and a persistent emergency action. It is a HajjGuard safety experience rather than a travel booking page or a dense operations dashboard.
 
 ## Main components
 
-- **Exploration hero:** a large illustrative aerial Haram view with selectable zone markers, rotation controls, and a clear Simulation Mode label. It is not a live camera feed.
+- **Exploration hero:** a full-size procedural WebGL digital twin with selectable zone volumes, orbit/zoom controls, reset and fit actions, and a clear Simulation Mode label. It is not a live camera feed or a survey-certified architectural model.
 - **Zone information panel:** shows the selected zone, current status, density, prediction, risk, and links to the full map and guidance screens.
 - **Intelligence cards:** explain the three user benefits: Predict, Guide, and Protect.
 - **Journey planner:** lets the user choose a start, destination, and priority such as less crowded, cooler, or accessible.
@@ -23,7 +23,7 @@ The landing experience is organized around one decision: help a pilgrim understa
 
 ## Technical choices
 
-The first screen remains a server-rendered Django page and uses the existing sectional telemetry JSON. The explorer uses a repository-hosted illustrative aerial image with lightweight HTML, CSS, and JavaScript overlays, so it works without a new build system, external 3D runtime, or paid map service. Selecting a marker reads the existing zone record; it does not create a separate frontend data source. The full geographic map remains available on the live-map route.
+The first screen remains a server-rendered Django page. The explorer loads a pinned, repository-hosted Three.js runtime and reads the existing zone/corridor records through the read-only digital-twin endpoint; it does not create a separate frontend data source. The geometry is procedural and prioritizes clarity and interaction over architectural survey accuracy. The full geographic Leaflet map remains available on the live-map route for precise geographic navigation.
 
 ## Accessibility and responsive behavior
 
