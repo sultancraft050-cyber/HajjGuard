@@ -86,5 +86,5 @@ main{min-height:100vh}
 
 {% block extra_js %}
 <script>function chooseRoute(btn){document.querySelectorAll('.hg-route').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.getElementById('hg-route-status').textContent=`Priority selected: ${btn.querySelector('strong').textContent}. Route remains a local recommendation.`;}</script>
-<script type="module" src="{% static 'js/hajjguard-digital-twin.js' %}?v=8"></script>
+<script type="module" src="{% static 'js/hajjguard-digital-twin.js' %}?v=9"></script>
 {% endblock %}

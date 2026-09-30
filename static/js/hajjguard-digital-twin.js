@@ -83,6 +83,29 @@ function addSiteLabel(parent, text, x, y, z) {
     return sprite;
 }
 
+function addMinaret(parent, x, z) {
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(9, 11, 12, 20), new THREE.MeshStandardMaterial({ color: 0x9ca3af, roughness: 0.8 }));
+    base.position.set(x, 6, z);
+    base.castShadow = true;
+    parent.add(base);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(4, 5.5, 52, 20), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 }));
+    shaft.position.set(x, 38, z);
+    shaft.castShadow = true;
+    parent.add(shaft);
+    const balcony = new THREE.Mesh(new THREE.CylinderGeometry(8, 8, 4, 20), new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.65 }));
+    balcony.position.set(x, 61, z);
+    balcony.castShadow = true;
+    parent.add(balcony);
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.8, 14, 20), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 }));
+    upper.position.set(x, 70, z);
+    upper.castShadow = true;
+    parent.add(upper);
+    const cap = new THREE.Mesh(new THREE.ConeGeometry(7, 10, 20), new THREE.MeshStandardMaterial({ color: 0xc5a059, metalness: 0.55, roughness: 0.4 }));
+    cap.position.set(x, 82, z);
+    cap.castShadow = true;
+    parent.add(cap);
+}
+
 function addHolySiteMasses(parent) {
     // Lightweight recognizable masses, intentionally labelled as a digital twin.
     const haram = new THREE.Group();
@@ -112,24 +135,23 @@ function addHolySiteMasses(parent) {
         const angle = (i / 8) * Math.PI * 2;
         const x = Math.cos(angle) * 122;
         const z = Math.sin(angle) * 122;
-        const minaret = new THREE.Mesh(
-            new THREE.CylinderGeometry(4, 6, 72, 16),
-            new THREE.MeshStandardMaterial({ color: 0x6b7280, roughness: 0.7 })
-        );
-        minaret.position.set(x, 36, z);
-        minaret.castShadow = true;
-        haram.add(minaret);
-        const cap = new THREE.Mesh(new THREE.SphereGeometry(7, 16, 8), new THREE.MeshStandardMaterial({ color: 0xc5a059, metalness: 0.5, roughness: 0.4 }));
-        cap.scale.y = 0.55;
-        cap.position.set(x, 74, z);
-        haram.add(cap);
+        addMinaret(haram, x, z);
     }
     for (let i = 0; i < 14; i += 1) {
         const angle = (i / 14) * Math.PI * 2;
         const x = Math.cos(angle) * 165;
         const z = Math.sin(angle) * 165;
         addBox(haram, x, 16, z, 42, 32, 22, 0x9ca3af);
+        addBox(haram, x, 36, z, 34, 8, 18, 0x64748b);
+        for (let column = -1; column <= 1; column += 1) {
+            addBox(haram, x + Math.cos(angle + Math.PI / 2) * column * 10, 23, z + Math.sin(angle + Math.PI / 2) * column * 10, 4, 14, 4, 0xe5e7eb);
+        }
     }
+    const arcadeRoof = new THREE.Mesh(new THREE.TorusGeometry(162, 7, 12, 96), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 }));
+    arcadeRoof.rotation.x = Math.PI / 2;
+    arcadeRoof.position.y = 43;
+    arcadeRoof.castShadow = true;
+    haram.add(arcadeRoof);
     addSiteLabel(haram, 'Masjid al-Haram', 0, 104, 0);
     const sai = new THREE.Group();
     sai.position.set(0, 0, 235);
@@ -173,6 +195,8 @@ function addHolySiteMasses(parent) {
     addBox(arafat, 0, 5, 0, 260, 10, 170, 0xd1d5db);
     addBox(arafat, 0, 25, -15, 36, 40, 36, 0x94a3b8);
     addBox(arafat, 0, 46, -15, 70, 8, 70, 0x64748b);
+    addBox(arafat, 0, 58, -15, 46, 8, 46, 0x475569);
+    addBox(arafat, 0, 69, -15, 22, 10, 22, 0x334155);
     for (let row = 0; row < 3; row += 1) {
         for (let col = 0; col < 8; col += 1) addDome(arafat, col * 28 - 98, 10, row * 30 + 22, 8, 13, 0xe2e8f0);
     }
