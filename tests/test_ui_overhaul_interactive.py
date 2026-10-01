@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -169,7 +170,7 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertIn("js/hajjguard-digital-twin.js", content)
         self.assertIn("pointer-events:none", content)
         self.assertIn("touch-action:none", content)
-        self.assertIn("js/hajjguard-digital-twin.js?v=9", content)
+        self.assertIn("js/hajjguard-digital-twin.js?v=10", content)
         self.assertIn("Holy Sites digital twin", content)
         self.assertIn("Simulation Mode", content)
         self.assertIn("Drag to orbit", content)
@@ -216,6 +217,17 @@ class InteractiveUIOverhaulTests(TestCase):
         self.assertEqual(len(payload['corridors']), 1)
         self.assertNotIn('pilgrim', response.content.decode('utf-8').lower())
         self.assertNotIn('qr_token', response.content.decode('utf-8').lower())
+
+    def test_digital_twin_uses_procedural_architecture_and_real_zone_projection(self):
+        """The visual scene must use the local procedural model and the API coordinates."""
+        twin = (Path(__file__).resolve().parents[1] / 'static' / 'js' / 'haram-geometry.js').read_text(encoding='utf-8')
+        scene = (Path(__file__).resolve().parents[1] / 'static' / 'js' / 'hajjguard-digital-twin.js').read_text(encoding='utf-8')
+        self.assertIn('buildHaramArchitecture', scene)
+        self.assertIn("Open two-storey arcades", twin)
+        self.assertIn('Hijr semicircular wall', twin)
+        self.assertIn('Kiswa front band', twin)
+        self.assertIn("haram.position.set(-280, 0, -117)", scene)
+        self.assertIn("mina.position.set(88, 0, -73)", scene)
 
     # 3. WINDOW 3: Pilgrim Smart Portal (pilgrim_portal.html)
     def test_pilgrim_portal_window(self):

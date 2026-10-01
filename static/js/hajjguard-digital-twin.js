@@ -1,5 +1,6 @@
 import * as THREE from '../vendor-three.module.js';
 import { OrbitControls } from '../vendor-orbit-controls.js';
+import { buildHaramArchitecture } from './haram-geometry.js';
 
 const canvas = document.getElementById('hg-3d-canvas');
 const fallbackPanel = document.getElementById('hg-fallback');
@@ -13,6 +14,7 @@ let controls;
 let raycaster;
 let pointer;
 let selected;
+let hovered;
 let frame;
 let contentRoot;
 let walkMode = false;
@@ -109,49 +111,10 @@ function addMinaret(parent, x, z) {
 function addHolySiteMasses(parent) {
     // Lightweight recognizable masses, intentionally labelled as a digital twin.
     const haram = new THREE.Group();
-    haram.position.set(-250, 0, -110);
+    haram.position.set(-280, 0, -117);
     parent.add(haram);
     siteGroups.set('haram', haram);
-    const courtyard = new THREE.Mesh(
-        new THREE.CylinderGeometry(105, 105, 5, 64),
-        new THREE.MeshStandardMaterial({ color: 0xe5e7eb, roughness: 0.7 })
-    );
-    courtyard.position.y = 3;
-    haram.add(courtyard);
-    const kaaba = addBox(haram, 0, 16, 0, 27, 27, 27, 0x111827);
-    kaaba.material.roughness = 0.55;
-    const goldBand = addBox(haram, 0, 21, 13.8, 22, 3, 1, 0xc5a059);
-    goldBand.material.metalness = 0.6;
-    [42, 62, 82].forEach((radius, index) => {
-        const tawafRing = new THREE.Mesh(
-            new THREE.TorusGeometry(radius, index === 2 ? 2.8 : 2, 12, 96),
-            new THREE.MeshStandardMaterial({ color: index === 2 ? 0xc5a059 : 0x94a3b8, roughness: 0.7, metalness: index === 2 ? 0.35 : 0.05 })
-        );
-        tawafRing.rotation.x = Math.PI / 2;
-        tawafRing.position.y = 8 + index * 2;
-        haram.add(tawafRing);
-    });
-    for (let i = 0; i < 8; i += 1) {
-        const angle = (i / 8) * Math.PI * 2;
-        const x = Math.cos(angle) * 122;
-        const z = Math.sin(angle) * 122;
-        addMinaret(haram, x, z);
-    }
-    for (let i = 0; i < 14; i += 1) {
-        const angle = (i / 14) * Math.PI * 2;
-        const x = Math.cos(angle) * 165;
-        const z = Math.sin(angle) * 165;
-        addBox(haram, x, 16, z, 42, 32, 22, 0x9ca3af);
-        addBox(haram, x, 36, z, 34, 8, 18, 0x64748b);
-        for (let column = -1; column <= 1; column += 1) {
-            addBox(haram, x + Math.cos(angle + Math.PI / 2) * column * 10, 23, z + Math.sin(angle + Math.PI / 2) * column * 10, 4, 14, 4, 0xe5e7eb);
-        }
-    }
-    const arcadeRoof = new THREE.Mesh(new THREE.TorusGeometry(162, 7, 12, 96), new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.8 }));
-    arcadeRoof.rotation.x = Math.PI / 2;
-    arcadeRoof.position.y = 43;
-    arcadeRoof.castShadow = true;
-    haram.add(arcadeRoof);
+    haram.add(buildHaramArchitecture());
     addSiteLabel(haram, 'Masjid al-Haram', 0, 104, 0);
     const sai = new THREE.Group();
     sai.position.set(0, 0, 235);
@@ -165,7 +128,7 @@ function addHolySiteMasses(parent) {
     addSiteLabel(sai, 'Sa’i corridor', 0, 54, 0);
 
     const mina = new THREE.Group();
-    mina.position.set(330, 0, 35);
+    mina.position.set(88, 0, -73);
     parent.add(mina);
     siteGroups.set('mina', mina);
     for (let row = 0; row < 5; row += 1) {
@@ -177,7 +140,7 @@ function addHolySiteMasses(parent) {
     addSiteLabel(mina, 'Mina', 0, 46, 70);
 
     const jamarat = new THREE.Group();
-    jamarat.position.set(400, 0, -170);
+    jamarat.position.set(-44, 0, -103);
     parent.add(jamarat);
     siteGroups.set('jamarat', jamarat);
     [-35, 0, 35].forEach((x) => {
@@ -189,7 +152,7 @@ function addHolySiteMasses(parent) {
     addSiteLabel(jamarat, 'Jamarat', 0, 80, 20);
 
     const arafat = new THREE.Group();
-    arafat.position.set(-80, 0, 320);
+    arafat.position.set(541, 0, 235);
     parent.add(arafat);
     siteGroups.set('arafat', arafat);
     addBox(arafat, 0, 5, 0, 260, 10, 170, 0xd1d5db);
@@ -203,7 +166,7 @@ function addHolySiteMasses(parent) {
     addSiteLabel(arafat, 'Arafat', 0, 72, 0);
 
     const muzdalifah = new THREE.Group();
-    muzdalifah.position.set(170, 0, 230);
+    muzdalifah.position.set(140, 0, 47);
     parent.add(muzdalifah);
     siteGroups.set('muzdalifah', muzdalifah);
     addBox(muzdalifah, 0, 3, 0, 210, 6, 130, 0xe5e7eb);
@@ -227,9 +190,9 @@ function buildScene(data) {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     controls = new OrbitControls(camera, canvas);
     controls.target.set(0, 0, 60);
-    controls.enableDamping = true;
+    controls.enableDamping = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     controls.dampingFactor = 0.07;
-    controls.minDistance = 240;
+    controls.minDistance = 45;
     controls.maxDistance = 1600;
     controls.maxPolarAngle = Math.PI * 0.48;
     controls.addEventListener('change', syncCameraState);
@@ -240,7 +203,9 @@ function buildScene(data) {
     const sun = new THREE.DirectionalLight(0xffffff, 2.4);
     sun.position.set(500, 900, 300);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024);
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, {left: -950, right: 950, top: 950, bottom: -950, near: 1, far: 2400});
+    sun.shadow.bias = -0.0004;
     scene.add(sun);
     const ground = new THREE.Mesh(
         new THREE.PlaneGeometry(1800, 1800),
@@ -306,8 +271,30 @@ function buildScene(data) {
         contentRoot.add(road);
     });
     stage.dataset.zoneMeshes = 'ready';
-    canvas.addEventListener('pointerdown', () => { canvas.dataset.dragging = 'true'; });
+    let dragStart;
+    let moved = false;
+    canvas.addEventListener('pointerdown', (event) => {
+        canvas.focus(); dragStart = [event.clientX, event.clientY]; moved = false; canvas.dataset.dragging = 'true';
+    });
+    canvas.addEventListener('pointercancel', () => { moved = true; canvas.dataset.dragging = 'false'; });
     canvas.addEventListener('pointerup', () => { canvas.dataset.dragging = 'false'; });
+    canvas.addEventListener('pointermove', (event) => {
+        if (canvas.dataset.dragging === 'true' && dragStart && Math.hypot(event.clientX - dragStart[0], event.clientY - dragStart[1]) > 6) moved = true;
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hit = raycaster.intersectObjects(zoneMeshes, false)[0]?.object;
+        if (hovered && hovered !== hit && hovered !== selected?.mesh) hovered.material.emissive?.setHex(0x000000);
+        hovered = hit || null;
+        if (hovered && hovered !== selected?.mesh) hovered.material.emissive?.setHex(0x334155);
+        canvas.style.cursor = hovered ? 'pointer' : (canvas.dataset.dragging === 'true' ? 'grabbing' : 'grab');
+    });
+    canvas.addEventListener('pointerleave', () => {
+        if (hovered && hovered !== selected?.mesh) hovered.material.emissive?.setHex(0x000000);
+        hovered = null;
+        canvas.style.cursor = 'grab';
+    });
     canvas.addEventListener('keydown', (event) => {
         if (!walkMode) return;
         const key = event.key.toLowerCase();
@@ -329,6 +316,7 @@ function buildScene(data) {
         controls.update();
     });
     canvas.addEventListener('click', (event) => {
+        if (moved) return;
         const rect = canvas.getBoundingClientRect();
         pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -339,7 +327,7 @@ function buildScene(data) {
     renderZoneList(data.zones);
     if (data.zones.length) selectZone(data.zones[0].code);
     resize();
-    fitCameraToContent();
+    focusSite('haram');
     animate();
 }
 
@@ -383,9 +371,9 @@ function renderZoneList(items) {
 function selectZone(code) {
     const entry = zones.get(code);
     if (!entry) return;
-    if (selected) selected.mesh.material.emissive?.setHex(0x000000);
+    if (selected?.mesh) selected.mesh.material.emissive?.setHex(0x000000);
     selected = entry;
-    if (selected.mesh.material.emissive) selected.mesh.material.emissive.setHex(0x334155);
+    if (selected.mesh?.material.emissive) selected.mesh.material.emissive.setHex(0x334155);
     const zone = entry.zone;
     document.getElementById('hg-panel-title').textContent = zone.name_en;
     document.getElementById('hg-panel-sub').textContent = zone.name_ar;
@@ -394,7 +382,7 @@ function selectZone(code) {
     document.getElementById('hg-prediction').textContent = zone.predicted_density_20m == null ? 'Not measured' : `${zone.predicted_density_20m} people/m²`;
     document.getElementById('hg-risk').textContent = zone.risk_score == null ? 'Not measured' : `${zone.risk_score}/100`;
     document.querySelectorAll('.hg-zone-list-item').forEach((item) => item.setAttribute('aria-current', item.dataset.code === code ? 'true' : 'false'));
-    if (controls && camera) {
+    if (controls && camera && selected.mesh) {
         const target = selected.mesh.position.clone();
         target.y = 0;
         controls.target.lerp(target, 0.42);
@@ -408,7 +396,7 @@ function focusSite(siteKey) {
     const bounds = new THREE.Box3().setFromObject(group);
     const center = bounds.getCenter(new THREE.Vector3());
     const size = bounds.getSize(new THREE.Vector3());
-    const distance = Math.max(230, Math.min(700, Math.max(size.x, size.z) * 2.5));
+    const distance = Math.max(230, Math.max(size.x, size.z) * 1.1 / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)));
     controls.target.copy(center).setY(0);
     camera.position.set(center.x + distance * 0.8, distance * 0.65, center.z + distance * 0.8);
     controls.update();
@@ -423,6 +411,7 @@ function resize() {
 }
 
 function animate() {
+    if (document.hidden) { frame = null; return; }
     frame = requestAnimationFrame(animate);
     controls?.update();
     renderer?.render(scene, camera);
@@ -475,12 +464,26 @@ window.addEventListener('keydown', (event) => {
 window.selectZone = selectZone;
 window.focusSite = focusSite;
 window.addEventListener('resize', resize);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && renderer && !frame) animate(); });
+new ResizeObserver(resize).observe(stage);
 
-if (!canvas || !window.WebGLRenderingContext) {
-    showFallback();
-} else {
+if (canvas) {
     fetch('/zones/api/digital-twin/', { credentials: 'same-origin' })
         .then((response) => { if (!response.ok) throw new Error('digital twin unavailable'); return response.json(); })
-        .then(buildScene)
+        .then((data) => {
+            // Keep inspection usable even when this device cannot create a WebGL context.
+            data.zones.forEach((zone) => zones.set(zone.code, { zone }));
+            renderZoneList(data.zones);
+            if (!window.WebGLRenderingContext) {
+                showFallback();
+                if (data.zones.length) selectZone(data.zones[0].code);
+                return;
+            }
+            try { buildScene(data); }
+            catch (error) {
+                showFallback();
+                if (data.zones.length) selectZone(data.zones[0].code);
+            }
+        })
         .catch(() => showFallback());
 }
