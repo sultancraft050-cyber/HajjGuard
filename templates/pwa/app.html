@@ -3,17 +3,17 @@
 <html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="{% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}rtl{% else %}ltr{% endif %}">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0d5c3a"><link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#0f172a"><link rel="manifest" href="/manifest.webmanifest">
   <title>HajjGuard Safety</title>
   <style>
-    :root { font-family: system-ui,sans-serif; color-scheme: light; --green:#0d5c3a; --red:#b42318; }
-    body { margin:0; background:#f8fafc; color:#172b24; }
+    :root { font-family: system-ui,sans-serif; color-scheme: light; --ink:#0f172a; --line:#e2e8f0; --red:#b42318; }
+    body { margin:0; background:#f8fafc; color:#0f172a; }
     main { max-width:720px; margin:auto; padding:1rem; }
-    .card { background:white; border-radius:1rem; padding:1rem; margin:1rem 0; box-shadow:0 2px 12px #0d5c3a18; }
-    button { min-height:48px; border:0; border-radius:.75rem; padding:.75rem 1rem; font-weight:700; cursor:pointer; }
+    .card { background:white; border-radius:1rem; padding:1rem; margin:1rem 0; box-shadow:0 2px 12px #0f172a18; }
+    button { min-height:48px; border:1px solid var(--line); border-radius:.75rem; padding:.75rem 1rem; font-weight:700; cursor:pointer; background:#fff; color:var(--ink); }
     button:focus-visible { outline:4px solid #f4b740; outline-offset:2px; }
-    .primary { background:var(--green); color:white; } .danger { background:var(--red); color:white; }
-    .muted { color:#52645d; } .status { padding:.75rem; border-radius:.75rem; background:#eef7f1; }
+    .primary { background:var(--ink); color:white; border-color:var(--ink); } .danger { background:var(--red); color:white; border-color:var(--red); }
+    .muted { color:#64748b; } .status { padding:.75rem; border-radius:.75rem; background:#f1f5f9; }
     body.high-contrast { background:#000; color:#fff; } body.high-contrast .card { background:#111; color:#fff; } body.high-contrast .muted { color:#eee; }
     body.reduced-motion *, body.reduced-motion *::before, body.reduced-motion *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
     @media (min-width:600px) { body.large-text { font-size:1.2rem; } }

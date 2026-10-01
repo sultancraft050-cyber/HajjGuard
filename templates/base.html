@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}HajjGuard | نظام إدارة الحشود وسلامة الحجاج - كود المنصات{% endblock %}</title>
+    <title>{% block title %}HajjGuard | Pilgrim safety and group coordination{% endblock %}</title>
 
     <!-- Google Fonts: IBM Plex Sans Arabic, Cairo & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,16 +25,16 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-    <!-- Saudi Unified National Design System (DGA 'كود المنصات' - 'قالب الحج') -->
+    <!-- HajjGuard shared design tokens -->
     <style>
         :root {
-            /* Official Saudi National Palette */
-            --dga-green: #006C35;
-            --dga-green-dark: #004D25;
-            --dga-green-hover: #008744;
-            --dga-green-light: #10B981;
-            --dga-green-mint: #ECFDF5;
-            --dga-green-sage: #E6F4EA;
+            /* HajjGuard neutral palette: green is reserved for external status data. */
+            --dga-green: #334155;
+            --dga-green-dark: #0f172a;
+            --dga-green-hover: #475569;
+            --dga-green-light: #94a3b8;
+            --dga-green-mint: #f1f5f9;
+            --dga-green-sage: #f8fafc;
             --dga-gold: #C5A059;
             --dga-gold-light: #FBF4E4;
             
@@ -72,7 +72,7 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* 1. Official DGA Top Verification Ribbon */
+        /* 1. Shared information ribbon */
         .dga-gov-ribbon {
             background-color: #0b2e1b;
             color: #d1fae5;
@@ -282,14 +282,45 @@
             border: 1px solid #e2e8f0;
             font-weight: 700;
         }
+
+        /* Shared HajjGuard surface: the same calm white / charcoal language as the explorer. */
+        body.dga-site-shell { background: #f8fafc; color: #0f172a; }
+        body.dga-site-shell .navbar-dga { background: rgba(255,255,255,.96); border-bottom: 1px solid #e2e8f0; box-shadow: 0 8px 24px rgba(15,23,42,.06); padding: .7rem 0; }
+        body.dga-site-shell .brand-logo-container { background: #0f172a; color: #fff; border-radius: 12px; box-shadow: 0 8px 18px rgba(15,23,42,.18); }
+        body.dga-site-shell .brand-text-title { color: #0f172a; }
+        body.dga-site-shell .navbar-dga .nav-link { color: #475569 !important; }
+        body.dga-site-shell .navbar-dga .nav-link:hover,
+        body.dga-site-shell .navbar-dga .nav-link.active { color: #0f172a !important; background: #f1f5f9; }
+        body.dga-site-shell .navbar-dga .nav-link i { color: #64748b; }
+        body.dga-site-shell .btn-dga-outline { color: #334155; border-color: #e2e8f0; }
+        body.dga-site-shell .btn-dga-outline:hover { color: #0f172a; border-color: #94a3b8; background: #f8fafc; }
+        body.dga-site-shell .btn-dga-primary { background: #0f172a; box-shadow: 0 8px 18px rgba(15,23,42,.16); }
+        body.dga-site-shell .btn-dga-primary:hover { background: #334155; }
+        body.dga-site-shell .dga-card,
+        body.dga-site-shell .card,
+        body.dga-site-shell .list-group { border-color: #e2e8f0; box-shadow: 0 8px 24px rgba(15,23,42,.05); }
+        body.dga-site-shell .dga-card:hover { border-color: #cbd5e1; box-shadow: 0 14px 30px rgba(15,23,42,.08); }
+        body.dga-site-shell .bg-success,
+        body.dga-site-shell .text-success { --bs-success: #475569; }
+        body.dga-site-shell .dga-footer { background: #0f172a; border-top: 3px solid #334155; }
+        body.dga-site-shell .dga-footer a:hover { color: #fff; }
+        body.dga-site-shell main > .container,
+        body.dga-site-shell main > .container-fluid { padding-top: 2rem; padding-bottom: 3rem; }
+        body.dga-site-shell h1, body.dga-site-shell h2, body.dga-site-shell h3 { letter-spacing: -.025em; }
+        body.dga-site-shell .form-control, body.dga-site-shell .form-select { border-color: #cbd5e1; border-radius: 10px; }
+        body.dga-site-shell .form-control:focus, body.dga-site-shell .form-select:focus { border-color: #64748b; box-shadow: 0 0 0 .2rem rgba(100,116,139,.16); }
+        body.dga-site-shell .alert { border-radius: 12px; }
+        body.dga-site-shell .table { --bs-table-striped-bg: #f8fafc; }
+        body.dga-site-shell .badge.bg-success { background-color: #475569 !important; }
+        @media (max-width: 991px) { body.dga-site-shell .navbar-dga .navbar-collapse { background:#fff; border-top:1px solid #e2e8f0; margin-top:.7rem !important; padding-top:.7rem; } }
     </style>
 
     {% block extra_head %}{% endblock %}
     {% block extra_css %}{% endblock %}
 </head>
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100 dga-site-shell">
 
-    <!-- Navigation header for the independent HajjGuard prototype -->
+    <!-- Shared HajjGuard navigation -->
     <nav class="navbar navbar-expand-lg navbar-dga sticky-top">
         <div class="container-fluid px-3 px-lg-4">
             
@@ -455,7 +486,7 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- 3. National Platform Footer (Unified Saudi Standards) -->
+    <!-- Shared HajjGuard footer -->
     <footer class="dga-footer">
         <div class="container px-3 px-lg-4">
             <div class="row g-4 mb-4">

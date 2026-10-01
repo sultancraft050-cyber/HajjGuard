@@ -27,7 +27,7 @@
         backdrop-filter: blur(12px);
         border-radius: var(--dga-radius-pill);
         padding: 6px 14px;
-        box-shadow: 0 8px 24px rgba(0, 108, 53, 0.12), 0 0 0 1px var(--dga-border);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12), 0 0 0 1px var(--dga-border);
         display: flex;
         gap: 6px;
         max-width: 95vw;
@@ -49,7 +49,7 @@
     .btn-site-pill:hover, .btn-site-pill.active {
         background: var(--dga-green);
         color: #ffffff;
-        box-shadow: 0 3px 8px rgba(0, 108, 53, 0.25);
+        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.25);
     }
 
     .map-legend {
@@ -128,7 +128,7 @@
         background-image: linear-gradient(30deg, rgba(23,94,57,.08) 12%, transparent 12.5%, transparent 87%, rgba(23,94,57,.08) 87.5%), linear-gradient(150deg, rgba(23,94,57,.08) 12%, transparent 12.5%, transparent 87%, rgba(23,94,57,.08) 87.5%);
         background-size: 56px 56px;
     }
-    #map-tile-fallback .fallback-title { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#175e39; background:rgba(255,255,255,.9); padding:12px 18px; border-radius:12px; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.12); }
+    #map-tile-fallback .fallback-title { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#334155; background:rgba(255,255,255,.9); padding:12px 18px; border-radius:12px; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.12); }
     #map-container.tiles-unavailable #map-tile-fallback { display:block; }
     #map-container.tiles-unavailable #hajj-map { background: transparent; }
     #map-tile-fallback .fallback-title { z-index:3; }
@@ -321,7 +321,7 @@
             [21.3548, 39.9840, 'Arafat']
         ];
         sites.forEach(([lat, lng, name]) => L.marker([lat, lng], {
-            icon: L.divIcon({className: 'site-label', html: `<span style="background:rgba(255,255,255,.9);border:1px solid #175e39;border-radius:8px;padding:3px 7px;color:#175e39;font-weight:700;font-size:11px;white-space:nowrap">${name}</span>`, iconAnchor: [0, 0]})
+            icon: L.divIcon({className: 'site-label', html: `<span style="background:rgba(255,255,255,.9);border:1px solid #334155;border-radius:8px;padding:3px 7px;color:#334155;font-weight:700;font-size:11px;white-space:nowrap">${name}</span>`, iconAnchor: [0, 0]})
         }).addTo(map));
     }
 
@@ -337,7 +337,7 @@
                 title.append(heading, document.createElement('br'));
                 const note = document.createElement('span'); note.textContent = `Source: ${feature.source}. Verified ${new Date(feature.verified_at).toLocaleDateString()}. Check availability locally.`;
                 title.append(note);
-                const layer = feature.coordinates.length > 1 ? L.polyline(feature.coordinates, {color:'#2563eb',weight:4}) : L.circleMarker(feature.coordinates[0],{radius:7,color:'#0d5c3a',fillColor:'#fff',fillOpacity:1});
+                const layer = feature.coordinates.length > 1 ? L.polyline(feature.coordinates, {color:'#2563eb',weight:4}) : L.circleMarker(feature.coordinates[0],{radius:7,color:'#0f172a',fillColor:'#fff',fillOpacity:1});
                 layer.bindPopup(title).addTo(planningLayers[key]);
             }
             document.getElementById('facility-note').textContent = data.features?.length ? 'Source-labelled facilities. Verify current availability locally.' : 'No verified facilities loaded. Unverified points are not shown.';

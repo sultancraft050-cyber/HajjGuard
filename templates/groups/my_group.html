@@ -11,13 +11,13 @@
         height: 12px;
         border-radius: 50%;
         background-color: var(--dga-green);
-        box-shadow: 0 0 0 0 rgba(0, 108, 53, 0.7);
+        box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.7);
         animation: radar-pulse 1.8s infinite;
     }
     @keyframes radar-pulse {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 108, 53, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(0, 108, 53, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 108, 53, 0); }
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(15, 23, 42, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(15, 23, 42, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(15, 23, 42, 0); }
     }
     .member-item-dga {
         transition: all 0.2s ease;
@@ -267,8 +267,8 @@
 
         // Safe radius boundary circle
         L.circle([centerLat, centerLng], {
-            color: dispersionM > 50 ? '#dc3545' : '#006C35',
-            fillColor: dispersionM > 50 ? '#dc3545' : '#006C35',
+            color: dispersionM > 50 ? '#dc3545' : '#334155',
+            fillColor: dispersionM > 50 ? '#dc3545' : '#334155',
             fillOpacity: 0.12,
             radius: Math.max(dispersionM, 25),
             dashArray: '5, 5'
@@ -289,7 +289,7 @@
             {% if m.latest_ping %}
             L.circleMarker([{{ m.latest_ping.latitude }}, {{ m.latest_ping.longitude }}], {
                 radius: 6,
-                fillColor: {% if m.is_drifting %}'#dc3545'{% else %}'#10B981'{% endif %},
+                fillColor: {% if m.is_drifting %}'#dc3545'{% else %}'#94a3b8'{% endif %},
                 color: '#ffffff',
                 weight: 1.5,
                 opacity: 1,

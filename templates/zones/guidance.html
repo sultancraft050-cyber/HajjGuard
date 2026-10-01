@@ -33,7 +33,7 @@
 
     <!-- Active Guidance Advice Alert -->
     {% if comparison.congestion_aware.reason %}
-    <div class="alert alert-info border-info shadow-sm rounded-4 mb-4 d-flex align-items-center gap-3 py-3" style="background-color: var(--dga-green-mint); border-color: rgba(0, 108, 53, 0.3) !important;">
+    <div class="alert alert-info border-info shadow-sm rounded-4 mb-4 d-flex align-items-center gap-3 py-3" style="background-color: var(--dga-green-mint); border-color: rgba(15, 23, 42, 0.3) !important;">
         <div class="fs-2 text-success">
             <i class="bi bi-shield-check"></i>
         </div>
@@ -108,7 +108,7 @@
                     <div class="small text-danger fw-bold"><i class="bi bi-exclamation-circle-fill me-1"></i>{% trans "يمر بنقاط عنق زجاجة مزدحمة" %}</div>
                 </div>
 
-                <div class="p-3 rounded-3 mb-3 border" style="background-color: var(--dga-green-mint); border-color: rgba(0, 108, 53, 0.3) !important;">
+                <div class="p-3 rounded-3 mb-3 border" style="background-color: var(--dga-green-mint); border-color: rgba(15, 23, 42, 0.3) !important;">
                     <div class="d-flex justify-content-between align-items-center mb-1">
                         <span class="text-success fw-bold small">{% trans "المسار الذكي المتزن:" %}</span>
                         <strong class="text-success">{{ comparison.congestion_aware.estimated_minutes }} {% trans "دقيقة" %}</strong>
