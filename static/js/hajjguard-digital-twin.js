@@ -25,7 +25,7 @@ function statusColor(status) {
 }
 
 function statusLabel(status) {
-    return { RED: 'CRITICAL', ORANGE: 'BUSY', GREEN: 'COMFORTABLE' }[status] || 'NOT MEASURED';
+    return { RED: 'CROWDED', ORANGE: 'BUSY', GREEN: 'COMFORTABLE' }[status] || 'NOT MEASURED';
 }
 
 function statusHex(status) {
@@ -258,6 +258,19 @@ function buildScene(data) {
         zoneMeshes.push(mesh, ring);
         zones.set(zone.code, { zone, mesh });
     });
+    // Visitor markers are source-labelled directory records, never synthetic locations.
+    (data.places || []).forEach((place) => {
+        if (!Array.isArray(place.coordinates) || place.coordinates.length !== 2) return;
+        const p = project(place.coordinates[0], place.coordinates[1]);
+        const marker = new THREE.Mesh(
+            new THREE.ConeGeometry(7, 18, 16),
+            new THREE.MeshStandardMaterial({ color: place.stale ? 0x94a3b8 : 0xb91c1c, roughness: 0.75 })
+        );
+        marker.position.set(p.x, 13, p.z);
+        marker.userData.place = place;
+        contentRoot.add(marker);
+        zoneMeshes.push(marker);
+    });
     data.corridors.forEach((corridor) => {
         const from = zones.get(corridor.from_zone)?.mesh?.position;
         const to = zones.get(corridor.to_zone)?.mesh?.position;
@@ -323,12 +336,26 @@ function buildScene(data) {
         raycaster.setFromCamera(pointer, camera);
         const hit = raycaster.intersectObjects(zoneMeshes, false)[0];
         if (hit?.object?.userData?.zone) selectZone(hit.object.userData.zone.code);
+        if (hit?.object?.userData?.place) selectPlace(hit.object.userData.place);
     });
     renderZoneList(data.zones);
     if (data.zones.length) selectZone(data.zones[0].code);
     resize();
     focusSite('haram');
     animate();
+}
+
+function selectPlace(place) {
+    document.getElementById('hg-panel-title').textContent = place.name_en;
+    document.getElementById('hg-panel-sub').textContent = `${place.name_ar} · ${place.category}`;
+    document.getElementById('hg-status').textContent = place.stale ? 'Verify before visiting' : 'Planning information';
+    document.getElementById('hg-density').textContent = 'Not measured';
+    document.getElementById('hg-prediction').textContent = 'Not measured';
+    document.getElementById('hg-risk').textContent = 'Not measured';
+    const bestTime = document.getElementById('hg-best-time');
+    const facilities = document.getElementById('hg-facilities');
+    if (bestTime) bestTime.textContent = 'Verify locally';
+    if (facilities) facilities.textContent = place.accessibility && Object.keys(place.accessibility).length ? 'Accessibility information available' : 'See directory details';
 }
 
 function syncCameraState() {
@@ -381,6 +408,10 @@ function selectZone(code) {
     document.getElementById('hg-density').textContent = zone.density_per_sqm == null ? 'Not measured' : `${zone.density_per_sqm} people/m²`;
     document.getElementById('hg-prediction').textContent = zone.predicted_density_20m == null ? 'Not measured' : `${zone.predicted_density_20m} people/m²`;
     document.getElementById('hg-risk').textContent = zone.risk_score == null ? 'Not measured' : `${zone.risk_score}/100`;
+    const bestTime = document.getElementById('hg-best-time');
+    const facilities = document.getElementById('hg-facilities');
+    if (bestTime) bestTime.textContent = 'Not measured';
+    if (facilities) facilities.textContent = 'Check safety map';
     document.querySelectorAll('.hg-zone-list-item').forEach((item) => item.setAttribute('aria-current', item.dataset.code === code ? 'true' : 'false'));
     if (controls && camera && selected.mesh) {
         const target = selected.mesh.position.clone();

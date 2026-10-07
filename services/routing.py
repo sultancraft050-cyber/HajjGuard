@@ -16,6 +16,55 @@ class RoutingEngine:
     """
 
     @staticmethod
+    def visitor_route(from_code, to_code, preference='less_crowded'):
+        """Use the existing directed corridor graph without synthetic fallback routes.
+
+        Unknown accessibility, distance and shade are excluded from constrained
+        strategies. A score chooses a path; ETA is the sum of corridor times.
+        """
+        import math
+        from django.utils import timezone
+        graph = RoutingEngine.build_graph(congestion_penalty=False)
+        now = timezone.now()
+        notes = []
+        for u, v, edge in list(graph.edges(data=True)):
+            corridor = Corridor.objects.filter(is_active=True, from_zone__code=u, to_zone__code=v).first()
+            verified = bool(corridor and corridor.verification_source.strip() and corridor.verified_at
+                            and 0 <= (now - corridor.verified_at).total_seconds() <= 90 * 86400)
+            if preference == 'wheelchair' and not (verified and corridor.wheelchair_accessible is True):
+                graph.remove_edge(u, v)
+                continue
+            if preference == 'cooler' and not (verified and corridor.shaded is True):
+                graph.remove_edge(u, v)
+                continue
+            if preference == 'less_walking':
+                if not (verified and corridor.length_meters and math.isfinite(corridor.length_meters)):
+                    graph.remove_edge(u, v)
+                    continue
+                edge['weight'] = corridor.length_meters
+            elif preference == 'less_crowded':
+                rec = graph.nodes[v]['zone'].density_records.first()
+                fresh = rec and 0 <= (now - rec.timestamp).total_seconds() <= 1200
+                if fresh:
+                    edge['weight'] = edge['base_time'] * (1 + max(0, rec.total_people / max(1, graph.nodes[v]['zone'].safe_capacity)) ** 2 * 4)
+                else:
+                    notes.append('No current crowd recommendation. Verify conditions before leaving.')
+        result = {'path': [], 'estimated_minutes': None, 'is_connected': False, 'preference': preference,
+                  'coordinates': [], 'notes': list(dict.fromkeys(notes)), 'provenance': 'local_corridor_records'}
+        if preference == 'cooler':
+            result['notes'].append('Shade-based preference only; route temperature is not measured.')
+        try:
+            path = nx.shortest_path(graph, from_code, to_code, weight='weight')
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            result['notes'].append('No verified route for this preference. Use the geographic map and local guidance.')
+            return result
+        result.update(path=path, is_connected=True,
+                      estimated_minutes=round(sum(graph[a][b]['base_time'] for a, b in zip(path, path[1:])), 1),
+                      coordinates=[[graph.nodes[c]['lat'], graph.nodes[c]['lng']] for c in path])
+        result['notes'].append('Corridor time estimate, not turn-by-turn navigation. Follow on-site instructions.')
+        return result
+
+    @staticmethod
     def build_graph(congestion_penalty=True):
         G = nx.DiGraph()
 

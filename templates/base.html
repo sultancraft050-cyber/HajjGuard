@@ -351,6 +351,11 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if '/zones/discover/' in request.path %}active{% endif %}" href="{% url 'zones:discover_makkah' %}">
+                            <i class="bi bi-compass"></i> {% trans "اكتشف مكة" %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if '/accounts/portal/' in request.path %}active{% endif %}" href="{% url 'accounts:pilgrim_portal' %}">
                             <i class="bi bi-person-badge"></i> {% trans "بوابة ضيف الرحمن" %}
                         </a>

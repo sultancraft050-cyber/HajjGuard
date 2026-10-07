@@ -7,7 +7,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from .models import Zone, Corridor, LocationPing, DensityRecord
+from .models import Zone, Corridor, LocationPing, DensityRecord, VisitorPlace
 from .utils import determine_zone_for_point, haversine_distance, altitude_from_barometric_pressure
 from accounts.models import PilgrimProfile
 
@@ -34,8 +34,73 @@ def landing_home(request):
         'total_headcount': total_headcount,
         'total_capacity': total_capacity,
         'mataf_section': next((s for s in sections if s['code'] == 'Z-HARAM-MATAF'), None),
+        'journey_zones': Zone.objects.all().order_by('site_type', 'name_en'),
     }
     return render(request, 'home.html', context)
+
+
+def discover_makkah_view(request):
+    """Public visitor directory for planning a wider Makkah trip.
+
+    Entries are planning categories and source-labelled places, not live inventory.
+    Booking, pricing, and availability stay with the visitor's chosen provider.
+    """
+    places = []
+    for place in VisitorPlace.objects.filter(enabled=True).order_by('category', 'name_en'):
+        try:
+            place.full_clean()
+        except Exception:
+            continue
+        places.append(place)
+    from django.db.models import Q
+    query = request.GET.get('q', '').strip().casefold()
+    category = request.GET.get('category', '').upper()
+    places = [p for p in places if (not category or p.category == category) and (not query or query in (p.name_en + p.name_ar + p.description + p.area).casefold())]
+    categories = [{'code': code, 'label': label} for code, label in VisitorPlace.CATEGORY_CHOICES]
+    return render(request, 'zones/discover_makkah.html', {'places': places, 'categories': categories})
+
+
+@require_GET
+def api_visitor_places(request):
+    """Return only enabled, source-labelled public visitor directory records."""
+    rows = VisitorPlace.objects.filter(enabled=True)
+    category = request.GET.get('category', '').strip().upper()
+    area = request.GET.get('area', '').strip()
+    accessible = request.GET.get('accessible') == '1'
+    query = request.GET.get('q', '').strip()
+    if category:
+        rows = rows.filter(category=category)
+    if area:
+        rows = rows.filter(area__icontains=area)
+    if query:
+        from django.db.models import Q
+        rows = rows.filter(Q(name_en__icontains=query) | Q(name_ar__icontains=query) | Q(description__icontains=query) | Q(area__icontains=query))
+    data = []
+    for place in rows:
+        try:
+            place.full_clean()
+        except Exception:
+            continue
+        has_accessibility = isinstance(place.accessibility, dict) and any(bool(v) for v in place.accessibility.values())
+        if accessible and not has_accessibility:
+            continue
+        data.append({
+            'id': place.id,
+            'name_ar': place.name_ar,
+            'name_en': place.name_en,
+            'category': place.category,
+            'description': place.description,
+            'area': place.area,
+            'coordinates': place.coordinates,
+            'address': place.address,
+            'accessibility': place.accessibility,
+            'source': place.source,
+            'source_url': place.source_url,
+            'verification_date': place.verification_date.isoformat() if place.verification_date else None,
+            'stale': place.is_stale,
+            'provenance': 'admin_curated',
+        })
+    return JsonResponse({'places': data, 'note': 'Planning information. Verify current availability before visiting.'})
 
 
 def live_map_view(request):
@@ -70,6 +135,8 @@ def api_digital_twin(request):
     zones = []
     for zone in Zone.objects.all().order_by('site_type', 'floor_level', 'name_en'):
         record = zone.density_records.first()
+        stale = bool(record and not 0 <= (timezone.now() - record.timestamp).total_seconds() <= 1200)
+        current = record if not stale else None
         zones.append({
             'code': zone.code,
             'name_ar': zone.name_ar,
@@ -79,12 +146,13 @@ def api_digital_twin(request):
             'center_lng': zone.center_lng,
             'radius_meters': zone.radius_meters,
             'floor_level': zone.floor_level,
-            'density_per_sqm': record.density_per_sqm if record else None,
-            'status': record.status if record else None,
-            'predicted_density_20m': record.predicted_density_20m if record else None,
-            'risk_score': record.risk_score if record else None,
+            'density_per_sqm': current.density_per_sqm if current else None,
+            'status': current.status if current else None,
+            'predicted_density_20m': current.predicted_density_20m if current else None,
+            'risk_score': current.risk_score if current else None,
             'data_timestamp': record.timestamp.isoformat() if record else None,
             'provenance': 'local_record' if record else 'unavailable',
+            'stale': stale,
         })
     corridors = [{
         'id': corridor.pk,
@@ -94,7 +162,20 @@ def api_digital_twin(request):
         'walking_minutes': corridor.base_walking_minutes,
         'width_meters': corridor.width_meters,
     } for corridor in Corridor.objects.filter(is_active=True).select_related('from_zone', 'to_zone')]
-    return JsonResponse({'zones': zones, 'corridors': corridors, 'mode': 'local_digital_twin'})
+    places = []
+    for place in VisitorPlace.objects.filter(enabled=True).order_by('name_en'):
+        try:
+            place.full_clean()
+        except Exception:
+            continue
+        places.append({
+            'id': place.pk, 'name_ar': place.name_ar, 'name_en': place.name_en,
+            'category': place.category, 'coordinates': place.coordinates,
+            'area': place.area, 'accessibility': place.accessibility,
+            'stale': place.is_stale, 'source': place.source,
+            'verification_date': place.verification_date.isoformat() if place.verification_date else None,
+        })
+    return JsonResponse({'zones': zones, 'corridors': corridors, 'places': places, 'mode': 'local_digital_twin'})
 
 @require_GET
 def api_zones_status(request):
@@ -414,19 +495,12 @@ def zone_detail_view(request, zone_id):
 
 
 def guidance_view(request):
-    """
-    KSU Specification Section 7.1 (Screen 8):
-    Guidance: Suggested route when an alert affects the pilgrim, step list.
-    """
+    """Public journey form; coordinates are ephemeral and never persisted."""
     from services.routing import RoutingEngine
     from_zone = request.GET.get('from', 'Z-MINA-SEC3')
     to_zone = request.GET.get('to', 'Z-JAMARAT-F0')
-
     comparison = RoutingEngine.get_route_comparison(from_zone, to_zone)
-
     return render(request, 'zones/guidance.html', {
-        'from_zone': from_zone,
-        'to_zone': to_zone,
+        'journey_zones': Zone.objects.all().order_by('site_type', 'name_en'),
         'comparison': comparison,
     })
-

@@ -75,6 +75,11 @@ class Corridor(models.Model):
     base_walking_minutes = models.FloatField(default=10.0, validators=[MinValueValidator(0.1)])
     width_meters = models.FloatField(default=15.0, validators=[MinValueValidator(1.0)])
     is_active = models.BooleanField(default=True)
+    wheelchair_accessible = models.BooleanField(null=True, blank=True, help_text='Unknown until verified on site.')
+    shaded = models.BooleanField(null=True, blank=True, help_text='Verified shade coverage; not a temperature measurement.')
+    length_meters = models.FloatField(null=True, blank=True, validators=[MinValueValidator(0.1)])
+    verification_source = models.CharField(max_length=250, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [
@@ -184,4 +189,70 @@ class SafetyMapFeature(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class VisitorPlace(models.Model):
+    """Source-labelled public places for visitor planning.
+
+    This is a directory, not an inventory or booking system. Availability and
+    pricing are deliberately outside the model and must be verified by visitors.
+    """
+    CATEGORY_CHOICES = [
+        ('STAY', _('Stay')),
+        ('VISIT', _('Visit')),
+        ('TRANSPORT', _('Transport')),
+        ('ESSENTIAL', _('Food and essentials')),
+        ('ACCESSIBILITY', _('Accessibility')),
+        ('SAFETY', _('Safety')),
+    ]
+    name_ar = models.CharField(max_length=180)
+    name_en = models.CharField(max_length=180)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, db_index=True)
+    description = models.TextField()
+    area = models.CharField(max_length=160, blank=True)
+    coordinates = models.JSONField(null=True, blank=True, help_text='[latitude, longitude]')
+    address = models.CharField(max_length=240, blank=True)
+    accessibility = models.JSONField(default=dict, blank=True)
+    source = models.CharField(max_length=250)
+    source_url = models.URLField(blank=True)
+    verification_date = models.DateField(null=True, blank=True, db_index=True)
+    enabled = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['category', 'name_en']
+        indexes = [models.Index(fields=['enabled', 'category'])]
+
+    def clean(self):
+        import math
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if self.coordinates is not None:
+            valid = (
+                isinstance(self.coordinates, list) and len(self.coordinates) == 2 and
+                all(isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
+                    for value in self.coordinates) and
+                -90 <= self.coordinates[0] <= 90 and -180 <= self.coordinates[1] <= 180
+            )
+            if not valid:
+                raise ValidationError({'coordinates': 'Use [latitude, longitude] with finite valid values.'})
+        if self.enabled:
+            if not self.coordinates:
+                raise ValidationError({'coordinates': 'Enabled visitor places require coordinates.'})
+            if not self.source.strip() or self.verification_date is None:
+                raise ValidationError('Enabled visitor places require a source and verification date.')
+            if self.verification_date > timezone.localdate():
+                raise ValidationError({'verification_date': 'Verification date cannot be in the future.'})
+        if self.accessibility is not None and not isinstance(self.accessibility, dict):
+            raise ValidationError({'accessibility': 'Accessibility must be a JSON object.'})
+
+    @property
+    def is_stale(self):
+        if not self.verification_date:
+            return True
+        return (timezone.localdate() - self.verification_date).days > 90
+
+    def __str__(self):
+        return self.name_en
 

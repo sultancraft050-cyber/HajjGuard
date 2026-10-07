@@ -7,7 +7,8 @@ from django.views.decorators.http import require_GET, require_POST
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from .services import RoutingEngine, CrowdSimulator, PredictiveForecaster
-from zones.models import Zone, DensityRecord, LocationPing
+from zones.models import Zone, DensityRecord, LocationPing, VisitorPlace
+from zones.utils import haversine_distance
 from safety.models import SosIncident
 from accounts.models import PilgrimProfile, AuditLog
 from services.weather import get_live_makkah_weather
@@ -283,15 +284,69 @@ def api_reset_crowd(request):
 
 @require_GET
 def api_calculate_route(request):
-    """
-    Calculates dynamic route between two zones and compares standard shortest path
-    versus HajjGuard congestion-aware detour.
-    """
-    from_zone = request.GET.get('from', 'Z-MINA-SEC3')
-    to_zone = request.GET.get('to', 'Z-JAMARAT-F0')
+    """Public ephemeral journey planning over the existing corridor engine."""
+    import math
+    from django.core.exceptions import ValidationError
+    from zones.models import SafetyMapFeature
+    allowed = {'fastest', 'less_crowded', 'wheelchair', 'less_walking', 'cooler'}
+    preference = request.GET.get('preference', 'less_crowded')
+    if preference not in allowed:
+        return JsonResponse({'status': 'error', 'message': 'Unsupported journey preference.'}, status=400)
 
-    comparison = RoutingEngine.get_route_comparison(from_zone, to_zone)
-    return JsonResponse({
-        'status': 'success',
-        'route_comparison': comparison
-    })
+    def endpoint(prefix, default):
+        coordinates = None
+        place_id = request.GET.get(prefix + '_place')
+        facility_id = request.GET.get(prefix + '_facility')
+        if place_id:
+            place = VisitorPlace.objects.filter(pk=int(place_id), enabled=True).first()
+            if not place:
+                raise ValueError('Place is unavailable.')
+            place.full_clean()
+            coordinates = place.coordinates
+        elif facility_id:
+            feature = SafetyMapFeature.objects.filter(pk=int(facility_id), enabled=True).first()
+            if not feature:
+                raise ValueError('Facility is unavailable.')
+            feature.full_clean()
+            coordinates = feature.coordinates[0]
+        elif request.GET.get(prefix + '_lat') is not None or request.GET.get(prefix + '_lng') is not None:
+            coordinates = [float(request.GET[prefix + '_lat']), float(request.GET[prefix + '_lng'])]
+        if coordinates is not None:
+            if len(coordinates) != 2 or not all(math.isfinite(v) for v in coordinates) or not -90 <= coordinates[0] <= 90 or not -180 <= coordinates[1] <= 180:
+                raise ValueError('Invalid coordinates.')
+            # Only points inside a known zone have corridor coverage. Never route
+            # an arbitrary hotel through a distant zone or invent an approach leg.
+            candidates = [z for z in Zone.objects.all() if z.contains_point(*coordinates)]
+            zone = min(candidates, key=lambda z: z.distance_to(*coordinates), default=None)
+            if not zone:
+                raise ValueError('This location is outside the verified corridor network. Use the geographic map.')
+            return zone.code
+        code = request.GET.get(prefix, default)
+        if not Zone.objects.filter(code=code).exists():
+            raise ValueError('Choose a known Holy Site or verified place.')
+        return code
+    try:
+        origin = endpoint('from', 'Z-MINA-SEC3')
+        destination = endpoint('to', 'Z-JAMARAT-F0')
+    except (ValueError, TypeError, KeyError, ValidationError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid or unavailable endpoint. Verify corridor coverage on the geographic map.'}, status=400)
+    comparison = RoutingEngine.get_route_comparison(origin, destination)
+    alternatives = {key: RoutingEngine.visitor_route(origin, destination, key) for key in allowed}
+    chosen = alternatives[preference]
+    target = Zone.objects.get(code=destination)
+    record = target.density_records.first()
+    fresh = bool(record and 0 <= (timezone.now() - record.timestamp).total_seconds() <= 1200)
+    crowd = {'GREEN': 'Comfortable', 'ORANGE': 'Busy', 'RED': 'Crowded'}.get(record.status) if fresh else None
+    elevated = bool(fresh and (record.status == 'RED' or record.risk_score >= 70))
+    comparison['journey'] = {
+        'preference': preference, 'route': chosen, 'route_alternatives': alternatives,
+        'crowd': crowd, 'best_departure': None,
+        'best_departure_label': 'Not measured; verify conditions before leaving.',
+        'safety_mode': elevated,
+        'safety_notes': (['Crowded destination: consider another route or wait in a safe area.'] if elevated else []) + chosen['notes'],
+        'accessibility': 'Only recently verified wheelchair corridors are eligible.' if preference == 'wheelchair' else 'Confirm accessibility before departure.',
+        'provenance': 'local_density_and_corridor_records' if fresh else 'corridor_records_density_unavailable',
+        'data_timestamp': record.timestamp.isoformat() if record else None,
+        'data_stale': bool(record and not fresh),
+    }
+    return JsonResponse({'status': 'success', 'route_comparison': comparison})

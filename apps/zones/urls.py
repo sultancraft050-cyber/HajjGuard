@@ -5,8 +5,10 @@ app_name = 'zones'
 
 urlpatterns = [
     path('api/safety-features/', views.api_safety_features, name='api_safety_features'),
+    path('api/visitor-places/', views.api_visitor_places, name='api_visitor_places'),
     path('api/digital-twin/', views.api_digital_twin, name='api_digital_twin'),
     path('map/', views.live_map_view, name='live_map'),
+    path('discover/', views.discover_makkah_view, name='discover_makkah'),
     path('live-map/', views.live_map_view, name='live_map_alias'),
     path('detail/<str:zone_id>/', views.zone_detail_view, name='zone_detail'),
     path('guidance/', views.guidance_view, name='guidance'),
