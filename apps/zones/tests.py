@@ -71,6 +71,22 @@ class ZonesLiveMapTestCase(TestCase):
         self.assertEqual(item['coordinates'], [[self.zone.center_lat, self.zone.center_lng], [destination.center_lat, destination.center_lng]])
         self.assertEqual(item['status'], 'open')
 
+    def test_public_map_data_has_only_public_layers(self):
+        response = self.client.get(reverse('zones:api_map_data'))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn('zones', data)
+        self.assertIn('corridors', data)
+        self.assertIn('facilities', data)
+        self.assertIn('places', data)
+        self.assertNotIn('pilgrim_id', response.content.decode())
+        self.assertNotIn('qr_token', response.content.decode())
+
+    def test_routes_endpoint_returns_corridor_overlay(self):
+        response = self.client.get(reverse('zones:api_routes'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('corridors', response.json())
+
     def test_api_location_ping_matches_zone(self):
         payload = {
             'lat': 21.41982,  # Inside the test zone

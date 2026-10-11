@@ -5,6 +5,9 @@ app_name = 'zones'
 
 urlpatterns = [
     path('api/safety-features/', views.api_safety_features, name='api_safety_features'),
+    path('api/facilities/', views.api_facilities, name='api_facilities'),
+    path('api/map-data/', views.api_map_data, name='api_map_data'),
+    path('api/routes/', views.api_routes, name='api_routes'),
     path('api/visitor-places/', views.api_visitor_places, name='api_visitor_places'),
     path('api/digital-twin/', views.api_digital_twin, name='api_digital_twin'),
     path('map/', views.live_map_view, name='live_map'),

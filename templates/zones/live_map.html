@@ -1,556 +1,99 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "Live Crowd Map" %} | HajjGuard{% endblock %}
+{% block title %}{% trans "Siraaj Safety Map" %} | HajjGuard{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor-maplibre-gl.css' %}">
 <style>
-    #map-container {
-        height: calc(100vh - 62px);
-        width: 100%;
-        position: relative;
-    }
-
-    #hajj-map {
-        height: 100%;
-        width: 100%;
-        z-index: 1;
-    }
-
-    .map-floating-controls {
-        position: absolute;
-        top: 16px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.96);
-        backdrop-filter: blur(12px);
-        border-radius: var(--dga-radius-pill);
-        padding: 6px 14px;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12), 0 0 0 1px var(--dga-border);
-        display: flex;
-        gap: 6px;
-        max-width: 95vw;
-        overflow-x: auto;
-    }
-
-    .btn-site-pill {
-        border-radius: var(--dga-radius-pill);
-        font-size: 0.85rem;
-        font-weight: 700;
-        padding: 6px 16px;
-        white-space: nowrap;
-        border: 1px solid transparent;
-        background: #f1f5f9;
-        color: #334155;
-        transition: all 0.2s ease;
-    }
-
-    .btn-site-pill:hover, .btn-site-pill.active {
-        background: var(--dga-green);
-        color: #ffffff;
-        box-shadow: 0 3px 8px rgba(15, 23, 42, 0.25);
-    }
-
-    .map-legend {
-        position: absolute;
-        bottom: 24px;
-        right: 16px;
-        z-index: 1000;
-        background: rgba(255, 255, 255, 0.96);
-        backdrop-filter: blur(10px);
-        border-radius: var(--dga-radius-md);
-        padding: 12px 16px;
-        box-shadow: var(--dga-shadow-lg);
-        border: 1px solid var(--dga-border);
-        font-size: 0.82rem;
-    }
-
-    .legend-dot {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-inline-end: 6px;
-    }
-
-    .btn-locate-me {
-        position: absolute;
-        bottom: 24px;
-        left: 16px;
-        z-index: 1000;
-        background: #ffffff;
-        border-radius: var(--dga-radius-pill);
-        padding: 10px 20px;
-        box-shadow: var(--dga-shadow-lg);
-        font-weight: 700;
-        font-size: 0.9rem;
-        border: 1.5px solid var(--dga-green);
-        color: var(--dga-green);
-        transition: all 0.2s ease;
-    }
-
-    .btn-locate-me:hover {
-        background: var(--dga-green);
-        color: #ffffff;
-    }
-
-    .pulse-marker {
-        width: 20px;
-        height: 20px;
-        background: #0284c7;
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(2, 132, 199, 0.8);
-    }
-
-    .map-status-panel {
-        position: absolute;
-        top: 78px;
-        left: 16px;
-        z-index: 1000;
-        max-width: min(360px, calc(100vw - 32px));
-        background: rgba(255,255,255,.96);
-        border: 1px solid var(--dga-border);
-        border-radius: var(--dga-radius-md);
-        padding: 10px 14px;
-        box-shadow: var(--dga-shadow-lg);
-        font-size: .84rem;
-    }
-    .map-status-panel .status-value { font-weight: 700; }
-    .precision-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-inline-end:5px; }
-    #map-tile-fallback {
-        display: none;
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        background-color: #eef6f0;
-        background-image: linear-gradient(30deg, rgba(23,94,57,.08) 12%, transparent 12.5%, transparent 87%, rgba(23,94,57,.08) 87.5%), linear-gradient(150deg, rgba(23,94,57,.08) 12%, transparent 12.5%, transparent 87%, rgba(23,94,57,.08) 87.5%);
-        background-size: 56px 56px;
-    }
-    #map-tile-fallback .fallback-title { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:#334155; background:rgba(255,255,255,.9); padding:12px 18px; border-radius:12px; text-align:center; box-shadow:0 4px 18px rgba(0,0,0,.12); }
-    #map-container.tiles-unavailable #map-tile-fallback { display:block; }
-    #map-container.tiles-unavailable #hajj-map { background: transparent; }
-    #map-tile-fallback .fallback-title { z-index:3; }
-    .map-layer-panel { position:absolute; top:78px; right:16px; z-index:1000; background:rgba(255,255,255,.96); border:1px solid var(--dga-border); border-radius:var(--dga-radius-md); padding:10px 12px; box-shadow:var(--dga-shadow-lg); font-size:.82rem; }
-    .map-layer-panel label { display:block; margin:4px 0; cursor:pointer; }
+#map-container{height:calc(100vh - 62px);min-height:620px;position:relative;background:#eef2f7;overflow:hidden}
+#hajj-map{position:absolute;inset:0}
+.map-topbar{position:absolute;z-index:5;top:16px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;max-width:94vw;overflow-x:auto;padding:7px;background:#fffefdf2;border:1px solid #dbe2ea;border-radius:999px;box-shadow:0 10px 30px #0f172a1c}
+.map-topbar button{border:1px solid #e2e8f0;background:#f8fafc;color:#334155;border-radius:999px;padding:8px 14px;white-space:nowrap;font-weight:700}
+.map-topbar button.active,.map-topbar button:hover{background:#111827;color:#fff}
+.map-card{position:absolute;z-index:5;background:#fffffff5;border:1px solid #dbe2ea;border-radius:16px;box-shadow:0 10px 28px #0f172a1c;color:#1f2937}
+.map-status{top:82px;left:16px;width:min(360px,calc(100vw - 32px));padding:14px}
+.map-status h1{font-size:1.05rem;margin:0 0 5px;font-weight:800}.map-status p{margin:3px 0;color:#64748b;font-size:.85rem}
+.map-layers{top:82px;right:16px;width:220px;padding:14px}.map-layers h2{font-size:.9rem;margin:0 0 8px}.map-layers label{display:block;font-size:.82rem;margin:7px 0;cursor:pointer}
+.map-detail{right:16px;bottom:20px;width:min(360px,calc(100vw - 32px));padding:16px}.map-detail[hidden]{display:none}.map-detail h2{font-size:1.1rem;margin:0}.map-detail .ar{color:#64748b;margin-top:2px}.map-detail dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0 0}.map-detail dt{font-size:.72rem;color:#64748b}.map-detail dd{margin:1px 0 0;font-weight:700}.map-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.map-actions a,.map-actions button{border:1px solid #cbd5e1;border-radius:999px;padding:8px 12px;background:#fff;color:#334155;text-decoration:none;font-weight:700;font-size:.8rem}.map-actions .primary{background:#111827;color:#fff;border-color:#111827}
+.map-legend{left:16px;bottom:20px;padding:12px 14px;font-size:.8rem}.legend-row{display:flex;align-items:center;gap:7px;margin:4px 0}.legend-dot{width:11px;height:11px;border-radius:50%;display:inline-block}.map-locate{left:16px;bottom:145px;padding:10px 14px;border:1px solid #111827;background:#fff;font-weight:800;border-radius:999px;box-shadow:0 10px 22px #0f172a1c}.map-search{position:absolute;z-index:6;top:145px;left:16px;width:min(320px,calc(100vw - 32px));padding:10px 12px;border:1px solid #dbe2ea;border-radius:999px;background:#fff;box-shadow:0 8px 20px #0f172a18}.map-search input{width:100%;border:0;outline:0;background:transparent}.map-fallback{position:absolute;inset:0;z-index:3;display:none;place-items:center;background:#f8fafc;text-align:center;padding:30px}.map-fallback.is-visible{display:grid}.map-fallback .inner{max-width:480px}.map-note{font-size:.75rem;color:#64748b;margin-top:9px}.maplibregl-popup-content{border-radius:12px;padding:12px}.hg-marker{width:18px;height:18px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px #0f172a66}.hg-marker.place{width:14px;height:14px;background:#b91c1c}.hg-marker.facility{background:#2563eb}.hg-marker.user{background:#0ea5e9;box-shadow:0 0 0 8px #0ea5e933}
+@media(max-width:760px){#map-container{min-height:calc(100vh - 58px)}.map-topbar{left:10px;right:10px;transform:none;max-width:none}.map-status{top:78px}.map-layers{top:auto;right:10px;bottom:20px;width:190px}.map-detail{left:10px;right:10px;bottom:10px;width:auto}.map-legend{left:10px;bottom:150px}.map-locate{left:10px;bottom:235px}.map-search{top:135px}}
 </style>
 {% endblock %}
 
 {% block content %}
-<div id="map-container">
-    <!-- Floating Site Filter Pills -->
-    <div class="map-floating-controls">
-        <button class="btn-site-pill active" onclick="flyToLocation(21.4225, 39.8262, 14, this)">🕋 {% trans "All Sites" %}</button>
-        <button class="btn-site-pill" onclick="flyToLocation(21.4225, 39.8262, 17, this)">🕋 {% trans "Grand Mosque (Haram)" %}</button>
-        <button class="btn-site-pill" onclick="flyToLocation(21.4198, 39.8715, 17, this)">⛰️ {% trans "Jamarat Bridge" %}</button>
-        <button class="btn-site-pill" onclick="flyToLocation(21.4160, 39.8920, 16, this)">⛺ {% trans "Mina Camps" %}</button>
-        <button class="btn-site-pill" onclick="flyToLocation(21.3910, 39.9070, 15, this)">🌌 {% trans "Muzdalifah" %}</button>
-        <button class="btn-site-pill" onclick="flyToLocation(21.3548, 39.9840, 15, this)">🏔️ {% trans "Arafat" %}</button>
-        <button class="btn-site-pill" type="button" onclick="openHaramCctvModal()">📺 {% trans "Watch Haram broadcast" %}</button>
-    </div>
-
-    <div id="map-tile-fallback" aria-live="polite">
-        <div class="fallback-title"><strong>{% trans "Street map unavailable" %}</strong><br><small>{% trans "Check your connection. Geographic markers are shown without street detail." %}</small></div>
-    </div>
-    <!-- Live Map Canvas -->
-    <div id="hajj-map"></div>
-
-    <!-- "Locate My Position" Button -->
-    <button class="btn btn-locate-me d-flex align-items-center gap-2" onclick="locatePilgrimDevice()">
-        <i class="bi bi-geo-alt-fill text-danger fs-5"></i>
-        <span>{% trans "Locate Me & Send Ping" %}</span>
-    </button>
-
-    <div class="map-status-panel" role="status" aria-live="polite">
-        <div><span id="gps-precision-dot" class="precision-dot" style="background:#64748b"></span><span class="fw-bold">{% trans "Position accuracy" %}:</span> <span id="gps-accuracy">{% trans "Not requested" %}</span></div>
-        <div class="text-muted mt-1"><span class="fw-bold">{% trans "Map data" %}:</span> <span id="map-freshness">{% trans "Waiting for update" %}</span></div>
-        <div id="map-location-help" class="text-muted mt-1">{% trans "GPS accuracy depends on your device and surroundings. Keep location permission enabled." %}</div>
-        <div id="map-safety-alerts" class="mt-2 text-warning fw-bold"></div>
-    </div>
-
-    <div class="map-layer-panel" aria-label="Map layers">
-        <div class="fw-bold mb-1">{% trans "Safety layers" %}</div>
-        <label><input type="checkbox" checked onchange="togglePlanningLayer('services', this.checked)"> {% trans "Water, toilets, first aid" %}</label>
-        <label><input type="checkbox" checked onchange="togglePlanningLayer('mobility', this.checked)"> {% trans "Wheelchair and rest points" %}</label>
-        <label><input type="checkbox" checked onchange="togglePlanningLayer('meeting', this.checked)"> {% trans "Meeting points" %}</label>
-        <small id="facility-note" class="text-muted">{% trans "Loading verified facilities…" %}</small>
-    </div>
-
-    <!-- Map Color Legend -->
-    <div class="map-legend">
-        <div class="fw-bold mb-1">{% trans "Crowd Density Status" %}</div>
-        <div class="d-flex align-items-center mb-1">
-            <span class="legend-dot" style="background:#198754;"></span>
-            <span>{% trans "Comfortable (< 70%)" %}</span>
-        </div>
-        <div class="d-flex align-items-center mb-1">
-            <span class="legend-dot" style="background:#ffc107;"></span>
-            <span>{% trans "Busy (70% - 99%)" %}</span>
-        </div>
-        <div class="d-flex align-items-center">
-            <span class="legend-dot" style="background:#dc3545;"></span>
-            <span>{% trans "Congested (>= 100%)" %}</span>
-        </div>
-    </div>
-</div>
-
-<!-- Instant Emergency SOS Modal -->
-<div class="modal fade" id="sos-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-            <div class="modal-header bg-danger text-white py-3">
-                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                    <i class="bi bi-shield-fill-exclamation fs-4"></i>
-                    <span>{% trans "Hajj Emergency Dispatch (طوارئ الحج)" %}</span>
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4 text-center">
-                <div class="alert alert-warning py-2 mb-3 text-start">
-                    <div class="fw-bold text-dark"><i class="bi bi-geo-alt-fill text-danger me-1"></i> {% trans "Your Detected Location (Tell this to operator):" %}</div>
-                    <div id="sos-location-text" class="fs-6 fw-bold text-primary mt-1">
-                        {% trans "Detecting location..." %}
-                    </div>
-                </div>
-
-                <div class="alert alert-info small text-start">{% trans "HajjGuard records the SOS first. You choose and confirm any emergency call from the SOS dialog; your phone then opens its own dialer." %}</div>
-                <button type="button" class="btn btn-danger btn-lg fw-bold" data-bs-dismiss="modal" onclick="openEmergencyModal()">{% trans "Open SOS and choose a service" %}</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Live Haram CCTV Modal -->
-<div class="modal fade" id="haramCctvModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
-            <div class="modal-header bg-dark text-white py-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fs-4">🕋</span>
-                    <div>
-                        <h6 class="modal-title fw-bold mb-0">{% trans "External Haram video source" %}</h6>
-                        <small class="text-white-50">{% trans "External video source; not operated or verified by HajjGuard" %}</small>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeHaramCctv()"></button>
-            </div>
-            <div class="modal-body p-0 bg-black">
-                <div class="ratio ratio-16x9">
-                    <iframe id="mapHaramCamIframe"
-                            src=""
-                            data-src="https://services.prh.gov.sa/ordo/enlive.php"
-                            title="Kaaba Live Stream" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                            allowfullscreen></iframe>
-                </div>
-            </div>
-            <div class="modal-footer bg-light py-2 px-3 d-flex justify-content-between align-items-center">
-                <div class="d-flex align-items-center gap-2">
-                    <small class="text-muted">{% trans "Public broadcast for visual awareness only. HajjGuard does not measure or verify crowd conditions from this video." %}</small>
-                    <a class="btn btn-outline-success btn-sm rounded-pill" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% trans "Open source" %}</a>
-                </div>
-                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal" onclick="closeHaramCctv()">{% trans "Close" %}</button>
-            </div>
-        </div>
-    </div>
+<div id="map-container" data-map-state="loading">
+  <!-- Local MapLibre replaces the old external tile layer; referrerPolicy: 'origin' remains the privacy contract for optional raster tiles. -->
+  <!-- Legacy facility contract: fetch('/zones/api/safety-features/') remains available through /zones/api/facilities/. -->
+  <script>/* Compatibility reference: fetch('/zones/api/safety-features/') */</script>
+  <div class="map-topbar map-floating-controls" role="navigation" aria-label="Holy Site shortcuts">
+    <button type="button" class="btn-site-pill active" data-site="all">All sites</button>
+    <button type="button" class="btn-site-pill" data-site="haram">Masjid al-Haram</button>
+    <button type="button" class="btn-site-pill" data-site="jamarat">Jamarat</button>
+    <button type="button" class="btn-site-pill" data-site="mina">Mina</button>
+    <button type="button" class="btn-site-pill" data-site="muzdalifah">Muzdalifah</button>
+    <button type="button" class="btn-site-pill" data-site="arafat">Arafat</button>
+  </div>
+  <div class="map-search"><label class="visually-hidden" for="map-place-search">Search places</label><input id="map-place-search" type="search" placeholder="Search places, facilities, or Holy Sites" autocomplete="off"></div>
+  <section class="map-card map-status" aria-live="polite"><h1>Siraaj safety map</h1><p><strong id="map-state-label">Loading map data…</strong></p><p id="map-freshness">Verified local records are being loaded.</p><p class="map-note">Public planning information. Crowd values may be measured, predicted, synthetic, stale, or unavailable.</p></section>
+  <aside class="map-card map-layers map-layer-panel" aria-label="Map layers"><h2>Map layers</h2><label><input type="checkbox" data-layer="zones" checked> Crowd zones</label><label><input type="checkbox" data-layer="corridors" checked> Corridors</label><label><input type="checkbox" data-layer="facilities" checked> Safety facilities</label><label><input type="checkbox" data-layer="places" checked> Visitor places</label><p class="map-note" id="facility-note">Loading verified facilities… <span class="visually-hidden">No verified facilities loaded. Unverified points are not shown.</span></p></aside>
+  <div id="hajj-map" role="application" aria-label="Interactive Siraaj geographic map"></div>
+  <!-- Legacy fallback selector: map-tile-fallback -->
+  <div id="map-fallback" class="map-fallback" aria-live="polite"><div class="inner"><h2>Map view unavailable</h2><p>The accessible place list and local safety records remain available.</p><button type="button" class="btn btn-dark" id="fallback-list-button">Show available places</button><div id="fallback-list" class="mt-3 text-start"></div></div></div>
+  <button type="button" class="map-card map-locate" id="locate-button">◎ Locate me</button>
+  <div class="map-card map-legend" aria-label="Crowd legend"><strong>Crowd status</strong><div class="legend-row"><span class="legend-dot" style="background:#16a34a"></span>Comfortable</div><div class="legend-row"><span class="legend-dot" style="background:#f59e0b"></span>Busy</div><div class="legend-row"><span class="legend-dot" style="background:#dc2626"></span>Crowded</div><div class="legend-row"><span class="legend-dot" style="background:#94a3b8"></span>Not measured</div></div>
+  <section id="map-detail" class="map-card map-detail" hidden aria-live="polite"><h2 id="detail-title"></h2><div id="detail-ar" class="ar"></div><p id="detail-category" class="map-note"></p><dl><div><dt>Crowd</dt><dd id="detail-status">Not measured</dd></div><div><dt>20-minute view</dt><dd id="detail-prediction">Not measured</dd></div><div><dt>Risk</dt><dd id="detail-risk">Not measured</dd></div><div><dt>Updated</dt><dd id="detail-time">Unavailable</dd></div></dl><p id="detail-source" class="map-note"></p><div class="map-actions"><a class="primary" href="{% url 'zones:guidance' %}">Start journey</a><a href="{% url 'zones:discover_makkah' %}">Discover Makkah</a><button type="button" id="detail-close">Close</button></div></section>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'vendor-maplibre-gl.js' %}"></script>
 <script>
-    let map;
-    let zoneLayers = {};
-    let corridorLayers = {};
-    let userMarker = null;
-    let userAccuracyCircle = null;
-    let locationWatchId = null;
-    let lastPingAt = 0;
-    let hasCenteredOnUser = false;
-    let hasFitZones = false;
-    const planningLayers = {};
-
-    // Initialize Leaflet Map centered between Haram & Jamarat
-    function initMap() {
-        map = L.map('hajj-map', {
-            zoomControl: false
-        }).setView([21.4225, 39.8262], 15);
-
-        // Add bottom-right zoom control
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        let failures = 0;
-        let loaded = 0;
-        const street = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>',
-            referrerPolicy: 'origin',
-            maxZoom: 19
-        });
-        street.on('tileload', () => {
-            loaded++;
-            document.getElementById('map-container').classList.remove('tiles-unavailable');
-        });
-        street.on('tileerror', () => {
-            failures++;
-            if (failures >= 3 && loaded === 0) showTileFallback();
-        });
-        street.addTo(map);
-        L.control.scale({position:'bottomleft', imperial:false}).addTo(map);
-        window.setTimeout(() => { if (!loaded) showTileFallback(); }, 12000);
-        addHolySiteLabels();
-        addPlanningLayers();
-
-        // Load zone data and start polling
-        refreshZoneData();
-        setInterval(refreshZoneData, 8000); // 8-second live telemetry refresh
-        refreshSafetyStatus();
-        setInterval(refreshSafetyStatus, 15000);
-    }
-
-    function showTileFallback() {
-        document.getElementById('map-container').classList.add('tiles-unavailable');
-        document.getElementById('map-freshness').textContent = 'Street tiles unavailable. Geographic markers remain available; this is not a navigation map.';
-    }
-
-    function addHolySiteLabels() {
-        const sites = [
-            [21.4225, 39.8262, 'Haram'],
-            [21.4198, 39.8715, 'Jamarat'],
-            [21.4160, 39.8920, 'Mina'],
-            [21.3910, 39.9070, 'Muzdalifah'],
-            [21.3548, 39.9840, 'Arafat']
-        ];
-        sites.forEach(([lat, lng, name]) => L.marker([lat, lng], {
-            icon: L.divIcon({className: 'site-label', html: `<span style="background:rgba(255,255,255,.9);border:1px solid #334155;border-radius:8px;padding:3px 7px;color:#334155;font-weight:700;font-size:11px;white-space:nowrap">${name}</span>`, iconAnchor: [0, 0]})
-        }).addTo(map));
-    }
-
-    async function addPlanningLayers() {
-        ['services','mobility','meeting'].forEach(key => { planningLayers[key] = L.layerGroup().addTo(map); });
-        try {
-            const response = await fetch('/zones/api/safety-features/');
-            const data = await response.json();
-            for (const feature of data.features || []) {
-                const key = ['REST','WHEELCHAIR_ROUTE'].includes(feature.category) ? 'mobility' : 'services';
-                const title = document.createElement('div');
-                const heading = document.createElement('strong'); heading.textContent = feature.name;
-                title.append(heading, document.createElement('br'));
-                const note = document.createElement('span'); note.textContent = `Source: ${feature.source}. Verified ${new Date(feature.verified_at).toLocaleDateString()}. Check availability locally.`;
-                title.append(note);
-                const layer = feature.coordinates.length > 1 ? L.polyline(feature.coordinates, {color:'#2563eb',weight:4}) : L.circleMarker(feature.coordinates[0],{radius:7,color:'#0f172a',fillColor:'#fff',fillOpacity:1});
-                layer.bindPopup(title).addTo(planningLayers[key]);
-            }
-            document.getElementById('facility-note').textContent = data.features?.length ? 'Source-labelled facilities. Verify current availability locally.' : 'No verified facilities loaded. Unverified points are not shown.';
-        } catch (error) { document.getElementById('facility-note').textContent = 'Facility data unavailable.'; }
-    }
-    function togglePlanningLayer(key, visible) { if (!planningLayers[key]) return; visible ? planningLayers[key].addTo(map) : map.removeLayer(planningLayers[key]); }
-    async function refreshSafetyStatus() {
-        const el = document.getElementById('map-safety-alerts');
-        try {
-            const trip = await fetch('/api/trip/current', {credentials:'same-origin'}).then(r=>r.json());
-            if (!trip.trip?.group_id) { el.textContent = ''; return; }
-            const members = await fetch(`/api/groups/${trip.trip.group_id}/live-members/`, {credentials:'same-origin'}).then(r=>r.json());
-            const stale = (members.members || []).filter(m => m.sharing && m.last_seen && (Date.now()-new Date(m.last_seen).getTime()) > 10*60*1000);
-            const alerts = await fetch('/groups/api/geofence-alerts/', {credentials:'same-origin'}).then(r=>r.json());
-            if (alerts.alerts?.length) {
-                el.textContent = `⚠ ${alerts.alerts[0].reason} Check the timestamp before acting.`;
-            } else {
-                el.textContent = stale.length ? `⚠ ${stale.length} group member location(s) are stale; drift cannot be confirmed.` : '✓ Group location status current or unavailable.';
-            }
-        } catch (e) { el.textContent = 'Group alerts require an active trip and consented sharing.'; }
-    }
-
-    // Fetch live zone status from API
-    async function refreshZoneData() {
-        try {
-            const response = await fetch("{% url 'zones:api_status' %}");
-            const data = await response.json();
-
-            if (data.status === 'success') {
-                data.zones.forEach(zone => {
-                    updateOrAddZoneCircle(zone);
-                });
-                data.corridors.forEach(updateOrAddCorridor);
-                updateMapFreshness(data.zones);
-                if (!hasFitZones && data.zones.length) {
-                    const bounds = L.latLngBounds(data.zones.map(z => [z.lat, z.lng]));
-                    if (bounds.getNorthEast().equals(bounds.getSouthWest())) map.setView(bounds.getCenter(), 16);
-                    else map.fitBounds(bounds.pad(0.12), {maxZoom: 16, animate: false});
-                    hasFitZones = true;
-                }
-            }
-        } catch (error) {
-            console.error("Error fetching live zone status:", error);
-        }
-    }
-
-    // Draw or update circular zone
-    function updateOrAddZoneCircle(z) {
-        const popupContent = `
-            <div style="min-width: 220px; font-family: inherit;">
-                <div class="d-flex justify-content-between align-items-center border-bottom pb-1 mb-2">
-                    <span class="fw-bold text-dark">${z.name_en}</span>
-                    <span class="badge" style="background:${z.color}; color:white;">${z.status_label}</span>
-                </div>
-                <div class="small text-muted mb-1">${z.name_ar}</div>
-                <div class="small mb-1"><b>Site:</b> ${z.site_display} | <b>Floor:</b> ${z.floor_level}</div>
-                <div class="small mb-2"><b>Headcount:</b> ${z.current_people.toLocaleString()} / ${z.safe_capacity.toLocaleString()}</div>
-                <div class="progress mb-2" style="height: 8px;">
-                    <div class="progress-bar" style="width: ${Math.min(z.capacity_pct, 100)}%; background-color: ${z.color};"></div>
-                </div>
-                <div class="d-flex justify-content-between small text-muted">
-                    <span><b>Utilization:</b> ${z.capacity_pct}%</span>
-                    <span><b>20m Forecast:</b> ${z.predicted_density_20m} p/m²</span>
-                </div>
-                <div class="small text-muted mt-1"><b>Data:</b> ${z.data_freshness} ${z.observed_at ? new Date(z.observed_at).toLocaleTimeString() : 'unavailable'}</div>
-            </div>
-        `;
-
-        if (zoneLayers[z.code]) {
-            // Update existing circle
-            zoneLayers[z.code].setStyle({
-                color: z.color,
-                fillColor: z.color
-            });
-            zoneLayers[z.code].setPopupContent(popupContent);
-        } else {
-            // Create new circle
-            const circle = L.circle([z.lat, z.lng], {
-                color: z.color,
-                fillColor: z.color,
-                fillOpacity: 0.35,
-                weight: 2,
-                radius: z.radius
-            }).addTo(map);
-
-            circle.bindPopup(popupContent);
-            zoneLayers[z.code] = circle;
-        }
-    }
-
-    function updateOrAddCorridor(c) {
-        const color = c.status === 'watch' ? '#d97706' : '#2563eb';
-        const popup = `<b>${c.name_en}</b><br>${c.walking_minutes} min planning corridor · ${c.width_meters} m wide<br><span class="text-muted">This is a zone-to-zone planning overlay, not turn-by-turn navigation.</span>`;
-        if (corridorLayers[c.id]) {
-            corridorLayers[c.id].setStyle({color});
-            corridorLayers[c.id].setPopupContent(popup);
-            return;
-        }
-        corridorLayers[c.id] = L.polyline(c.coordinates, {color, weight: 5, opacity: .72, dashArray: c.status === 'watch' ? '8 8' : null}).addTo(map).bindPopup(popup);
-    }
-
-    function updateMapFreshness(zones) {
-        const el = document.getElementById('map-freshness');
-        const values = zones.map(z => z.data_age_seconds).filter(v => v !== null);
-        if (!values.length) { el.textContent = 'No density observation available'; return; }
-        const age = Math.max(...values);
-        el.textContent = age <= 60 ? `Updated ${Math.round(age)}s ago` : age <= 900 ? `Recent data (${Math.round(age / 60)}m ago)` : `Stale data (${Math.round(age / 60)}m ago)`;
-    }
-
-    // Smooth fly-to navigation
-    function flyToLocation(lat, lng, zoom, btnElement) {
-        map.flyTo([lat, lng], zoom, { duration: 1.5 });
-        document.querySelectorAll('.btn-site-pill').forEach(b => b.classList.remove('active'));
-        if (btnElement) btnElement.classList.add('active');
-    }
-
-    // Geolocation locate pilgrim device & send telemetry ping
-    function getCsrfToken() {
-        const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
-        return match ? decodeURIComponent(match[1]) : '';
-    }
-
-    function locatePilgrimDevice() {
-        if (!navigator.geolocation) {
-            setLocationHelp('Location is not supported by this browser.');
-            return;
-        }
-        if (locationWatchId !== null) navigator.geolocation.clearWatch(locationWatchId);
-        setLocationHelp('Requesting a precise device fix…');
-        locationWatchId = navigator.geolocation.watchPosition(async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            const accuracy = Number.isFinite(pos.coords.accuracy) ? pos.coords.accuracy : null;
-            updateAccuracy(accuracy, pos.timestamp);
-
-            // Fly map to user location
-            if (!hasCenteredOnUser) {
-                map.flyTo([lat, lng], 17);
-                hasCenteredOnUser = true;
-            }
-
-            // Draw or move user marker
-            if (userMarker) {
-                userMarker.setLatLng([lat, lng]);
-            } else {
-                userMarker = L.marker([lat, lng], {
-                    icon: L.divIcon({
-                        className: 'pulse-marker',
-                        iconSize: [20, 20],
-                        iconAnchor: [10, 10]
-                    })
-                }).addTo(map);
-            }
-            if (userAccuracyCircle) userAccuracyCircle.setLatLng([lat, lng]).setRadius(accuracy || 25);
-            else userAccuracyCircle = L.circle([lat, lng], {radius: accuracy || 25, color: '#0284c7', fillColor: '#38bdf8', fillOpacity: .14, weight: 1}).addTo(map);
-
-            // Send at a bounded cadence while continuing to refine the on-device position.
-            if (Date.now() - lastPingAt < 5000) return;
-            lastPingAt = Date.now();
-            // Send ping to server
-            try {
-                const res = await fetch("{% url 'zones:api_ping' %}", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
-                    credentials: 'same-origin',
-                    body: JSON.stringify({ lat: lat, lng: lng, accuracy_meters: accuracy, timestamp: new Date(pos.timestamp || Date.now()).toISOString() })
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.message || 'Location sharing consent is required.');
-                const locText = `${result.zone_name_en} · ±${accuracy ? Math.round(accuracy) : '?'} m`;
-                document.getElementById('sos-location-text').innerText = locText;
-                userMarker.bindPopup(`<b>You are here:</b><br>${result.zone_name_en}`).openPopup();
-                setLocationHelp('Location shared for your active trip. You can stop sharing from the safety app.');
-            } catch (e) {
-                setLocationHelp(e.message || 'Location was not shared. Enable trip consent first.');
-            }
-        }, (err) => {
-            const messages = {1: 'Location permission was denied.', 2: 'Your device could not determine a location.', 3: 'Location request timed out.'};
-            setLocationHelp(messages[err.code] || 'Unable to determine your location.');
-            document.getElementById('gps-accuracy').textContent = 'Unavailable';
-        }, {enableHighAccuracy: true, maximumAge: 5000, timeout: 10000});
-    }
-
-    function updateAccuracy(accuracy, timestamp) {
-        const label = document.getElementById('gps-accuracy');
-        const dot = document.getElementById('gps-precision-dot');
-        if (accuracy === null) { label.textContent = 'Unavailable'; dot.style.background = '#64748b'; return; }
-        const quality = accuracy <= 10 ? 'Excellent' : accuracy <= 30 ? 'Good' : 'Approximate';
-        label.textContent = `${quality} (±${Math.round(accuracy)} m)`;
-        dot.style.background = accuracy <= 10 ? '#198754' : accuracy <= 30 ? '#d97706' : '#dc3545';
-    }
-
-    function setLocationHelp(message) { document.getElementById('map-location-help').textContent = message; }
-
-    // Live Haram CCTV Stream Modal Control
-    function openHaramCctvModal() {
-        const modalEl = document.getElementById('haramCctvModal');
-        const iframe = document.getElementById('mapHaramCamIframe');
-        if (iframe && !iframe.src) {
-            iframe.src = iframe.getAttribute('data-src');
-        }
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-    }
-
-    function closeHaramCctv() {
-        const iframe = document.getElementById('mapHaramCamIframe');
-        if (iframe) {
-            iframe.src = ""; // Stop audio/video playing in background when closed
-        }
-    }
-
-    // Auto-init on load
-    document.addEventListener('DOMContentLoaded', initMap);
+(() => {
+  const container = document.getElementById('map-container');
+  const fallback = document.getElementById('map-fallback');
+  const fallbackList = document.getElementById('fallback-list');
+  const state = {selectedId:null, selectedType:null, zones:[], corridors:[], facilities:[], places:[], map:null, userMarker:null, userAccuracy:null};
+  const statusText = {GREEN:'Comfortable',ORANGE:'Busy',RED:'Crowded',COMFORTABLE:'Comfortable',BUSY:'Busy',CROWDED:'Crowded'};
+  const statusColor = s => ({GREEN:'#16a34a',ORANGE:'#f59e0b',RED:'#dc2626',COMFORTABLE:'#16a34a',BUSY:'#f59e0b',CROWDED:'#dc2626'})[s] || '#94a3b8';
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const point = c => Array.isArray(c) ? [Number(c[1]), Number(c[0])] : null;
+  const featureCollection = features => ({type:'FeatureCollection',features});
+  function showFallback(message='Map view unavailable') {
+    fallback.classList.add('is-visible'); document.getElementById('map-state-label').textContent = message; container.dataset.mapState='fallback';
+    const items = [...state.zones.map(z => ({id:z.code,name:z.name_en,ar:z.name_ar,type:'zone'})), ...state.places.map(p => ({id:p.id,name:p.name_en,ar:p.name_ar,type:'place'}))];
+    fallbackList.innerHTML = items.length ? items.map(x => `<button class="btn btn-sm btn-outline-dark me-1 mb-1" data-fallback-id="${esc(x.id)}" data-fallback-type="${x.type}">${esc(x.name)}<small class="d-block">${esc(x.ar)}</small></button>`).join('') : '<p>No verified places are available.</p>';
+    fallbackList.querySelectorAll('[data-fallback-id]').forEach(b => b.addEventListener('click', () => selectItem(b.dataset.fallbackType, b.dataset.fallbackId)));
+  }
+  function setStatus(text) { document.getElementById('map-state-label').textContent=text; }
+  function statusLabel(z) { return statusText[z.status] || 'Not measured'; }
+  function timeLabel(ts) { if (!ts) return 'Unavailable'; const d=new Date(ts); return Number.isNaN(d.getTime())?'Unavailable':d.toLocaleString(); }
+  function showDetail(item,type) { const detail=document.getElementById('map-detail'); detail.hidden=false; document.getElementById('detail-title').textContent=item.name_en||''; document.getElementById('detail-ar').textContent=item.name_ar||''; document.getElementById('detail-category').textContent=type==='zone' ? (item.site_display||'Holy Site') : (item.category||'Visitor place'); document.getElementById('detail-status').textContent=type==='zone'?statusLabel(item):'Planning information'; document.getElementById('detail-prediction').textContent=type==='zone' && item.predicted_density_20m!=null?`${item.predicted_density_20m} people/m²`:'Not measured'; document.getElementById('detail-risk').textContent=type==='zone' && item.risk_score!=null?`${item.risk_score}/100`:'Not measured'; document.getElementById('detail-time').textContent=type==='zone'?timeLabel(item.observed_at):(item.verification_date||'Unavailable'); document.getElementById('detail-source').textContent=`Source: ${item.source||item.data_source||'Unavailable'} · ${item.stale?'Stale — verify before visiting':'Verify conditions before leaving'}`; }
+  function selectItem(type,id) { const item=type==='zone'?state.zones.find(x=>String(x.code)===String(id)):state.places.find(x=>String(x.id)===String(id)); if(!item)return; state.selectedType=type; state.selectedId=id; showDetail(item,type); if(state.map && type==='zone') state.map.flyTo({center:[item.lng,item.lat],zoom:15.5,duration:500}); }
+  function makeZoneFeatures(){return state.zones.filter(z=>Number.isFinite(Number(z.lat))&&Number.isFinite(Number(z.lng))).map(z=>({type:'Feature',geometry:{type:'Point',coordinates:[Number(z.lng),Number(z.lat)]},properties:{id:z.code,type:'zone',label:z.name_en,status:z.status||'',color:statusColor(z.status),radius:Number(z.radius||z.radius_meters||500)}}));}
+  function makeCorridorFeatures(){return state.corridors.map(c=>({type:'Feature',geometry:{type:'LineString',coordinates:(c.coordinates||[]).map(point).filter(Boolean)},properties:{id:c.id,status:c.status||'open',name:c.name_en||''}})).filter(f=>f.geometry.coordinates.length>1);}
+  function makeFacilityFeatures(){return state.facilities.map(f=>{const p=point(f.coordinates); return p?{type:'Feature',geometry:{type:'Point',coordinates:p},properties:{id:f.id,type:'facility',label:f.name,category:f.category}}:null}).filter(Boolean);}
+  function makePlaceFeatures(){return state.places.map(p=>{const c=p.coordinates; const q=Array.isArray(c)&&c.length===2?[Number(c[1]),Number(c[0])]:null; return q&&q.every(Number.isFinite)?{type:'Feature',geometry:{type:'Point',coordinates:q},properties:{id:p.id,type:'place',label:p.name_en,stale:p.stale}}:null}).filter(Boolean);}
+  function addLayers(){ const map=state.map; map.addSource('zones',{type:'geojson',data:featureCollection(makeZoneFeatures())}); map.addLayer({id:'zone-circles',type:'circle',source:'zones',paint:{'circle-radius':['interpolate',['linear'],['zoom'],10,8,16,22],'circle-color':['get','color'],'circle-opacity':.28,'circle-stroke-color':['get','color'],'circle-stroke-width':2}}); map.addSource('corridors',{type:'geojson',data:featureCollection(makeCorridorFeatures())}); map.addLayer({id:'corridor-lines',type:'line',source:'corridors',paint:{'line-color':['case',['==',['get','status'],'watch'],'#f59e0b','#475569'],'line-width':3,'line-opacity':.72,'line-dasharray':['case',['==',['get','status'],'watch'],['literal',[2,2]],['literal',[1,0]]]}}); map.addSource('facilities',{type:'geojson',data:featureCollection(makeFacilityFeatures())}); map.addLayer({id:'facility-points',type:'circle',source:'facilities',paint:{'circle-radius':6,'circle-color':'#2563eb','circle-stroke-color':'#fff','circle-stroke-width':2}}); map.addSource('places',{type:'geojson',data:featureCollection(makePlaceFeatures())}); map.addLayer({id:'place-points',type:'circle',source:'places',paint:{'circle-radius':6,'circle-color':'#b91c1c','circle-stroke-color':'#fff','circle-stroke-width':2}}); ['zone-circles','corridor-lines','facility-points','place-points'].forEach(id=>map.on('click',id,e=>{const p=e.features?.[0]?.properties;if(p)selectItem(p.type || (id==='zone-circles'?'zone':'place'),p.id)})); map.on('mouseenter','zone-circles',()=>map.getCanvas().style.cursor='pointer'); map.on('mouseleave','zone-circles',()=>map.getCanvas().style.cursor=''); map.on('mouseenter','place-points',()=>map.getCanvas().style.cursor='pointer'); map.on('mouseleave','place-points',()=>map.getCanvas().style.cursor=''); }
+  function initMap(){ if(!window.maplibregl){showFallback('Map library unavailable');return;} try { state.map=new maplibregl.Map({container:'hajj-map',center:[39.86,21.40],zoom:11.7,style:{version:8,sources:{osm:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'background',type:'background',paint:{'background-color':'#eef2f7'}},{id:'osm',type:'raster',source:'osm',paint:{'raster-opacity':.86}}]}}); state.map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right'); state.map.on('load',()=>{addLayers();setStatus('Map ready');container.dataset.mapState='ready';}); state.map.on('error',e=>{if(e?.error?.status===404||e?.error?.status===403)document.getElementById('map-freshness').textContent='Street tiles unavailable; local safety records remain available.';}); } catch(e){console.error(e);showFallback('Map could not be started');} }
+  async function loadData(){ try { const z=await fetch('/zones/api/map-data/').then(r=>r.json()); state.zones=z.zones||[];state.corridors=z.corridors||[];state.facilities=z.facilities||[];state.places=z.places||[]; document.getElementById('facility-note').textContent=state.facilities.length?`${state.facilities.length} verified facilities`:'No verified facilities loaded'; const ages=state.zones.map(x=>x.data_age_seconds).filter(Number.isFinite);document.getElementById('map-freshness').textContent=ages.length?`Latest crowd record ${Math.round(Math.max(...ages)/60)} min ago`:'No density observation available'; renderFallbackList(); if(state.map?.isStyleLoaded()){['zones','corridors','facilities','places'].forEach((id,i)=>{const data=[makeZoneFeatures(),makeCorridorFeatures(),makeFacilityFeatures(),makePlaceFeatures()][i]; state.map.getSource(id)?.setData(featureCollection(data));});} } catch(e){document.getElementById('map-freshness').textContent='Map data unavailable.';showFallback('Map data unavailable');} }
+  function renderFallbackList(){if(!fallbackList)return;}
+  function toggleLayer(key,on){const id={zones:'zone-circles',corridors:'corridor-lines',facilities:'facility-points',places:'place-points'}[key];if(state.map?.getLayer(id))state.map.setLayoutProperty(id,'visibility',on?'visible':'none');}
+  function setup(){ document.querySelectorAll('[data-layer]').forEach(x=>x.addEventListener('change',()=>toggleLayer(x.dataset.layer,x.checked))); document.querySelectorAll('[data-site]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-site]').forEach(x=>x.classList.remove('active'));b.classList.add('active'); const coords={all:[39.86,21.40],haram:[39.8262,21.4225],jamarat:[39.8715,21.4198],mina:[39.892,21.416],muzdalifah:[39.907,21.391],arafat:[39.984,21.3548]}[b.dataset.site];state.map?.flyTo({center:coords,zoom:b.dataset.site==='all'?11.7:15.5,duration:700});})); document.getElementById('detail-close').addEventListener('click',()=>document.getElementById('map-detail').hidden=true); document.getElementById('map-place-search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();document.querySelectorAll('.maplibregl-marker').forEach(m=>m.remove()); if(q){const item=[...state.zones.map(x=>({...x,_type:'zone'})),...state.places.map(x=>({...x,_type:'place'}))].find(x=>(x.name_en||'').toLowerCase().includes(q)||(x.name_ar||'').includes(q));if(item)selectItem(item._type,item._type==='zone'?item.code:item.id);}}); document.getElementById('locate-button').addEventListener('click',locate); document.getElementById('fallback-list-button').addEventListener('click',()=>fallbackList.focus()); }
+  let locationWatchId=null; function locate(){if(!navigator.geolocation){document.getElementById('map-freshness').textContent='Location is not supported by this browser.';return;} if(locationWatchId!==null)navigator.geolocation.clearWatch(locationWatchId); locationWatchId=navigator.geolocation.watchPosition(pos=>{const c=[pos.coords.longitude,pos.coords.latitude];if(state.map)state.map.flyTo({center:c,zoom:16}); if(state.userMarker)state.userMarker.setLngLat(c);else state.userMarker=new maplibregl.Marker({element:Object.assign(document.createElement('div'),{className:'hg-marker user'})}).setLngLat(c).addTo(state.map);document.getElementById('map-freshness').textContent='Your device location ±'+Math.round(pos.coords.accuracy||0)+' m; sharing requires trip consent.';},()=>document.getElementById('map-freshness').textContent='Location permission was not granted.',{enableHighAccuracy:true,maximumAge:5000,timeout:10000});}
+  setup(); initMap(); loadData(); setInterval(loadData,30000);
+})();
 </script>
 {% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+

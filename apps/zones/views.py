@@ -130,6 +130,43 @@ def api_safety_features(request):
 
 
 @require_GET
+def api_facilities(request):
+    """Map-friendly alias for the verified public safety-facility feed."""
+    return api_safety_features(request)
+
+
+@require_GET
+def api_map_data(request):
+    """Return the privacy-safe public layers consumed by the geographic map."""
+    status = json.loads(api_zones_status(request).content)
+    facilities = json.loads(api_safety_features(request).content)
+    places = json.loads(api_visitor_places(request).content)
+    return JsonResponse({
+        'zones': status.get('zones', []),
+        'corridors': status.get('corridors', []),
+        'facilities': facilities.get('features', []),
+        'places': places.get('places', []),
+        'provenance': 'local_hajjguard_records',
+        'privacy': 'public layers contain no personal identifiers, QR tokens, medical data, or private locations',
+    })
+
+
+@require_GET
+def api_routes(request):
+    """Expose the existing corridor network for map rendering.
+
+    Journey route calculation remains owned by analytics.api_calculate_route;
+    this endpoint only provides the public route overlay geometry.
+    """
+    status = json.loads(api_zones_status(request).content)
+    return JsonResponse({
+        'corridors': status.get('corridors', []),
+        'provenance': 'local_corridor_records',
+        'note': 'Use the journey route endpoint for preference-weighted route calculation.',
+    })
+
+
+@require_GET
 def api_digital_twin(request):
     """Return the public, non-personal data needed by the 3D explorer."""
     zones = []
