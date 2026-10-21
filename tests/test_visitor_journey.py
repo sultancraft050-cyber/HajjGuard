@@ -29,7 +29,8 @@ class VisitorJourneyTests(TestCase):
         response = self.client.get(reverse('zones:discover_makkah'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Discover Makkah')
-        self.assertContains(response, 'Start a journey')
+        self.assertContains(response, 'Open attraction map')
+        self.assertNotContains(response, 'Start a journey')
         self.assertContains(response, 'verify before visiting')
 
     def test_enabled_places_are_source_labelled_and_filtered(self):
@@ -64,6 +65,16 @@ class VisitorJourneyTests(TestCase):
         )
         with self.assertRaises(ValidationError):
             place.full_clean()
+
+    def test_public_place_rejects_zero_and_out_of_region_coordinates(self):
+        for coordinates in ([0, 0], [39.82, 21.42], [24.0, 46.0]):
+            with self.subTest(coordinates=coordinates):
+                place = VisitorPlace(
+                    name_ar='موقع', name_en='Invalid', category='VISIT', description='x',
+                    coordinates=coordinates, source='Source', verification_date=date.today(), enabled=True,
+                )
+                with self.assertRaises(ValidationError):
+                    place.full_clean()
 
     def test_stale_place_is_explicitly_labelled(self):
         place = VisitorPlace.objects.create(

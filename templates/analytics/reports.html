@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "التقارير التحليلية والتصدير الإحصائي" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}التقارير التحليلية والتصدير الإحصائي{% else %}Analytics reports and statistical export{% endif %} | HajjGuard{% endblock %}
 
 {% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,25 +15,25 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold">
-                    <i class="bi bi-file-earmark-bar-graph"></i> {% trans "سجل التدقيق والإحصاء الوطني" %}
+                    <i class="bi bi-file-earmark-bar-graph"></i> {% if LANGUAGE_CODE == 'ar' %}سجل التدقيق والإحصاء الوطني{% else %}Audit log and national statistics{% endif %}
                 </span>
             </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-file-earmark-bar-graph-fill text-success me-2"></i>{% trans "التقارير التحليلية وإحصاءات التدفق والكثافة" %}
+                <i class="bi bi-file-earmark-bar-graph-fill text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}التقارير التحليلية وإحصاءات التدفق والكثافة{% else %}Analytics and flow-density statistics{% endif %}
             </h2>
             <p class="text-muted small mb-0">
-                {% trans "سجلات التدقيق المكاني الموثقة، بيانات استجابة طوارئ موسم الحج، ومخرجات نماذج الاتزان اللحظي." %}
+                {% if LANGUAGE_CODE == 'ar' %}سجلات التدقيق المكاني الموثقة، بيانات استجابة طوارئ موسم الحج، ومخرجات نماذج الاتزان اللحظي.{% else %}Verified spatial audit records, Hajj emergency-response data, and live balance-model outputs.{% endif %}
             </p>
         </div>
         <div class="d-flex gap-2">
             <a href="{% url 'analytics:export_density_csv' %}" class="btn btn-dga-outline">
-                <i class="bi bi-file-earmark-spreadsheet text-success me-1"></i>{% trans "تصدير الكثافة CSV" %}
+                <i class="bi bi-file-earmark-spreadsheet text-success me-1"></i>{% if LANGUAGE_CODE == 'ar' %}تصدير الكثافة CSV{% else %}Export density CSV{% endif %}
             </a>
             <a href="{% url 'analytics:export_incidents_csv' %}" class="btn btn-dga-outline">
-                <i class="bi bi-file-earmark-spreadsheet text-danger me-1"></i>{% trans "تصدير البلاغات CSV" %}
+                <i class="bi bi-file-earmark-spreadsheet text-danger me-1"></i>{% if LANGUAGE_CODE == 'ar' %}تصدير البلاغات CSV{% else %}Export incidents CSV{% endif %}
             </a>
             <button class="btn btn-dga-primary" onclick="window.print()">
-                <i class="bi bi-printer me-1"></i>{% trans "طباعة التقرير" %}
+                <i class="bi bi-printer me-1"></i>{% if LANGUAGE_CODE == 'ar' %}طباعة التقرير{% else %}Print report{% endif %}
             </button>
         </div>
     </div>
@@ -42,30 +42,30 @@
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="dga-card p-3 border-start border-primary border-4 h-100">
-                <span class="text-muted small fw-bold">{% trans "الحجاج المشمولين بالتغطية" %}</span>
+                <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}الحجاج المشمولين بالتغطية{% else %}Covered pilgrims{% endif %}</span>
                 <h2 class="fw-bold text-dark mb-0 mt-1">{{ total_pilgrims }}</h2>
-                <small class="text-muted">{{ vulnerable_pilgrims }} {% trans "مصنفون كأولوية رعاية" %}</small>
+                <small class="text-muted">{{ vulnerable_pilgrims }} {% if LANGUAGE_CODE == 'ar' %}مصنفون كأولوية رعاية{% else %}Classified as care priority{% endif %}</small>
             </div>
         </div>
         <div class="col-md-3">
             <div class="dga-card p-3 border-start border-danger border-4 h-100">
-                <span class="text-muted small fw-bold">{% trans "إجمالي بلاغات SOS" %}</span>
+                <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}إجمالي بلاغات SOS{% else %}Total SOS incidents{% endif %}</span>
                 <h2 class="fw-bold text-danger mb-0 mt-1">{{ total_incidents }}</h2>
-                <small class="text-danger fw-semibold">{{ open_incidents }} {% trans "مفتوحة حالياً" %}</small>
+                <small class="text-danger fw-semibold">{{ open_incidents }} {% if LANGUAGE_CODE == 'ar' %}مفتوحة حالياً{% else %}Currently open{% endif %}</small>
             </div>
         </div>
         <div class="col-md-3">
             <div class="dga-card p-3 border-start border-success border-4 h-100">
-                <span class="text-muted small fw-bold">{% trans "التذاكر المغلقة بنجاح" %}</span>
+                <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}التذاكر المغلقة بنجاح{% else %}Successfully closed tickets{% endif %}</span>
                 <h2 class="fw-bold text-success mb-0 mt-1">{{ resolved_incidents }}</h2>
-                <small class="text-muted">{% trans "معالجة وموثقة بالسجل" %}</small>
+                <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}معالجة وموثقة بالسجل{% else %}Processed and recorded{% endif %}</small>
             </div>
         </div>
         <div class="col-md-3">
             <div class="dga-card p-3 border-start border-info border-4 h-100">
-                <span class="text-muted small fw-bold">{% trans "عينات التليمترية المسجلة" %}</span>
+                <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}عينات التليمترية المسجلة{% else %}Recorded telemetry samples{% endif %}</span>
                 <h2 class="fw-bold text-info mb-0 mt-1">{{ recent_records_count }}</h2>
-                <small class="text-muted">{% trans "خلال نافذة آخر 24 ساعة" %}</small>
+                <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}خلال نافذة آخر 24 ساعة{% else %}Within the last 24 hours{% endif %}</small>
             </div>
         </div>
     </div>
@@ -76,7 +76,7 @@
         <div class="col-lg-6">
             <div class="dga-card p-4 h-100">
                 <h5 class="fw-bold text-dark mb-3">
-                    <i class="bi bi-pie-chart-fill text-danger me-2"></i>{% trans "توزيع بلاغات الطوارئ حسب التصنيف" %}
+                    <i class="bi bi-pie-chart-fill text-danger me-2"></i>{% if LANGUAGE_CODE == 'ar' %}توزيع بلاغات الطوارئ حسب التصنيف{% else %}Emergency incidents by category{% endif %}
                 </h5>
                 <div style="height: 300px;">
                     <canvas id="categoryChart"></canvas>
@@ -88,16 +88,16 @@
         <div class="col-lg-6">
             <div class="dga-card p-4 h-100">
                 <h5 class="fw-bold text-dark mb-3">
-                    <i class="bi bi-table text-success me-2"></i>{% trans "أحدث رصد للكثافة بالمشاعر" %}
+                    <i class="bi bi-table text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}أحدث رصد للكثافة بالمشاعر{% else %}Latest Holy Sites density reading{% endif %}
                 </h5>
                 <div class="table-responsive" style="max-height: 300px;">
                     <table class="table table-sm table-hover align-middle mb-0">
                         <thead class="table-light small">
                             <tr>
-                                <th>{% trans "القطاع" %}</th>
-                                <th>{% trans "الكثافة" %}</th>
-                                <th>{% trans "العدد" %}</th>
-                                <th>{% trans "الوقت" %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}القطاع{% else %}Zone{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الكثافة{% else %}Density{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}العدد{% else %}Count{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الوقت{% else %}Time{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody class="small">
@@ -109,12 +109,12 @@
                                 </td>
                                 <td><span class="badge bg-secondary">{{ rec.density_sqm }} p/m²</span></td>
                                 <td>{{ rec.headcount }}</td>
-                                <td class="text-muted">{{ rec.recorded_at|timesince }} {% trans "مضت" %}</td>
+                                <td class="text-muted">{{ rec.recorded_at|timesince }} {% if LANGUAGE_CODE == 'ar' %}مضت{% else %}ago{% endif %}</td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="4" class="text-center py-4 text-muted">
-                                    {% trans "لا توجد سجلات تليمترية حديثة." %}
+                                    {% if LANGUAGE_CODE == 'ar' %}لا توجد سجلات تليمترية حديثة.{% else %}No recent telemetry records.{% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

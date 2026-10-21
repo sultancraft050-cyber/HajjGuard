@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "فوجي والرادار المكاني (My Group & Spatial Radar)" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}فوجي والرادار المكاني (My Group & Spatial Radar){% else %}My group and spatial radar{% endif %} | HajjGuard{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -42,22 +42,22 @@
             <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="radar-pulse-ring"></span>
                 <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold">
-                    {% trans "الرصد المكاني اللحظي للأفواج" %}
+                    {% if LANGUAGE_CODE == 'ar' %}الرصد المكاني اللحظي للأفواج{% else %}Live group location monitoring{% endif %}
                 </span>
             </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-people-fill text-success me-2"></i>{% trans "فوجي والرادار المكاني لتتبع التباعد" %}
+                <i class="bi bi-people-fill text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}فوجي والرادار المكاني لتتبع التباعد{% else %}My group and separation radar{% endif %}
             </h2>
             <p class="text-muted small mb-0">
-                {% trans "تتبع هندسي متصل للكتلة المركزية (Centroid Dispersion) لحماية الحجاج وأفراد العائلة من التفرق في نقاط الزحام الشديد." %}
+                {% if LANGUAGE_CODE == 'ar' %}تتبع هندسي متصل للكتلة المركزية (Centroid Dispersion) لحماية الحجاج وأفراد العائلة من التفرق في نقاط الزحام الشديد.{% else %}Continuous group-centroid monitoring to help pilgrims and families avoid separation in crowded areas.{% endif %}
             </p>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-dga-outline" data-bs-toggle="modal" data-bs-target="#joinGroupModal">
-                <i class="bi bi-person-plus-fill me-1"></i>{% trans "الانضمام / تبديل الفوج" %}
+                <i class="bi bi-person-plus-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}الانضمام / تبديل الفوج{% else %}Join or switch group{% endif %}
             </button>
             <a href="{% url 'zones:live_map' %}" class="btn btn-dga-primary">
-                <i class="bi bi-map-fill me-1"></i>{% trans "الخريطة الكاملة" %}
+                <i class="bi bi-map-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}الخريطة الكاملة{% else %}Full map{% endif %}
             </a>
         </div>
     </div>
@@ -69,7 +69,7 @@
             <i class="bi bi-exclamation-triangle-fill"></i>
         </div>
         <div>
-            <h5 class="fw-bold mb-1 text-dark">{% trans "تنبيه انفصال / تباعد عن الفوج!" %}</h5>
+            <h5 class="fw-bold mb-1 text-dark">{% if LANGUAGE_CODE == 'ar' %}تنبيه انفصال / تباعد عن الفوج!{% else %}Group separation alert{% endif %}</h5>
             <p class="mb-0 text-dark small">
                 {{ drift_alert }}
             </p>
@@ -83,29 +83,29 @@
         <div class="col-md-4">
             <div class="dga-card p-3 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted small fw-bold">{% trans "اسم ورمز الفوج" %}</span>
+                    <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}اسم ورمز الفوج{% else %}Group name and code{% endif %}</span>
                     <span class="badge bg-success font-monospace fs-6">{{ group.join_code }}</span>
                 </div>
                 <h4 class="fw-bold text-dark mb-1">{{ group.name }}</h4>
-                <p class="text-muted small mb-0">{% trans "كود الانضمام:" %} {{ group.join_code }}</p>
+                <p class="text-muted small mb-0">{% if LANGUAGE_CODE == 'ar' %}كود الانضمام:{% else %}Join code:{% endif %} {{ group.join_code }}</p>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="dga-card p-3 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted small fw-bold">{% trans "نصف قطر تشتت الفوج" %}</span>
+                    <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}نصف قطر تشتت الفوج{% else %}Group dispersion radius{% endif %}</span>
                     <i class="bi bi-bullseye text-primary fs-5"></i>
                 </div>
                 <h4 class="fw-bold text-dark mb-1">
-                    {{ group_centroid.dispersion_m|default:12 }} <small class="text-muted fs-6">{% trans "متر" %}</small>
+                    {{ group_centroid.dispersion_m|default:12 }} <small class="text-muted fs-6">{% if LANGUAGE_CODE == 'ar' %}متر{% else %}metres{% endif %}</small>
                 </h4>
                 <span class="small {% if group_centroid.dispersion_m > 50 %}text-warning fw-bold{% else %}text-success{% endif %}">
                     <i class="bi bi-shield-check me-1"></i>
                     {% if group_centroid.dispersion_m > 50 %}
-                        {% trans "تشتت مرتفع: الأعضاء يبتعدون عن المركز" %}
+                        {% if LANGUAGE_CODE == 'ar' %}تشتت مرتفع: الأعضاء يبتعدون عن المركز{% else %}High dispersion: members are far from the centre{% endif %}
                     {% else %}
-                        {% trans "فوج متماسك: جميع الأفراد ضمن نطاق الأمان" %}
+                        {% if LANGUAGE_CODE == 'ar' %}فوج متماسك: جميع الأفراد ضمن نطاق الأمان{% else %}Cohesive group: everyone is within the safety range{% endif %}
                     {% endif %}
                 </span>
             </div>
@@ -114,7 +114,7 @@
         <div class="col-md-4">
             <div class="dga-card p-3 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="text-muted small fw-bold">{% trans "المطوف / قائد الفوج" %}</span>
+                    <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}المطوف / قائد الفوج{% else %}Guide / group leader{% endif %}</span>
                     <i class="bi bi-person-badge text-success fs-5"></i>
                 </div>
                 <h4 class="fw-bold text-dark mb-1">{{ group.leader.user.get_full_name|default:group.leader.user.username }}</h4>
@@ -133,9 +133,9 @@
             <div class="dga-card overflow-hidden h-100">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold text-dark mb-0">
-                        <i class="bi bi-geo-alt-fill text-danger me-2"></i>{% trans "الرادار الجغرافي لأعضاء الفوج" %}
+                        <i class="bi bi-geo-alt-fill text-danger me-2"></i>{% if LANGUAGE_CODE == 'ar' %}الرادار الجغرافي لأعضاء الفوج{% else %}Group member geographic radar{% endif %}
                     </h6>
-                    <small class="text-muted">{% trans "إحداثيات GPS مباشرة" %}</small>
+                    <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}إحداثيات GPS مباشرة{% else %}Live GPS coordinates{% endif %}</small>
                 </div>
                 <div id="groupMap" style="height: 400px; width: 100%;"></div>
             </div>
@@ -146,9 +146,9 @@
             <div class="dga-card overflow-hidden h-100">
                 <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
                     <h6 class="fw-bold text-dark mb-0">
-                        <i class="bi bi-people me-2 text-primary"></i>{% trans "أعضاء الفوج" %} ({{ members_data|length }})
+                        <i class="bi bi-people me-2 text-primary"></i>{% if LANGUAGE_CODE == 'ar' %}أعضاء الفوج{% else %}Group members{% endif %} ({{ members_data|length }})
                     </h6>
-                    <span class="badge bg-light text-dark border">{% trans "نطاق الأمان: 50م" %}</span>
+                    <span class="badge bg-light text-dark border">{% if LANGUAGE_CODE == 'ar' %}نطاق الأمان: 50م{% else %}Safety range: 50 m{% endif %}</span>
                 </div>
                 <div class="p-3 overflow-auto" style="max-height: 400px;">
                     {% for m in members_data %}
@@ -157,14 +157,14 @@
                             <div>
                                 <strong class="text-dark">{{ m.pilgrim.user.get_full_name|default:m.pilgrim.user.username }}</strong>
                                 {% if m.pilgrim == profile %}
-                                    <span class="badge bg-primary ms-1">{% trans "أنت" %}</span>
+                                    <span class="badge bg-primary ms-1">{% if LANGUAGE_CODE == 'ar' %}أنت{% else %}You{% endif %}</span>
                                 {% endif %}
                                 <span class="badge bg-light text-muted small ms-1">{{ m.role }}</span>
                             </div>
                             {% if m.is_drifting %}
-                                <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill me-1"></i>{% trans "مبتعد" %}</span>
+                                <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}مبتعد{% else %}Away{% endif %}</span>
                             {% else %}
-                                <span class="badge bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle me-1"></i>{% trans "ضمن النطاق" %}</span>
+                                <span class="badge bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle me-1"></i>{% if LANGUAGE_CODE == 'ar' %}ضمن النطاق{% else %}Within range{% endif %}</span>
                             {% endif %}
                         </div>
 
@@ -174,48 +174,98 @@
                                 {% if m.latest_ping and m.latest_ping.zone %}
                                     {{ m.latest_ping.zone.name_ar|default:m.latest_ping.zone.name_en }}
                                 {% else %}
-                                    {% trans "إحداثي مسار" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}إحداثي مسار{% else %}Location point{% endif %}
                                 {% endif %}
                             </div>
                             <div>
                                 <span class="fw-bold {% if m.is_drifting %}text-danger{% else %}text-dark{% endif %}">
-                                    {{ m.distance_from_centroid }} {% trans "متر" %}
-                                </span> {% trans "عن المركز" %}
+                                    {{ m.distance_from_centroid }} {% if LANGUAGE_CODE == 'ar' %}متر{% else %}metres{% endif %}
+                                </span> {% if LANGUAGE_CODE == 'ar' %}عن المركز{% else %}From centre{% endif %}
                             </div>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
                             <small class="text-muted">
                                 {% if m.latest_ping %}
-                                    {{ m.latest_ping.timestamp|timesince }} {% trans "مضت" %}
+                                    {{ m.latest_ping.timestamp|timesince }} {% if LANGUAGE_CODE == 'ar' %}مضت{% else %}ago{% endif %}
                                 {% else %}
-                                    {% trans "لا يوجد رصد حديث" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}لا يوجد رصد حديث{% else %}No recent location update{% endif %}
                                 {% endif %}
                             </small>
+                            {% if m.pilgrim == group.leader %}
                             <a href="tel:{{ m.pilgrim.phone }}" class="btn btn-sm btn-dga-outline py-0 px-2 small">
-                                <i class="bi bi-telephone me-1"></i>{% trans "اتصال" %}
+                                <i class="bi bi-telephone me-1"></i>{% if LANGUAGE_CODE == 'ar' %}اتصال بالقائد{% else %}Contact leader{% endif %}
                             </a>
+                            {% endif %}
                         </div>
                     </div>
                     {% empty %}
                     <div class="p-4 text-center text-muted">
-                        {% trans "لا يوجد أعضاء مسجلين بهذا الفوج حالياً." %}
+                        {% if LANGUAGE_CODE == 'ar' %}لا يوجد أعضاء مسجلين بهذا الفوج حالياً.{% else %}No members are currently registered in this group.{% endif %}
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
     </div>
+    <!-- Group chat -->
+    <section class="dga-card mb-4" aria-labelledby="group-chat-title">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h6 id="group-chat-title" class="fw-bold text-dark mb-0"><i class="bi bi-chat-dots text-primary me-2"></i>{% if LANGUAGE_CODE == 'ar' %}محادثة الفوج{% else %}Group chat{% endif %}</h6>
+            <span id="group-chat-status" class="badge bg-light text-muted border" role="status">{% if LANGUAGE_CODE == 'ar' %}جار الاتصال{% else %}Connecting{% endif %}</span>
+        </div>
+        <div id="group-chat-messages" class="p-3 overflow-auto" style="max-height:320px" role="log" aria-live="polite" aria-relevant="additions">
+            <p id="group-chat-empty" class="text-muted text-center mb-0">{% if LANGUAGE_CODE == 'ar' %}لا توجد رسائل بعد.{% else %}No messages yet.{% endif %}</p>
+        </div>
+        <form id="group-chat-form" class="p-3 border-top">
+            {% csrf_token %}
+            <div class="input-group">
+                <input id="group-chat-input" class="form-control" maxlength="2000" required autocomplete="off" placeholder="{% if LANGUAGE_CODE == 'ar' %}اكتب رسالة للفوج...{% else %}Write a group message…{% endif %}" aria-label="{% if LANGUAGE_CODE == 'ar' %}رسالة الفوج{% else %}Group message{% endif %}">
+                <button class="btn btn-dga-primary" type="submit">{% if LANGUAGE_CODE == 'ar' %}إرسال{% else %}Send{% endif %}</button>
+            </div>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <input id="group-chat-image" type="file" accept="image/png,image/jpeg,image/webp" class="form-control form-control-sm" aria-label="{% if LANGUAGE_CODE == 'ar' %}إرفاق صورة{% else %}Attach image{% endif %}">
+                <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}صورة اختيارية حتى 5 ميجابايت{% else %}Optional image up to 5 MB{% endif %}</small>
+            </div>
+            <p id="group-chat-error" class="text-danger small mt-2 mb-0" role="alert" hidden></p>
+        </form>
+    </section>
+
+    {% if is_group_manager %}
+    <section id="group-management" class="dga-card mb-4" aria-labelledby="group-management-title">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h6 id="group-management-title" class="fw-bold text-dark mb-0"><i class="bi bi-person-badge text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}إدارة الفوج للقائد{% else %}Leader group management{% endif %}</h6>
+            <button id="rotate-group-code" class="btn btn-sm btn-dga-outline" type="button">{% if LANGUAGE_CODE == 'ar' %}تغيير كود الانضمام{% else %}Change join code{% endif %}</button>
+        </div>
+        <div class="p-3">
+            <p id="group-management-status" class="small text-muted" role="status">{% if LANGUAGE_CODE == 'ar' %}جار تحميل حالة الفوج...{% else %}Loading group status…{% endif %}</p>
+            <form id="group-announcement-form" class="mb-3">
+                <label class="form-label fw-bold" for="group-announcement-input">{% if LANGUAGE_CODE == 'ar' %}إعلان للفوج{% else %}Group announcement{% endif %}</label>
+                <div class="input-group"><input id="group-announcement-input" class="form-control" maxlength="2000" required><button class="btn btn-dga-primary" type="submit">{% if LANGUAGE_CODE == 'ar' %}نشر{% else %}Publish{% endif %}</button></div>
+            </form>
+            <form id="group-geofence-form" class="row g-2 mb-3">
+                <div class="col-md-3"><label class="form-label" for="geofence-name">{% if LANGUAGE_CODE == 'ar' %}اسم نقطة التجمع{% else %}Meeting point name{% endif %}</label><input id="geofence-name" class="form-control" required></div>
+                <div class="col-md-3"><label class="form-label" for="geofence-lat">{% if LANGUAGE_CODE == 'ar' %}خط العرض{% else %}Latitude{% endif %}</label><input id="geofence-lat" class="form-control" type="number" step="any" required></div>
+                <div class="col-md-3"><label class="form-label" for="geofence-lng">{% if LANGUAGE_CODE == 'ar' %}خط الطول{% else %}Longitude{% endif %}</label><input id="geofence-lng" class="form-control" type="number" step="any" required></div>
+                <div class="col-md-3"><label class="form-label" for="geofence-radius">{% if LANGUAGE_CODE == 'ar' %}النطاق بالمتر{% else %}Radius in metres{% endif %}</label><input id="geofence-radius" class="form-control" type="number" min="20" max="5000" value="100" required></div>
+                <div class="col-12"><button class="btn btn-dga-outline" type="submit">{% if LANGUAGE_CODE == 'ar' %}إضافة نقطة تجمع{% else %}Add meeting point{% endif %}</button></div>
+            </form>
+            <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>{% if LANGUAGE_CODE == 'ar' %}العضو{% else %}Member{% endif %}</th><th>{% if LANGUAGE_CODE == 'ar' %}الدور{% else %}Role{% endif %}</th><th>{% if LANGUAGE_CODE == 'ar' %}المشاركة{% else %}Sharing{% endif %}</th><th>{% if LANGUAGE_CODE == 'ar' %}آخر ظهور{% else %}Last seen{% endif %}</th><th>{% if LANGUAGE_CODE == 'ar' %}إجراء{% else %}Action{% endif %}</th></tr></thead><tbody id="group-management-members"></tbody></table></div>
+            <div id="group-management-fences" class="mt-3 small"></div>
+        </div>
+    </section>
+    {% endif %}
+
     {% else %}
     <div class="dga-card p-5 text-center bg-white">
         <i class="bi bi-people text-muted fs-1 mb-3"></i>
-        <h4 class="fw-bold text-dark">{% trans "غير مسجل في أي فوج حالياً" %}</h4>
+        <h4 class="fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}غير مسجل في أي فوج حالياً{% else %}Not currently registered in a group{% endif %}</h4>
         <p class="text-muted mb-4" style="max-width: 500px; margin: 0 auto;">
-            {% trans "أنت غير مسجل حالياً ضمن حملة أو فوج حجاج. انضم إلى فوج عبر الرمز لتفعيل رادار التباعد وتنبيهات الأمان الميداني." %}
+            {% if LANGUAGE_CODE == 'ar' %}أنت غير مسجل حالياً ضمن حملة أو فوج حجاج. انضم إلى فوج عبر الرمز لتفعيل رادار التباعد وتنبيهات الأمان الميداني.{% else %}You are not currently registered in a pilgrim group. Join a group with its code to enable separation monitoring and field safety alerts.{% endif %}
         </p>
         <div>
             <button class="btn btn-dga-primary px-4" data-bs-toggle="modal" data-bs-target="#joinGroupModal">
-                <i class="bi bi-person-plus-fill me-1"></i>{% trans "الانضمام لفوج عبر الرمز" %}
+                <i class="bi bi-person-plus-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}الانضمام لفوج عبر الرمز{% else %}Join a group with a code{% endif %}
             </button>
         </div>
     </div>
@@ -229,20 +279,20 @@
         <div class="modal-content rounded-4 border-0 shadow-lg">
             <div class="modal-header bg-success text-white border-0 py-3">
                 <h5 class="modal-title fw-bold">
-                    <i class="bi bi-people-fill me-1"></i>{% trans "الانضمام إلى فوج الحجاج" %}
+                    <i class="bi bi-people-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}الانضمام إلى فوج الحجاج{% else %}Join a pilgrim group{% endif %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form method="POST" action="{% url 'groups:api_join_group' %}">
                 {% csrf_token %}
                 <div class="modal-body p-4">
-                    <label class="form-label small fw-bold text-dark">{% trans "أدخل رمز الفوج (Group Code)" %}</label>
+                    <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}أدخل رمز الفوج (Group Code){% else %}Enter the group code (Group Code){% endif %}</label>
                     <input type="text" name="group_code" class="form-control text-uppercase font-monospace fs-5 text-center mb-3" placeholder="GRP-XXXX" required>
-                    <small class="text-muted d-block">{% trans "يمكنك الحصول على الرمز من مطوفك أو بطاقة نسك الموزعة بالمخيم." %}</small>
+                    <small class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}يمكنك الحصول على الرمز من مطوفك أو بطاقة نسك الموزعة بالمخيم.{% else %}Get the code from your guide or the Nusuk card distributed at the camp.{% endif %}</small>
                 </div>
                 <div class="modal-footer border-0 p-3">
-                    <button type="button" class="btn btn-dga-outline" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
-                    <button type="submit" class="btn btn-dga-primary">{% trans "انضمام للفوج" %}</button>
+                    <button type="button" class="btn btn-dga-outline" data-bs-dismiss="modal">{% if LANGUAGE_CODE == 'ar' %}إلغاء{% else %}Cancel{% endif %}</button>
+                    <button type="submit" class="btn btn-dga-primary">{% if LANGUAGE_CODE == 'ar' %}انضمام للفوج{% else %}Join group{% endif %}</button>
                 </div>
             </form>
         </div>
@@ -251,9 +301,51 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if group and group_centroid %}
+{% if group %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const groupId = {{ group.id }};
+        const csrfToken = document.querySelector('#group-chat-form input[name=csrfmiddlewaretoken]')?.value || '';
+        const chatMessages = document.getElementById('group-chat-messages');
+        const chatStatus = document.getElementById('group-chat-status');
+        const chatError = document.getElementById('group-chat-error');
+        const chatEmpty = document.getElementById('group-chat-empty');
+        const seen = new Set();
+        let lastMessageId = 0;
+        let socket = null;
+        let pollTimer = null;
+        let reconnectTimer = null;
+
+        const status = (text, style='bg-light text-muted border') => { chatStatus.textContent = text; chatStatus.className = `badge ${style}`; };
+        const error = (text='') => { chatError.textContent = text; chatError.hidden = !text; };
+        const addMessage = (message) => {
+            if (!message || seen.has(message.id)) return;
+            seen.add(message.id); lastMessageId = Math.max(lastMessageId, Number(message.id) || 0); chatEmpty?.remove();
+            const item = document.createElement('article');
+            item.className = `border rounded-3 p-2 mb-2 ${message.is_announcement ? 'border-success bg-success bg-opacity-10' : 'bg-white'}`;
+            item.dataset.messageId = message.id;
+            const header = document.createElement('div'); header.className = 'd-flex justify-content-between small text-muted';
+            const sender = document.createElement('strong'); sender.textContent = message.is_announcement ? `📢 ${message.sender}` : message.sender;
+            const time = document.createElement('time'); time.dateTime = message.created_at || ''; time.textContent = message.created_at ? new Date(message.created_at).toLocaleString() : '';
+            header.append(sender, time); item.append(header);
+            const text = document.createElement('p'); text.className = 'mb-1 mt-1'; text.textContent = message.text; item.append(text);
+            if (message.image_url) { const image = document.createElement('img'); image.src = message.image_url; image.alt = '{% if LANGUAGE_CODE == 'ar' %}صورة مرفقة برسالة المجموعة{% else %}Image attached to group message{% endif %}'; image.loading = 'lazy'; image.className = 'rounded'; image.style.maxWidth = '220px'; image.style.maxHeight = '180px'; item.append(image); }
+            const actions = document.createElement('div'); actions.className = 'd-flex gap-2';
+            const report = document.createElement('button'); report.type = 'button'; report.className = 'btn btn-link btn-sm text-muted p-0'; report.textContent = '{% if LANGUAGE_CODE == 'ar' %}إبلاغ{% else %}Report{% endif %}'; report.onclick = () => moderate(message.id, 'report'); actions.append(report);
+            if (message.can_delete) { const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'btn btn-link btn-sm text-danger p-0'; remove.textContent = '{% if LANGUAGE_CODE == 'ar' %}حذف{% else %}Delete{% endif %}'; remove.onclick = () => moderate(message.id, 'delete'); actions.append(remove); }
+            item.append(actions);
+            chatMessages.append(item); chatMessages.scrollTop = chatMessages.scrollHeight;
+        };
+        const loadMessages = async () => { try { const response = await fetch(`/groups/api/groups/${groupId}/messages/?after_id=${lastMessageId}&limit=50`, {credentials:'same-origin'}); if (!response.ok) throw new Error(); const data = await response.json(); (data.messages || []).forEach(addMessage); } catch (_) { status('{% if LANGUAGE_CODE == 'ar' %}تعذر تحديث المحادثة{% else %}Unable to update chat{% endif %}', 'bg-warning text-dark'); } };
+        const startPolling = () => { if (!pollTimer) pollTimer = setInterval(loadMessages, 5000); loadMessages(); };
+        const stopPolling = () => { if (pollTimer) clearInterval(pollTimer); pollTimer = null; };
+        const connect = () => { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; socket = new WebSocket(`${protocol}://${location.host}/ws/groups/${groupId}/`); socket.onopen = () => { status('{% if LANGUAGE_CODE == 'ar' %}متصل{% else %}Connected{% endif %}', 'bg-success text-white'); stopPolling(); }; socket.onmessage = event => { try { const data = JSON.parse(event.data); if (data.message) addMessage(data.message); } catch (_) {} }; socket.onerror = () => { status('{% if LANGUAGE_CODE == 'ar' %}تحديث احتياطي{% else %}Polling fallback{% endif %}', 'bg-warning text-dark'); startPolling(); }; socket.onclose = () => { startPolling(); status('{% if LANGUAGE_CODE == 'ar' %}إعادة الاتصال{% else %}Reconnect{% endif %}', 'bg-warning text-dark'); reconnectTimer = setTimeout(connect, 3000); }; };
+        const api = async (url, options={}) => { const headers = Object.assign({'Accept':'application/json','X-CSRFToken':csrfToken}, options.headers || {}); const response = await fetch(url, Object.assign({credentials:'same-origin',headers}, options)); const data = await response.json().catch(()=>({})); if (!response.ok) throw new Error(data.message || '{% if LANGUAGE_CODE == 'ar' %}تعذر تنفيذ الطلب{% else %}Request failed{% endif %}'); return data; };
+        const moderate = async (id, action) => { try { await api(`/groups/api/groups/${groupId}/messages/${id}/moderate/`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action})}); } catch (e) { error(e.message); } };
+        document.getElementById('group-chat-form')?.addEventListener('submit', async event => { event.preventDefault(); error(); const input=document.getElementById('group-chat-input'); const file=document.getElementById('group-chat-image').files[0]; try { const data=await api(`/groups/api/groups/${groupId}/messages/create/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:input.value.trim()})}); addMessage(data.message); input.value=''; if(file){const form=new FormData();form.append('image',file);const upload=await api(`/groups/api/groups/${groupId}/messages/${data.message.id}/attachments/`,{method:'POST',body:form}); const item=document.querySelector(`[data-message-id="${data.message.id}"]`); if(item&&upload.image_url){const image=document.createElement('img');image.src=upload.image_url;image.alt='{% if LANGUAGE_CODE == 'ar' %}صورة مرفقة برسالة المجموعة{% else %}Image attached to group message{% endif %}';image.className='rounded';image.style.maxWidth='220px';item.insertBefore(image,item.lastElementChild);} document.getElementById('group-chat-image').value='';}} catch(e){error(e.message);} });
+        loadMessages(); connect();
+
+        {% if group_centroid %}
         const centerLat = {{ group_centroid.lat|default:21.4225 }};
         const centerLng = {{ group_centroid.lng|default:39.8262 }};
         const dispersionM = {{ group_centroid.dispersion_m|default:15 }};
@@ -272,7 +364,7 @@
             fillOpacity: 0.12,
             radius: Math.max(dispersionM, 25),
             dashArray: '5, 5'
-        }).addTo(map).bindPopup("{% trans 'المركز الهندسي للفوج (Centroid)' %}");
+        }).addTo(map).bindPopup("{% if LANGUAGE_CODE == 'ar' %}المركز الهندسي للفوج (Centroid){% else %}Group centroid{% endif %}");
 
         // Leader Marker
         L.circleMarker([centerLat, centerLng], {
@@ -282,7 +374,7 @@
             weight: 2,
             opacity: 1,
             fillOpacity: 0.95
-        }).addTo(map).bindPopup("<strong>{% trans 'قائد الفوج' %}</strong>: {{ group.leader.user.get_full_name }}");
+        }).addTo(map).bindPopup("<strong>{% if LANGUAGE_CODE == 'ar' %}قائد الفوج{% else %}Group leader{% endif %}</strong>: {{ group.leader.user.get_full_name }}");
 
         // Member Markers
         {% for m in members_data %}
@@ -294,9 +386,20 @@
                 weight: 1.5,
                 opacity: 1,
                 fillOpacity: 0.9
-            }).addTo(map).bindPopup("<strong>{{ m.pilgrim.user.get_full_name }}</strong><br>{{ m.distance_from_centroid }}m {% trans 'عن المركز' %}");
+            }).addTo(map).bindPopup("<strong>{{ m.pilgrim.user.get_full_name }}</strong><br>{{ m.distance_from_centroid }}m {% if LANGUAGE_CODE == 'ar' %}عن المركز{% else %}from centre{% endif %}");
             {% endif %}
         {% endfor %}
+        {% endif %}
+
+        {% if is_group_manager %}
+        const managerStatus=document.getElementById('group-management-status');
+        const managerApi=(url,options={})=>api(url,options);
+        const loadManagement=async()=>{try{const data=await managerApi(`/groups/api/groups/${groupId}/management/`);managerStatus.textContent=`${data.group.name} · {% if LANGUAGE_CODE == 'ar' %}كود الانضمام{% else %}Join code{% endif %}: ${data.group.join_code}`;const body=document.getElementById('group-management-members');body.replaceChildren();(data.members||[]).forEach(member=>{const row=document.createElement('tr');const name=document.createElement('td');name.textContent=member.name+(member.is_leader?' ({% if LANGUAGE_CODE == 'ar' %}القائد{% else %}Leader{% endif %})':'');const role=document.createElement('td');role.textContent=member.role;const sharing=document.createElement('td');sharing.textContent=member.sharing?'{% if LANGUAGE_CODE == 'ar' %}مفعلة{% else %}Enabled{% endif %}':'{% if LANGUAGE_CODE == 'ar' %}غير مفعلة{% else %}Disabled{% endif %}';const freshness=document.createElement('td');freshness.textContent=member.last_seen?`${member.freshness} · ${new Date(member.last_seen).toLocaleString()}`:'{% if LANGUAGE_CODE == 'ar' %}لا يوجد رصد{% else %}No location update{% endif %}';const action=document.createElement('td');if(!member.is_leader){const select=document.createElement('select');select.className='form-select form-select-sm mb-1';['MEMBER','DEPUTY','DEPENDENT'].forEach(value=>{const option=document.createElement('option');option.value=value;option.textContent=value;option.selected=value===member.role;select.append(option);});select.onchange=()=>managerApi(`/groups/api/groups/${groupId}/members/${member.id}/role/`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({role:select.value})}).catch(e=>managerStatus.textContent=e.message);const remove=document.createElement('button');remove.type='button';remove.className='btn btn-sm btn-outline-danger';remove.textContent='{% if LANGUAGE_CODE == 'ar' %}إزالة{% else %}Remove{% endif %}';remove.onclick=async()=>{if(confirm('{% if LANGUAGE_CODE == 'ar' %}إزالة هذا العضو؟{% else %}Remove this member?{% endif %}')){await managerApi(`/groups/api/groups/${groupId}/members/${member.id}/remove/`,{method:'POST'});loadManagement();}};const ping=document.createElement('button');ping.type='button';ping.className='btn btn-sm btn-outline-primary';ping.textContent='{% if LANGUAGE_CODE == 'ar' %}طلب تحقق{% else %}Request check-in{% endif %}';ping.onclick=()=>managerApi(`/groups/api/groups/${groupId}/members/${member.id}/ping/`,{method:'POST'}).then(()=>managerStatus.textContent='{% if LANGUAGE_CODE == 'ar' %}تم إرسال طلب التحقق{% else %}Check-in request sent{% endif %}').catch(e=>managerStatus.textContent=e.message);action.append(select,remove,ping);}row.append(name,role,sharing,freshness,action);body.append(row);});const fences=document.getElementById('group-management-fences');fences.replaceChildren();(data.geofences||[]).forEach(fence=>{const item=document.createElement('div');item.className='border rounded p-2 mb-1 d-flex justify-content-between';item.textContent=`${fence.name} · ${fence.radius_meters}m · ${fence.enabled?'{% if LANGUAGE_CODE == 'ar' %}مفعلة{% else %}Enabled{% endif %}':'{% if LANGUAGE_CODE == 'ar' %}متوقفة{% else %}Stopped{% endif %}'}`;const edit=document.createElement('button');edit.type='button';edit.className='btn btn-sm btn-outline-secondary me-1';edit.textContent='{% if LANGUAGE_CODE == 'ar' %}تعديل{% else %}Edit{% endif %}';edit.onclick=async()=>{const name=prompt('{% if LANGUAGE_CODE == 'ar' %}اسم نقطة التجمع{% else %}Meeting point name{% endif %}',fence.name);const radius=prompt('{% if LANGUAGE_CODE == 'ar' %}النطاق بالمتر{% else %}Radius in metres{% endif %}',fence.radius_meters);if(name&&radius){await managerApi(`/groups/api/geofences/${fence.id}/`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,radius_meters:radius})});loadManagement();}};const button=document.createElement('button');button.type='button';button.className='btn btn-sm btn-outline-danger';button.textContent='{% if LANGUAGE_CODE == 'ar' %}إيقاف{% else %}Disable{% endif %}';button.onclick=async()=>{await managerApi(`/groups/api/geofences/${fence.id}/delete/`,{method:'DELETE'});loadManagement();};item.append(edit,button);fences.append(item);});}catch(e){managerStatus.textContent=e.message;}};
+        document.getElementById('group-announcement-form')?.addEventListener('submit',async event=>{event.preventDefault();const input=document.getElementById('group-announcement-input');try{const data=await managerApi(`/groups/api/groups/${groupId}/announcements/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:input.value.trim()})});addMessage(data.message);input.value='';}catch(e){managerStatus.textContent=e.message;}});
+        document.getElementById('group-geofence-form')?.addEventListener('submit',async event=>{event.preventDefault();try{await managerApi(`/groups/api/groups/${groupId}/geofences/create/`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('geofence-name').value,lat:document.getElementById('geofence-lat').value,lng:document.getElementById('geofence-lng').value,radius_meters:document.getElementById('geofence-radius').value})});event.target.reset();loadManagement();}catch(e){managerStatus.textContent=e.message;}});
+        document.getElementById('rotate-group-code')?.addEventListener('click',async()=>{if(!confirm('{% if LANGUAGE_CODE == 'ar' %}تغيير الكود سيبطل الكود القديم. متابعة؟{% else %}Changing the code will invalidate the old code. Continue?{% endif %}'))return;try{const data=await managerApi(`/groups/api/groups/${groupId}/rotate-code/`,{method:'POST'});managerStatus.textContent=`{% if LANGUAGE_CODE == 'ar' %}كود الانضمام الجديد{% else %}New join code{% endif %}: ${data.join_code}`;}catch(e){managerStatus.textContent=e.message;}});
+        loadManagement();
+        {% endif %}
     });
 </script>
 {% endif %}

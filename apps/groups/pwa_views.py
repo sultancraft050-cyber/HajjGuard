@@ -8,12 +8,12 @@ from django.db import transaction
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 
 from accounts.models import AuditLog, GuardianRelationship, NotificationEvent, PushSubscription
-from .models import GeofenceAlert, GroupGeofence, GroupMessage, GroupMembership, LocationShareGrant, PhonePingRequest, PilgrimTrip
+from .models import GeofenceAlert, GroupGeofence, GroupMessage, GroupMembership, LocationShareGrant, PhonePingRequest, PilgrimTrip, PilgrimGroup
 from zones.models import LocationPing
 from zones.utils import haversine_distance
 
@@ -184,14 +184,92 @@ def _group_member(request, group_id):
     return GroupMembership.objects.filter(group_id=group_id, pilgrim=profile, is_active=True).first() if profile else None
 
 
+def _group_manager(request, group_id):
+    """Return an active member only when the caller is the group leader or staff."""
+    membership = _group_member(request, group_id)
+    if request.user.is_staff and not membership:
+        group = PilgrimGroup.objects.filter(id=group_id).first()
+        membership = GroupMembership.objects.filter(group=group, pilgrim_id=group.leader_id, is_active=True).first() if group else None
+    if not membership:
+        return None
+    if request.user.is_staff or membership.pilgrim_id == membership.group.leader_id:
+        return membership
+    return None
+
+
+def _json_body(request):
+    try:
+        value = json.loads(request.body or '{}')
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _message_payload(message, group_id, viewer_id=None):
+    payload = {
+        'id': message.id,
+        'sender': message.sender.user.get_full_name() or message.sender.user.username,
+        'text': message.text,
+        'image_url': f'/groups/api/groups/{group_id}/messages/{message.id}/attachment/' if message.image else None,
+        'is_announcement': message.is_announcement,
+        'created_at': message.created_at.isoformat(),
+    }
+    if viewer_id is not None:
+        payload['can_delete'] = message.sender_id == viewer_id
+    return payload
+
+
+@login_required(login_url='/accounts/login/')
+@require_GET
+def group_management(request, group_id):
+    manager = _group_manager(request, group_id)
+    if not manager:
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    group = manager.group
+    now = timezone.now()
+    rows = GroupMembership.objects.filter(group=group, is_active=True).select_related('pilgrim__user')
+    members = []
+    for row in rows:
+        active_trip = PilgrimTrip.objects.filter(
+            pilgrim=row.pilgrim, group=group, status__in=['PLANNED', 'ACTIVE'],
+            starts_at__lte=now, ends_at__gt=now,
+        ).first()
+        grant = LocationShareGrant.objects.filter(pilgrim=row.pilgrim, trip=active_trip).first() if active_trip else None
+        ping_query = LocationPing.objects.filter(pilgrim=row.pilgrim)
+        if grant and grant.consent_timestamp:
+            ping_query = ping_query.filter(timestamp__gte=grant.consent_timestamp)
+        last_ping = ping_query.order_by('-timestamp').first() if grant and grant.is_active else None
+        members.append({
+            'id': row.pilgrim_id,
+            'name': row.pilgrim.user.get_full_name() or row.pilgrim.user.username,
+            'role': row.role,
+            'is_leader': row.pilgrim_id == group.leader_id,
+            'sharing': bool(grant and grant.is_active),
+            'freshness': ('current' if last_ping and (now - last_ping.timestamp).total_seconds() <= 120 else 'stale') if grant and grant.is_active else 'not_shared',
+            'last_seen': last_ping.timestamp.isoformat() if last_ping else None,
+        })
+    fences = list(GroupGeofence.objects.filter(group=group, trip__ends_at__gt=now).values(
+        'id', 'trip_id', 'name', 'center_lat', 'center_lng', 'radius_meters', 'enabled'
+    ))
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'GROUP_VIEW {group.id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'group': {'id': group.id, 'name': group.name, 'join_code': group.join_code}, 'members': members, 'geofences': fences})
+
+
 @login_required(login_url='/accounts/login/')
 @require_GET
 def messages(request, group_id):
     if not _group_member(request, group_id):
         return JsonResponse({'status': 'error', 'message': 'Group membership required.'}, status=403)
-    rows = GroupMessage.objects.filter(group_id=group_id, deleted_at__isnull=True).select_related('sender__user').order_by('-created_at')[:100]
-    return JsonResponse({'status': 'success', 'messages': [{'id': m.id, 'sender': m.sender.user.get_full_name() or m.sender.user.username,
-        'text': m.text, 'image_url': f'/api/groups/{group_id}/messages/{m.id}/attachment/' if m.image else None, 'created_at': m.created_at} for m in reversed(list(rows))]})
+    try:
+        after_id = max(0, int(request.GET.get('after_id', 0)))
+        limit = min(100, max(1, int(request.GET.get('limit', 50))))
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid message cursor.'}, status=400)
+    query = GroupMessage.objects.filter(group_id=group_id, deleted_at__isnull=True).select_related('sender__user')
+    if after_id:
+        query = query.filter(id__gt=after_id)
+    rows = query.order_by('id')[:limit]
+    return JsonResponse({'status': 'success', 'messages': [_message_payload(m, group_id, _profile(request).id) for m in rows]})
 
 
 @login_required(login_url='/accounts/login/')
@@ -200,9 +278,8 @@ def create_message(request, group_id):
     membership = _group_member(request, group_id)
     if not membership:
         return JsonResponse({'status': 'error', 'message': 'Group membership required.'}, status=403)
-    try:
-        data = json.loads(request.body or '{}')
-    except (TypeError, ValueError):
+    data = _json_body(request)
+    if data is None:
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON.'}, status=400)
     text = str(data.get('text', '')).strip()
     if not text or len(text) > 2000:
@@ -211,8 +288,85 @@ def create_message(request, group_id):
     if recent:
         return JsonResponse({'status': 'error', 'message': 'Please wait before sending another message.'}, status=429)
     message = GroupMessage.objects.create(group_id=group_id, sender=membership.pilgrim, text=text)
-    async_to_sync(get_channel_layer().group_send)(f'group-{group_id}', {'type': 'group_event', 'payload': {'type': 'chat.message', 'message': {'id': message.id, 'sender': membership.pilgrim.user.get_full_name() or membership.pilgrim.user.username, 'text': message.text, 'created_at': message.created_at.isoformat()}}})
-    return JsonResponse({'status': 'success', 'message': {'id': message.id, 'text': message.text, 'created_at': message.created_at}})
+    payload = _message_payload(message, group_id, membership.pilgrim_id)
+    async_to_sync(get_channel_layer().group_send)(f'group-{group_id}', {'type': 'group_event', 'payload': {'type': 'chat.message', 'message': payload}})
+    AuditLog.objects.create(user=request.user, action='GROUP_CHAT', target=f'MESSAGE_CREATE {message.id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'message': payload})
+
+
+@login_required(login_url='/accounts/login/')
+@require_POST
+def create_announcement(request, group_id):
+    manager = _group_manager(request, group_id)
+    if not manager:
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    data = _json_body(request)
+    text = str(data.get('text', '')).strip() if data else ''
+    if not text or len(text) > 2000:
+        return JsonResponse({'message': 'Announcement must contain 1-2000 characters.'}, status=400)
+    if GroupMessage.objects.filter(group_id=group_id, is_announcement=True, created_at__gte=timezone.now() - timedelta(seconds=10)).exists():
+        return JsonResponse({'message': 'Please wait before sending another announcement.'}, status=429)
+    message = GroupMessage.objects.create(group_id=group_id, sender=manager.pilgrim, text=text, is_announcement=True)
+    payload = _message_payload(message, group_id, manager.pilgrim_id)
+    async_to_sync(get_channel_layer().group_send)(f'group-{group_id}', {'type': 'group_event', 'payload': {'type': 'chat.announcement', 'message': payload}})
+    from services.push import send_notification
+    for member in GroupMembership.objects.filter(group_id=group_id, is_active=True).exclude(pilgrim=manager.pilgrim).select_related('pilgrim__user'):
+        event = NotificationEvent.objects.create(recipient=member.pilgrim.user, event_type='CHAT', payload={'title': 'Group announcement', 'body': text[:160], 'data': {'group_id': group_id, 'message_id': message.id}}, expires_at=timezone.now() + timedelta(hours=24))
+        send_notification(event)
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'ANNOUNCEMENT_CREATE {message.id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'message': payload})
+
+
+@login_required(login_url='/accounts/login/')
+@require_POST
+def remove_member(request, group_id, member_id):
+    manager = _group_manager(request, group_id)
+    if not manager:
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    target = GroupMembership.objects.filter(group_id=group_id, pilgrim_id=member_id, is_active=True).first()
+    if not target or target.pilgrim_id == manager.group.leader_id:
+        return JsonResponse({'message': 'The group leader cannot be removed.'}, status=400)
+    target.is_active = False
+    target.save(update_fields=['is_active'])
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'MEMBER_REMOVE {member_id} GROUP {group_id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'member_id': member_id})
+
+
+@login_required(login_url='/accounts/login/')
+@require_http_methods(['PATCH'])
+def update_member_role(request, group_id, member_id):
+    manager = _group_manager(request, group_id)
+    if not manager:
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    target = GroupMembership.objects.filter(group_id=group_id, pilgrim_id=member_id, is_active=True).first()
+    data = _json_body(request)
+    role = data.get('role') if data else None
+    valid_roles = {value for value, _ in GroupMembership.ROLE_CHOICES}
+    if not target or target.pilgrim_id == manager.group.leader_id or role not in valid_roles:
+        return JsonResponse({'message': 'Invalid member role change.'}, status=400)
+    target.role = role
+    target.save(update_fields=['role'])
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'MEMBER_ROLE {member_id}={role} GROUP {group_id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'member_id': member_id, 'role': role})
+
+
+@login_required(login_url='/accounts/login/')
+@require_POST
+def rotate_join_code(request, group_id):
+    manager = _group_manager(request, group_id)
+    if not manager:
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    if AuditLog.objects.filter(
+        user=request.user,
+        action='GROUP_MANAGEMENT',
+        target__startswith=f'JOIN_CODE_ROTATE GROUP {group_id}',
+        timestamp__gte=timezone.now() - timedelta(minutes=1),
+    ).exists():
+        return JsonResponse({'message': 'Please wait before rotating the group code.'}, status=429)
+    manager.group.join_code = manager.group.generate_join_code()
+    manager.group.save(update_fields=['join_code'])
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'JOIN_CODE_ROTATE GROUP {group_id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'join_code': manager.group.join_code})
 
 
 @login_required(login_url='/accounts/login/')
@@ -244,6 +398,49 @@ def create_geofence(request, group_id):
     fence = GroupGeofence.objects.create(group_id=group_id, trip=trip, name=name, center_lat=lat, center_lng=lng, radius_meters=radius)
     AuditLog.objects.create(user=request.user, action='VIEW_PILGRIM', target=f'GEOFENCE_CREATE {fence.id}')
     return JsonResponse({'status': 'success', 'id': fence.id})
+
+
+@login_required(login_url='/accounts/login/')
+@require_http_methods(['PATCH'])
+def update_geofence(request, geofence_id):
+    fence = GroupGeofence.objects.filter(id=geofence_id).select_related('group').first()
+    if not fence:
+        return JsonResponse({'message': 'Meeting point not found.'}, status=404)
+    manager = _group_manager(request, fence.group_id)
+    if not manager:
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    data = _json_body(request)
+    if data is None:
+        return JsonResponse({'message': 'Invalid JSON.'}, status=400)
+    try:
+        name = str(data.get('name', fence.name)).strip()
+        lat = float(data.get('lat', fence.center_lat))
+        lng = float(data.get('lng', fence.center_lng))
+        radius = int(data.get('radius_meters', fence.radius_meters))
+        enabled = bool(data.get('enabled', fence.enabled))
+    except (TypeError, ValueError):
+        return JsonResponse({'message': 'Invalid meeting point.'}, status=400)
+    if not name or not math.isfinite(lat) or not math.isfinite(lng) or not -90 <= lat <= 90 or not -180 <= lng <= 180 or not 20 <= radius <= 5000:
+        return JsonResponse({'message': 'Invalid meeting point.'}, status=400)
+    fence.name, fence.center_lat, fence.center_lng = name, lat, lng
+    fence.radius_meters, fence.enabled = radius, enabled
+    fence.save(update_fields=['name', 'center_lat', 'center_lng', 'radius_meters', 'enabled'])
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'GEOFENCE_UPDATE {fence.id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'id': fence.id, 'enabled': fence.enabled})
+
+
+@login_required(login_url='/accounts/login/')
+@require_http_methods(['DELETE'])
+def delete_geofence(request, geofence_id):
+    fence = GroupGeofence.objects.filter(id=geofence_id).select_related('group').first()
+    if not fence:
+        return JsonResponse({'message': 'Meeting point not found.'}, status=404)
+    if not _group_manager(request, fence.group_id):
+        return JsonResponse({'message': 'Group leader or staff access required.'}, status=403)
+    fence.enabled = False
+    fence.save(update_fields=['enabled'])
+    AuditLog.objects.create(user=request.user, action='GROUP_MANAGEMENT', target=f'GEOFENCE_DISABLE {fence.id}', ip_address=request.META.get('REMOTE_ADDR'))
+    return JsonResponse({'status': 'success', 'id': fence.id, 'enabled': False})
 
 
 @login_required(login_url='/accounts/login/')

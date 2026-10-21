@@ -116,16 +116,17 @@ def live_map_view(request):
 @require_GET
 def api_safety_features(request):
     from .models import SafetyMapFeature
+    from django.core.exceptions import ValidationError
     rows = SafetyMapFeature.objects.filter(enabled=True, verified_at__isnull=False)
     features = []
     for row in rows:
-        from django.core.exceptions import ValidationError
         try:
             row.full_clean()
         except ValidationError:
             continue
         features.append({'id': row.pk, 'name': row.name, 'category': row.category,
-                         'coordinates': row.coordinates, 'source': row.source, 'verified_at': row.verified_at})
+                         'coordinates': row.coordinates, 'source': row.source,
+                         'source_url': row.source_url, 'verified_at': row.verified_at})
     return JsonResponse({'features': features, 'note': 'Only source-labelled verified records are shown. Verify current availability on site.'})
 
 
@@ -164,6 +165,36 @@ def api_routes(request):
         'provenance': 'local_corridor_records',
         'note': 'Use the journey route endpoint for preference-weighted route calculation.',
     })
+
+
+def published_haram_locations():
+    from .models import HaramLocation
+    from django.core.exceptions import ValidationError
+    result = []
+    for row in HaramLocation.objects.filter(enabled=True).exclude(accuracy_level='UNVERIFIED'):
+        try:
+            row.full_clean()
+        except ValidationError:
+            continue
+        result.append({
+            'location_id': row.location_id, 'name_ar': row.name_ar, 'name_en': row.name_en,
+            'available_languages': row.available_languages, 'category': row.category,
+            'floor_level': row.floor_level, 'coordinates': [row.latitude, row.longitude],
+            'position': [row.local_x, row.local_y, row.local_z],
+            'accuracy_level': row.accuracy_level, 'source': row.source,
+            'source_url': row.source_url,
+            'verification_date': row.verification_date.isoformat(), 'notes': row.notes,
+        })
+    return result
+
+
+@require_GET
+def api_haram_locations(request):
+    from .models import HaramLocation
+    locations = published_haram_locations()
+    return JsonResponse({'haram_locations': locations,
+        'categories': [{'code': code, 'label': label} for code, label in HaramLocation.CATEGORY_CHOICES],
+        'note': 'No approved locations published yet.' if not locations else 'Verify current access on site.'})
 
 
 @require_GET
@@ -212,7 +243,7 @@ def api_digital_twin(request):
             'stale': place.is_stale, 'source': place.source,
             'verification_date': place.verification_date.isoformat() if place.verification_date else None,
         })
-    return JsonResponse({'zones': zones, 'corridors': corridors, 'places': places, 'mode': 'local_digital_twin'})
+    return JsonResponse({'zones': zones, 'corridors': corridors, 'places': places, 'mode': 'local_digital_twin', 'haram_locations': published_haram_locations()})
 
 @require_GET
 def api_zones_status(request):
@@ -225,7 +256,12 @@ def api_zones_status(request):
     now = timezone.now()
     window_15m = now - timezone.timedelta(minutes=15)
 
+    from django.core.exceptions import ValidationError
     for z in zones:
+        try:
+            z.full_clean()
+        except ValidationError:
+            continue
         latest_record = z.density_records.first()
         base_people = latest_record.total_people if latest_record else 0
         
@@ -276,6 +312,9 @@ def api_zones_status(request):
             'data_age_seconds': age_seconds,
             'data_freshness': freshness,
             'data_source': 'density_record' if latest_record else 'telemetry_only',
+            'source': 'Local Siraaj zone record',
+            'verification_date': z.created_at.date().isoformat(),
+            'accuracy_level': 'REVIEWED',
         })
 
     corridors = []

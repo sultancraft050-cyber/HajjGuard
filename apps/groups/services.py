@@ -3,7 +3,7 @@ from datetime import timedelta
 from django.utils import timezone
 from zones.utils import haversine_distance
 from zones.models import LocationPing
-from groups.models import PilgrimGroup, GroupMembership
+from groups.models import PilgrimGroup, GroupMembership, LocationShareGrant
 
 class GroupDriftService:
     """
@@ -36,7 +36,30 @@ class GroupDriftService:
             group = group_or_id
 
         now = timezone.now()
-        leader_ping = LocationPing.objects.filter(pilgrim=group.leader).order_by('-timestamp').first()
+        grants = {
+            grant.pilgrim_id: grant
+            for grant in LocationShareGrant.objects.filter(
+                trip__group=group,
+                trip__status__in=['PLANNED', 'ACTIVE'],
+                trip__starts_at__lte=now,
+                trip__ends_at__gt=now,
+                enabled=True,
+                consent_given=True,
+                revoked_at__isnull=True,
+                expires_at__gt=now,
+            )
+        }
+
+        def latest_consented_ping(profile_id):
+            grant = grants.get(profile_id)
+            if not grant:
+                return None
+            query = LocationPing.objects.filter(pilgrim_id=profile_id)
+            if grant.consent_timestamp:
+                query = query.filter(timestamp__gte=grant.consent_timestamp)
+            return query.order_by('-timestamp').first()
+
+        leader_ping = latest_consented_ping(group.leader_id)
 
         leader_status = {
             'leader_id': group.leader.id,
@@ -59,7 +82,11 @@ class GroupDriftService:
             if m.pilgrim_id == group.leader_id:
                 continue
 
-            mem_ping = LocationPing.objects.filter(pilgrim=m.pilgrim).order_by('-timestamp').first()
+            # A member without active consent is not monitored and must not
+            # appear as silent, drifting, or recently located.
+            if m.pilgrim_id not in grants:
+                continue
+            mem_ping = latest_consented_ping(m.pilgrim_id)
             p_name = m.pilgrim.user.get_full_name() or m.pilgrim.user.username
 
             if not mem_ping:
@@ -147,7 +174,7 @@ class GroupDriftService:
         if leader_ping:
             active_coords.append((leader_ping.lat, leader_ping.lng))
         for m in members:
-            p_ping = LocationPing.objects.filter(pilgrim=m.pilgrim).order_by('-timestamp').first()
+            p_ping = latest_consented_ping(m.pilgrim_id)
             if p_ping and (now - p_ping.timestamp).total_seconds() <= cls.SILENCE_THRESHOLD_SECONDS:
                 active_coords.append((p_ping.lat, p_ping.lng))
 

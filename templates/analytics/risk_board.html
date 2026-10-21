@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "مصفوفة مخاطر التدفق والاختناق اللحظية" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}مصفوفة مخاطر التدفق والاختناق اللحظية{% else %}Live flow and bottleneck risk matrix{% endif %} | HajjGuard{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -11,31 +11,31 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger fw-bold">
-                    <i class="bi bi-shield-exclamation"></i> {% trans "مؤشر المخاطر المركب (Risk Index)" %}
+                    <i class="bi bi-shield-exclamation"></i> {% if LANGUAGE_CODE == 'ar' %}مؤشر المخاطر المركب (Risk Index){% else %}Composite risk index{% endif %}
                 </span>
             </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-bar-chart-steps text-danger me-2"></i>{% trans "مصفوفة رصد مخاطر التدفق والاختناق بالمشاعر" %}
+                <i class="bi bi-bar-chart-steps text-danger me-2"></i>{% if LANGUAGE_CODE == 'ar' %}مصفوفة رصد مخاطر التدفق والاختناق بالمشاعر{% else %}Holy Sites flow and bottleneck risk board{% endif %}
             </h2>
             <p class="text-muted small mb-0">
-                {% trans "تصنيف استباقي لحظي للقطاعات يدمج الكثافة المادية مع التركيبة الديموغرافية (كبار السن، الكراسي المتحركة، الأمراض المزمنة) والإجهاد الحراري." %}
+                {% if LANGUAGE_CODE == 'ar' %}تصنيف استباقي لحظي للقطاعات يدمج الكثافة المادية مع التركيبة الديموغرافية (كبار السن، الكراسي المتحركة، الأمراض المزمنة) والإجهاد الحراري.{% else %}Live proactive zone classification combining physical density, demographics, and heat stress.{% endif %}
             </p>
         </div>
         <div class="d-flex align-items-center gap-3">
             <div class="dga-card p-2 px-3 d-flex align-items-center gap-3">
                 <div>
-                    <small class="text-muted d-block">{% trans "طقس المشاعر المقدسة" %}</small>
+                    <small class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}طقس المشاعر المقدسة{% else %}Holy Sites weather{% endif %}</small>
                     <span class="fw-bold text-dark fs-6">{{ weather.temperature_c|default:34 }}°C ({{ weather.weather_desc }})</span>
                 </div>
                 <div class="border-start ps-3">
-                    <small class="text-muted d-block">{% trans "مؤشر الإجهاد الحراري" %}</small>
+                    <small class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}مؤشر الإجهاد الحراري{% else %}Heat stress index{% endif %}</small>
                     <span class="badge {% if heat_index >= 40 %}bg-danger{% elif heat_index >= 35 %}bg-warning text-dark{% else %}bg-success{% endif %} fs-6 rounded-pill px-2">
                         {{ heat_index|default:36 }}°C
                     </span>
                 </div>
             </div>
             <a href="{% url 'analytics:export_density_csv' %}" class="btn btn-dga-outline">
-                <i class="bi bi-file-earmark-excel text-success me-1"></i>{% trans "تصدير CSV" %}
+                <i class="bi bi-file-earmark-excel text-success me-1"></i>{% if LANGUAGE_CODE == 'ar' %}تصدير CSV{% else %}Export CSV{% endif %}
             </a>
         </div>
     </div>
@@ -44,32 +44,32 @@
     <div class="dga-card p-3 mb-4">
         <form method="GET" class="row g-2 align-items-center">
             <div class="col-md-4">
-                <label class="form-label small text-muted mb-1 fw-bold">{% trans "تصفية حسب المشعر المقدس:" %}</label>
+                <label class="form-label small text-muted mb-1 fw-bold">{% if LANGUAGE_CODE == 'ar' %}تصفية حسب المشعر المقدس:{% else %}Filter by Holy Site:{% endif %}</label>
                 <select name="site" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="ALL" {% if site_filter == 'ALL' %}selected{% endif %}>{% trans "كافة المشاعر المقدسة" %}</option>
-                    <option value="HARAM" {% if site_filter == 'HARAM' %}selected{% endif %}>{% trans "المسجد الحرام وصحن المطاف" %}</option>
-                    <option value="MINA" {% if site_filter == 'MINA' %}selected{% endif %}>{% trans "مشعر منى ومخيمات الإقامة" %}</option>
-                    <option value="JAMARAT" {% if site_filter == 'JAMARAT' %}selected{% endif %}>{% trans "منشأة جسر الجمرات" %}</option>
-                    <option value="ARAFAT" {% if site_filter == 'ARAFAT' %}selected{% endif %}>{% trans "مشعر عرفات وجبل الرحمة" %}</option>
-                    <option value="MUZDALIFAH" {% if site_filter == 'MUZDALIFAH' %}selected{% endif %}>{% trans "مشعر مزدلفة" %}</option>
+                    <option value="ALL" {% if site_filter == 'ALL' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}كافة المشاعر المقدسة{% else %}All Holy Sites{% endif %}</option>
+                    <option value="HARAM" {% if site_filter == 'HARAM' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}المسجد الحرام وصحن المطاف{% else %}Masjid al-Haram and Mataf{% endif %}</option>
+                    <option value="MINA" {% if site_filter == 'MINA' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}مشعر منى ومخيمات الإقامة{% else %}Mina and residential camps{% endif %}</option>
+                    <option value="JAMARAT" {% if site_filter == 'JAMARAT' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}منشأة جسر الجمرات{% else %}Jamarat Bridge facility{% endif %}</option>
+                    <option value="ARAFAT" {% if site_filter == 'ARAFAT' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}مشعر عرفات وجبل الرحمة{% else %}Arafat and Mount Mercy{% endif %}</option>
+                    <option value="MUZDALIFAH" {% if site_filter == 'MUZDALIFAH' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}مشعر مزدلفة{% else %}Muzdalifah{% endif %}</option>
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label small text-muted mb-1 fw-bold">{% trans "أولوية الترتيب:" %}</label>
+                <label class="form-label small text-muted mb-1 fw-bold">{% if LANGUAGE_CODE == 'ar' %}أولوية الترتيب:{% else %}Ranking priority:{% endif %}</label>
                 <select name="sort" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="risk" {% if sort_by == 'risk' %}selected{% endif %}>{% trans "الأعلى في مؤشر المخاطر (الافتراضي)" %}</option>
-                    <option value="predicted" {% if sort_by == 'predicted' %}selected{% endif %}>{% trans "أعلى كثافة متوقعة (بعد 20 دقيقة)" %}</option>
-                    <option value="vulnerable" {% if sort_by == 'vulnerable' %}selected{% endif %}>{% trans "أعلى نسبة فئات رعاية خاصة" %}</option>
-                    <option value="capacity" {% if sort_by == 'capacity' %}selected{% endif %}>{% trans "أعلى نسبة استغلال للسعة" %}</option>
-                    <option value="people" {% if sort_by == 'people' %}selected{% endif %}>{% trans "إجمالي عدد الحجاج المتواجدين" %}</option>
+                    <option value="risk" {% if sort_by == 'risk' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}الأعلى في مؤشر المخاطر (الافتراضي){% else %}Highest risk index (default){% endif %}</option>
+                    <option value="predicted" {% if sort_by == 'predicted' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}أعلى كثافة متوقعة (بعد 20 دقيقة){% else %}Highest predicted density (20 minutes){% endif %}</option>
+                    <option value="vulnerable" {% if sort_by == 'vulnerable' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}أعلى نسبة فئات رعاية خاصة{% else %}Highest special-care group share{% endif %}</option>
+                    <option value="capacity" {% if sort_by == 'capacity' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}أعلى نسبة استغلال للسعة{% else %}Highest capacity utilization{% endif %}</option>
+                    <option value="people" {% if sort_by == 'people' %}selected{% endif %}>{% if LANGUAGE_CODE == 'ar' %}إجمالي عدد الحجاج المتواجدين{% else %}Total pilgrims present{% endif %}</option>
                 </select>
             </div>
             <div class="col-md-4 d-flex align-items-end justify-content-end gap-2 pt-3 pt-md-0">
                 <a href="{% url 'analytics:risk_board' %}" class="btn btn-sm btn-dga-outline">
-                    <i class="bi bi-arrow-clockwise me-1"></i>{% trans "إعادة ضبط" %}
+                    <i class="bi bi-arrow-clockwise me-1"></i>{% if LANGUAGE_CODE == 'ar' %}إعادة ضبط{% else %}Reset{% endif %}
                 </a>
                 <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-sm btn-dga-primary">
-                    <i class="bi bi-speedometer2 me-1"></i>{% trans "لوحة القيادة التكتيكية" %}
+                    <i class="bi bi-speedometer2 me-1"></i>{% if LANGUAGE_CODE == 'ar' %}لوحة القيادة التكتيكية{% else %}Tactical dashboard{% endif %}
                 </a>
             </div>
         </form>
@@ -81,13 +81,13 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light border-bottom">
                     <tr class="small text-muted fw-bold">
-                        <th class="ps-4">{% trans "القطاع والمشعر" %}</th>
-                        <th>{% trans "الكثافة اللحظية" %}</th>
-                        <th>{% trans "تنبؤ (20 دقيقة)" %}</th>
-                        <th>{% trans "نسبة إشغال السعة" %}</th>
-                        <th>{% trans "الحجاج ذوي الأولوية" %}</th>
-                        <th>{% trans "درجة المخاطر" %}</th>
-                        <th class="text-end pe-4">{% trans "الإجراء" %}</th>
+                        <th class="ps-4">{% if LANGUAGE_CODE == 'ar' %}القطاع والمشعر{% else %}Zone and Holy Site{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}الكثافة اللحظية{% else %}Current density{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}تنبؤ (20 دقيقة){% else %}Forecast (20 minutes){% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}نسبة إشغال السعة{% else %}Capacity utilization{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}الحجاج ذوي الأولوية{% else %}Priority pilgrims{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}درجة المخاطر{% else %}Risk score{% endif %}</th>
+                        <th class="text-end pe-4">{% if LANGUAGE_CODE == 'ar' %}الإجراء{% else %}Action{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -128,14 +128,14 @@
                         </td>
                         <td class="text-end pe-4">
                             <a href="{% url 'zones:zone_detail' item.zone.code %}" class="btn btn-sm btn-dga-outline">
-                                <i class="bi bi-eye"></i> {% trans "تفاصيل" %}
+                                <i class="bi bi-eye"></i> {% if LANGUAGE_CODE == 'ar' %}تفاصيل{% else %}Details{% endif %}
                             </a>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
                         <td colspan="7" class="text-center py-4 text-muted">
-                            {% trans "لا توجد قطاعات مسجلة مطابقة لمعايير التصفية." %}
+                            {% if LANGUAGE_CODE == 'ar' %}لا توجد قطاعات مسجلة مطابقة لمعايير التصفية.{% else %}No zones match the selected filters.{% endif %}
                         </td>
                     </tr>
                     {% endfor %}

@@ -15,8 +15,6 @@ class PilgrimProfile(models.Model):
     LANGUAGE_CHOICES = [
         ('ar', 'العربية (Arabic)'),
         ('en', 'English'),
-        ('ur', 'اردو (Urdu)'),
-        ('id', 'Bahasa Indonesia'),
     ]
 
     CHRONIC_CHOICES = [
@@ -79,6 +77,8 @@ class AuditLog(models.Model):
         ('EXPORT_REPORT', _('Exported Operations CSV')),
         ('ASSIGN_TICKET', _('Assigned Field Unit')),
         ('RESOLVE_INCIDENT', _('Resolved SOS Ticket')),
+        ('GROUP_CHAT', _('Group chat action')),
+        ('GROUP_MANAGEMENT', _('Group management action')),
     ]
 
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')

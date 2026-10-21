@@ -1,11 +1,12 @@
 {% load i18n static %}
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
-<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}rtl{% else %}ltr{% endif %}">
+<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}HajjGuard | Pilgrim safety and group coordination{% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'images/siraaj-logo-master-transparent.png' %}">
 
     <!-- Google Fonts: IBM Plex Sans Arabic, Cairo & Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +64,7 @@
         }
 
         body {
-            font-family: {% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}'IBM Plex Sans Arabic', 'Cairo', sans-serif{% else %}'Inter', system-ui, sans-serif{% endif %};
+            font-family: {% if LANGUAGE_CODE == 'ar' %}'IBM Plex Sans Arabic', 'Cairo', sans-serif{% else %}'Inter', system-ui, sans-serif{% endif %};
             background-color: var(--dga-bg);
             color: var(--dga-text-primary);
             margin: 0;
@@ -138,6 +139,23 @@
             font-weight: 600;
             color: var(--dga-text-muted);
             letter-spacing: 0.3px;
+        }
+        .siraaj-brand-logo {
+            display: block;
+            width: 142px;
+            height: auto;
+            max-height: 54px;
+            object-fit: contain;
+        }
+        .siraaj-footer-logo {
+            display: block;
+            width: 128px;
+            height: auto;
+            max-height: 42px;
+            object-fit: contain;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 4px 8px;
         }
 
         /* Navigation Links & Dropdowns */
@@ -271,6 +289,9 @@
         .dga-footer a:hover {
             color: #34d399;
         }
+        .dga-footer p.text-muted {
+            color: #cbd5e1 !important;
+        }
 
         /* Search Modal Hotkey Badge */
         .search-badge {
@@ -324,21 +345,23 @@
     <nav class="navbar navbar-expand-lg navbar-dga sticky-top">
         <div class="container-fluid px-3 px-lg-4">
             
-            <!-- Brand Platform Logo & Emblem -->
+            <!-- Siraaj brand logo -->
             <a class="navbar-brand-dga" href="{% url 'home' %}">
-                <div class="brand-logo-container">
-                    <i class="bi bi-shield-fill-check"></i>
-                </div>
-                <div>
-                    <div class="brand-text-title">HajjGuard <span class="fw-light text-muted">| حارس الحج</span></div>
-                    <div class="brand-text-subtitle">{% trans "نظام إدارة الحشود وسلامة الحجاج الموحد" %}</div>
-                </div>
+                <img class="siraaj-brand-logo" src="{% static 'images/siraaj-logo-master-transparent.png' %}" alt="Siraaj | سراج">
             </a>
 
             <!-- Mobile Navbar Toggler -->
             <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="collapse" data-bs-target="#dgaNavbar">
                 <i class="bi bi-list fs-2 text-dark"></i>
             </button>
+
+            <!-- Keep the language switch reachable on narrow screens without opening the menu. -->
+            <form action="{% url 'set_language' %}" method="post" class="d-lg-none ms-auto me-2 mobile-language-switch">
+                {% csrf_token %}<input name="next" type="hidden" value="{{ request.get_full_path }}">
+                <button type="submit" name="language" value="{% if LANGUAGE_CODE == 'ar' %}en{% else %}ar{% endif %}" class="btn btn-dga-outline py-2 px-3">
+                    {% if LANGUAGE_CODE == 'ar' %}English{% else %}العربية{% endif %}
+                </button>
+            </form>
 
             <!-- Navbar Links & Dropdowns -->
             <div class="collapse navbar-collapse mt-3 mt-lg-0" id="dgaNavbar">
@@ -347,75 +370,69 @@
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link {% if request.path == '/' or request.path == '/home/' %}active{% endif %}" href="{% url 'home' %}">
-                            <i class="bi bi-house-door"></i> {% trans "الرئيسية" %}
+                            <i class="bi bi-house-door"></i> {% if LANGUAGE_CODE == 'ar' %}الرئيسية{% else %}Home{% endif %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/zones/discover/' in request.path %}active{% endif %}" href="{% url 'zones:discover_makkah' %}">
-                            <i class="bi bi-compass"></i> {% trans "اكتشف مكة" %}
+                            <i class="bi bi-compass"></i> {% if LANGUAGE_CODE == 'ar' %}اكتشف مكة{% else %}Discover Makkah{% endif %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/accounts/portal/' in request.path %}active{% endif %}" href="{% url 'accounts:pilgrim_portal' %}">
-                            <i class="bi bi-person-badge"></i> {% trans "بوابة ضيف الرحمن" %}
+                            <i class="bi bi-person-badge"></i> {% if LANGUAGE_CODE == 'ar' %}بوابة ضيف الرحمن{% else %}Pilgrim portal{% endif %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-success fw-bold {% if '/nusuk/card/' in request.path %}active{% endif %}" href="{% url 'nusuk:digital_card' %}">
-                            <i class="bi bi-person-vcard text-success"></i> {% trans "بطاقة نسك الذكية" %}
+                            <i class="bi bi-person-vcard text-success"></i> {% if LANGUAGE_CODE == 'ar' %}بطاقة نسك الذكية{% else %}Nusuk smart card{% endif %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/zones/map/' in request.path %}active{% endif %}" href="{% url 'zones:live_map' %}">
-                            <i class="bi bi-map"></i> {% trans "الخريطة المباشرة" %}
+                            <i class="bi bi-map"></i> {% if LANGUAGE_CODE == 'ar' %}الخريطة المباشرة{% else %}Live map{% endif %}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if '/groups/my-group/' in request.path %}active{% endif %}" href="{% url 'groups:my_group' %}">
-                            <i class="bi bi-people"></i> {% trans "فوجي والرادار" %}
+                            <i class="bi bi-people"></i> {% if LANGUAGE_CODE == 'ar' %}فوجي والرادار{% else %}My group{% endif %}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/zones/guidance/' in request.path %}active{% endif %}" href="{% url 'zones:guidance' %}">
-                            <i class="bi bi-compass"></i> {% trans "الإرشاد الذكي" %}
-                        </a>
-                    </li>
-
                     <!-- Operations & Control Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-cpu"></i> {% trans "مركز العمليات" %}
+                            <i class="bi bi-cpu"></i> {% if LANGUAGE_CODE == 'ar' %}مركز العمليات{% else %}Operations{% endif %}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dga shadow-lg">
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'safety:operations_dashboard' %}">
-                                    <i class="bi bi-speedometer2 text-success me-2"></i> {% trans "غرفة العمليات والتحكم التكتيكي" %}
+                                    <i class="bi bi-speedometer2 text-success me-2"></i> {% if LANGUAGE_CODE == 'ar' %}غرفة العمليات والتحكم التكتيكي{% else %}Tactical operations room{% endif %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'analytics:risk_board' %}">
-                                    <i class="bi bi-bar-chart-steps text-danger me-2"></i> {% trans "مصفوفة مخاطر التدفق والاختناق" %}
+                                    <i class="bi bi-bar-chart-steps text-danger me-2"></i> {% if LANGUAGE_CODE == 'ar' %}مصفوفة مخاطر التدفق والاختناق{% else %}Flow and bottleneck risk matrix{% endif %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'safety:incident_queue' %}">
-                                    <i class="bi bi-bell-fill text-warning me-2"></i> {% trans "إدارة بلاغات واستجابة الطوارئ" %}
+                                    <i class="bi bi-bell-fill text-warning me-2"></i> {% if LANGUAGE_CODE == 'ar' %}إدارة بلاغات واستجابة الطوارئ{% else %}Incident and emergency response{% endif %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'groups:lost_pilgrim' %}">
-                                    <i class="bi bi-qr-code-scan text-primary me-2"></i> {% trans "البحث الفوري عن تائه (Nusuk QR/ID)" %}
+                                    <i class="bi bi-qr-code-scan text-primary me-2"></i> {% if LANGUAGE_CODE == 'ar' %}البحث الفوري عن تائه (Nusuk QR/ID){% else %}Lost pilgrim lookup (Nusuk QR/ID){% endif %}
                                 </a>
                             </li>
                             <li><hr class="dropdown-divider my-1"></li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'analytics:reports' %}">
-                                    <i class="bi bi-file-earmark-bar-graph text-info me-2"></i> {% trans "تقارير الكثافة والتصدير الإحصائي" %}
+                                    <i class="bi bi-file-earmark-bar-graph text-info me-2"></i> {% if LANGUAGE_CODE == 'ar' %}تقارير الكثافة والتصدير الإحصائي{% else %}Density reports and export{% endif %}
                                 </a>
                             </li>
                             <li>
                                 <a class="dropdown-item py-2" href="{% url 'analytics:routing_comparison' %}">
-                                    <i class="bi bi-diagram-3 text-secondary me-2"></i> {% trans "معيار التوجيه الدفاعي (KSU >= 15%)" %}
+                                    <i class="bi bi-diagram-3 text-secondary me-2"></i> {% if LANGUAGE_CODE == 'ar' %}معيار التوجيه الدفاعي (KSU >= 15%){% else %}Defensive guidance standard (KSU >= 15%){% endif %}
                                 </a>
                             </li>
                         </ul>
@@ -428,7 +445,7 @@
                     <!-- Interactive Global Search Palette Button -->
                     <button type="button" class="btn btn-dga-outline py-2 px-3" onclick="openSearchPaletteModal()" title="Search commands (Ctrl+K)">
                         <i class="bi bi-search"></i>
-                        <span class="d-none d-xl-inline">{% trans "البحث" %}</span>
+                        <span class="d-none d-xl-inline">{% if LANGUAGE_CODE == 'ar' %}البحث{% else %}Search{% endif %}</span>
                         <span class="search-badge d-none d-xl-inline">Ctrl K</span>
                     </button>
 
@@ -438,8 +455,6 @@
                             <i class="bi bi-translate"></i>
                             {% if LANGUAGE_CODE == 'ar' %}العربية
                             {% elif LANGUAGE_CODE == 'en' %}English
-                            {% elif LANGUAGE_CODE == 'ur' %}اردو
-                            {% elif LANGUAGE_CODE == 'id' %}Indonesia
                             {% else %}Language{% endif %}
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dga dropdown-menu-end shadow">
@@ -448,8 +463,6 @@
                                 <input name="next" type="hidden" value="{{ request.get_full_path }}">
                                 <li><button type="submit" name="language" value="ar" class="dropdown-item {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">🇸🇦 العربية (Arabic)</button></li>
                                 <li><button type="submit" name="language" value="en" class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">🇬🇧 English</button></li>
-                                <li><button type="submit" name="language" value="ur" class="dropdown-item {% if LANGUAGE_CODE == 'ur' %}active{% endif %}">🇵🇰 اردو (Urdu)</button></li>
-                                <li><button type="submit" name="language" value="id" class="dropdown-item {% if LANGUAGE_CODE == 'id' %}active{% endif %}">🇮🇩 Bahasa Indonesia</button></li>
                             </form>
                         </ul>
                     </div>
@@ -462,24 +475,24 @@
                             <span class="small fw-bold">{{ user.username|truncatechars:12 }}</span>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-dga dropdown-menu-end shadow">
-                            <li><div class="dropdown-header text-muted small">{% trans "الحساب الموثق" %}</div></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-gear me-2"></i>{% trans "إعدادات الملف الشخصي" %}</a></li>
-                            <li><a class="dropdown-item" href="{% url 'nusuk:digital_card' %}"><i class="bi bi-person-vcard me-2"></i>{% trans "بطاقتي الذكية" %}</a></li>
+                            <li><div class="dropdown-header text-muted small">{% if LANGUAGE_CODE == 'ar' %}الحساب الموثق{% else %}Verified account{% endif %}</div></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="bi bi-gear me-2"></i>{% if LANGUAGE_CODE == 'ar' %}إعدادات الملف الشخصي{% else %}Profile settings{% endif %}</a></li>
+                            <li><a class="dropdown-item" href="{% url 'nusuk:digital_card' %}"><i class="bi bi-person-vcard me-2"></i>{% if LANGUAGE_CODE == 'ar' %}بطاقتي الذكية{% else %}My smart card{% endif %}</a></li>
                             <li><hr class="dropdown-divider my-1"></li>
-                            <li><a class="dropdown-item text-danger" href="/admin/logout/"><i class="bi bi-box-arrow-right me-2"></i>{% trans "تسجيل الخروج" %}</a></li>
+                            <li><a class="dropdown-item text-danger" href="/admin/logout/"><i class="bi bi-box-arrow-right me-2"></i>{% if LANGUAGE_CODE == 'ar' %}تسجيل الخروج{% else %}Log out{% endif %}</a></li>
                         </ul>
                     </div>
                     {% else %}
                     <a href="{% url 'accounts:register' %}" class="btn btn-dga-outline py-2 px-3">
                         <i class="bi bi-box-arrow-in-right"></i>
-                        <span>{% trans "تسجيل الدخول" %}</span>
+                        <span>{% if LANGUAGE_CODE == 'ar' %}تسجيل الدخول{% else %}Log in{% endif %}</span>
                     </a>
                     {% endif %}
 
                     <!-- Direct Emergency SOS Button -->
                     <button type="button" class="btn btn-dga-sos" onclick="openEmergencyModal()">
                         <i class="bi bi-shield-exclamation"></i>
-                        <span>{% trans "طوارئ SOS" %}</span>
+                        <span>{% if LANGUAGE_CODE == 'ar' %}طوارئ SOS{% else %}Emergency SOS{% endif %}</span>
                     </button>
                 </div>
             </div>
@@ -491,70 +504,67 @@
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Shared HajjGuard footer -->
+    <!-- Shared Siraaj footer -->
     <footer class="dga-footer">
         <div class="container px-3 px-lg-4">
             <div class="row g-4 mb-4">
                 
                 <div class="col-lg-4 col-md-6">
                     <div class="d-flex align-items-center gap-2 mb-3">
-                        <div class="brand-logo-container" style="width: 36px; height: 36px; font-size: 1.1rem;">
-                            <i class="bi bi-shield-check"></i>
-                        </div>
-                        <h5 class="fw-bold text-white mb-0">HajjGuard | حارس الحج</h5>
+                        <img class="siraaj-footer-logo" src="{% static 'images/siraaj-logo-master-transparent.png' %}" alt="Siraaj | سراج">
                     </div>
                     <p class="small text-muted mb-3">
-                        {% trans "Independent academic safety prototype for pilgrim groups, emergency guidance, and consent-controlled location sharing." %}
+                        <!-- Independent academic safety prototype for pilgrim groups, emergency guidance, and consent-controlled location sharing. -->{% if LANGUAGE_CODE == 'ar' %}نموذج أكاديمي مستقل للسلامة وتنسيق مجموعات الحجاج والإرشاد للطوارئ ومشاركة الموقع بموافقة.{% else %}Independent academic safety prototype for pilgrim groups, emergency guidance, and consent-controlled location sharing.{% endif %}
                     </p>
                 </div>
 
                 <div class="col-lg-2 col-md-3 col-6">
-                    <h6 class="fw-bold text-white mb-3">{% trans "خدمات الحاج" %}</h6>
+                    <h6 class="fw-bold text-white mb-3">{% if LANGUAGE_CODE == 'ar' %}خدمات الحاج{% else %}Pilgrim services{% endif %}</h6>
                     <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
-                        <li><a href="{% url 'accounts:pilgrim_portal' %}">{% trans "بوابة ضيف الرحمن" %}</a></li>
-                        <li><a href="{% url 'nusuk:digital_card' %}">{% trans "بطاقة نسك الرقمية" %}</a></li>
-                        <li><a href="{% url 'zones:live_map' %}">{% trans "الخريطة المباشرة" %}</a></li>
-                        <li><a href="{% url 'groups:my_group' %}">{% trans "فوجي والرادار" %}</a></li>
-                        <li><a href="{% url 'zones:guidance' %}">{% trans "الإرشاد الذكي" %}</a></li>
+                        <li><a href="{% url 'accounts:pilgrim_portal' %}">{% if LANGUAGE_CODE == 'ar' %}بوابة ضيف الرحمن{% else %}Pilgrim portal{% endif %}</a></li>
+                        <li><a href="{% url 'nusuk:digital_card' %}">{% if LANGUAGE_CODE == 'ar' %}بطاقة نسك الرقمية{% else %}Nusuk digital card{% endif %}</a></li>
+                        <li><a href="{% url 'zones:live_map' %}">{% if LANGUAGE_CODE == 'ar' %}الخريطة المباشرة{% else %}Live map{% endif %}</a></li>
+                        <li><a href="{% url 'groups:my_group' %}">{% if LANGUAGE_CODE == 'ar' %}فوجي والرادار{% else %}My group{% endif %}</a></li>
+                        <li><a href="{% url 'zones:discover_makkah' %}">{% if LANGUAGE_CODE == 'ar' %}دليل الأماكن والخدمات{% else %}Places and facilities guide{% endif %}</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-2 col-md-3 col-6">
-                    <h6 class="fw-bold text-white mb-3">{% trans "مركز القيادة" %}</h6>
+                    <h6 class="fw-bold text-white mb-3">{% if LANGUAGE_CODE == 'ar' %}مركز القيادة{% else %}Operations centre{% endif %}</h6>
                     <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
-                        <li><a href="{% url 'safety:operations_dashboard' %}">{% trans "غرفة العمليات" %}</a></li>
-                        <li><a href="{% url 'analytics:risk_board' %}">{% trans "لوحة المخاطر" %}</a></li>
-                        <li><a href="{% url 'safety:incident_queue' %}">{% trans "إدارة البلاغات" %}</a></li>
-                        <li><a href="{% url 'groups:lost_pilgrim' %}">{% trans "البحث عن مفقود" %}</a></li>
-                        <li><a href="{% url 'analytics:reports' %}">{% trans "التقارير التحليلية" %}</a></li>
+                        <li><a href="{% url 'safety:operations_dashboard' %}">{% if LANGUAGE_CODE == 'ar' %}غرفة العمليات{% else %}Operations room{% endif %}</a></li>
+                        <li><a href="{% url 'analytics:risk_board' %}">{% if LANGUAGE_CODE == 'ar' %}لوحة المخاطر{% else %}Risk board{% endif %}</a></li>
+                        <li><a href="{% url 'safety:incident_queue' %}">{% if LANGUAGE_CODE == 'ar' %}إدارة البلاغات{% else %}Incident management{% endif %}</a></li>
+                        <li><a href="{% url 'groups:lost_pilgrim' %}">{% if LANGUAGE_CODE == 'ar' %}البحث عن مفقود{% else %}Lost pilgrim lookup{% endif %}</a></li>
+                        <li><a href="{% url 'analytics:reports' %}">{% if LANGUAGE_CODE == 'ar' %}التقارير التحليلية{% else %}Analytics reports{% endif %}</a></li>
                     </ul>
                 </div>
 
                 <div class="col-lg-4 col-md-12">
-                    <h6 class="fw-bold text-white mb-3">{% trans "خطوط الطوارئ والمساندة المباشرة" %}</h6>
+                    <h6 class="fw-bold text-white mb-3">{% if LANGUAGE_CODE == 'ar' %}خطوط الطوارئ والمساندة المباشرة{% else %}Emergency and support lines{% endif %}</h6>
                     <div class="row g-2 mb-3">
                         <div class="col-6">
                             <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
                                 <div class="text-danger fw-bold fs-5">911</div>
-                                <div class="small text-white-50">{% trans "الطوارئ الموحد" %}</div>
+                                <div class="small text-white-50">{% if LANGUAGE_CODE == 'ar' %}الطوارئ الموحد{% else %}Unified emergency{% endif %}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
                                 <div class="text-warning fw-bold fs-5">997</div>
-                                <div class="small text-white-50">{% trans "الهلال الأحمر (إسعاف)" %}</div>
+                                <div class="small text-white-50">{% if LANGUAGE_CODE == 'ar' %}الهلال الأحمر (إسعاف){% else %}Red Crescent (ambulance){% endif %}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
                                 <div class="text-info fw-bold fs-5">1966</div>
-                                <div class="small text-white-50">{% trans "إرشاد التائهين (نسك)" %}</div>
+                                <div class="small text-white-50">{% if LANGUAGE_CODE == 'ar' %}إرشاد التائهين (نسك){% else %}Lost pilgrim guidance (Nusuk){% endif %}</div>
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="p-2 rounded-3 bg-dark border border-secondary text-center">
                                 <div class="text-success fw-bold fs-5">937</div>
-                                <div class="small text-white-50">{% trans "مركز استشارات الصحة" %}</div>
+                                <div class="small text-white-50">{% if LANGUAGE_CODE == 'ar' %}مركز استشارات الصحة{% else %}Health advice centre{% endif %}</div>
                             </div>
                         </div>
                     </div>
@@ -566,12 +576,12 @@
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 small text-muted">
                 <div>
-                    &copy; 2026-2027 King Saud University (KSU CCIS) | IS 498 / IS 499 Capstone Defense | HajjGuard
+                    &copy; 2026-2027 King Saud University (KSU CCIS) | IS 498 / IS 499 Capstone Defense | Siraaj
                 </div>
                 <div class="d-flex align-items-center gap-3">
-                    <a href="{% url 'accounts:profile' %}">{% trans "سياسة الخصوصية وحماية البيانات" %}</a>
+                    <a href="{% url 'accounts:profile' %}">{% if LANGUAGE_CODE == 'ar' %}سياسة الخصوصية وحماية البيانات{% else %}Privacy and data protection{% endif %}</a>
                     <span>•</span>
-                    <span>{% trans "Academic prototype · synthetic data unless labelled otherwise" %}</span>
+                    <span>{% if LANGUAGE_CODE == 'ar' %}Academic prototype · synthetic data unless labelled otherwise{% else %}Academic prototype · synthetic data unless labelled otherwise{% endif %}</span>
                 </div>
             </div>
         </div>
@@ -584,28 +594,28 @@
                 <div class="modal-header border-bottom p-3">
                     <div class="input-group">
                         <span class="input-group-text bg-transparent border-0"><i class="bi bi-search fs-5 text-muted"></i></span>
-                        <input type="text" id="globalSearchInput" class="form-control border-0 fs-5 shadow-none" placeholder="{% trans 'ابحث عن قطاع، خدمة، حاج، بلاغ أو فتوى شرعية...' %}" onkeyup="filterGlobalSearch()">
+                        <input type="text" id="globalSearchInput" class="form-control border-0 fs-5 shadow-none" placeholder="{% if LANGUAGE_CODE == 'ar' %}ابحث عن قطاع، خدمة، حاج، بلاغ أو فتوى شرعية...{% else %}Search for a service, pilgrim, incident, or guidance...{% endif %}" onkeyup="filterGlobalSearch()">
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-3" style="max-height: 400px; overflow-y: auto;">
-                    <div class="small text-muted fw-bold mb-2">{% trans "الوصول السريع الأكثر استخداماً:" %}</div>
+                    <div class="small text-muted fw-bold mb-2">{% if LANGUAGE_CODE == 'ar' %}الوصول السريع الأكثر استخداماً:{% else %}Most used quick access:{% endif %}</div>
                     <div class="list-group list-group-flush" id="searchQuickLinks">
                         <a href="{% url 'nusuk:digital_card' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
-                            <span class="d-flex align-items-center gap-2"><i class="bi bi-person-vcard text-success"></i> <strong>{% trans "بطاقة نسك الذكية (Digital Card & QR)" %}</strong></span>
-                            <span class="badge bg-light text-dark">{% trans "خدمة فورية" %}</span>
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-person-vcard text-success"></i> <strong>{% if LANGUAGE_CODE == 'ar' %}بطاقة نسك الذكية (Digital Card & QR){% else %}Nusuk smart card (Digital Card & QR){% endif %}</strong></span>
+                            <span class="badge bg-light text-dark">{% if LANGUAGE_CODE == 'ar' %}خدمة فورية{% else %}Quick service{% endif %}</span>
                         </a>
                         <a href="{% url 'zones:live_map' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
-                            <span class="d-flex align-items-center gap-2"><i class="bi bi-map text-primary"></i> <strong>{% trans "خريطة الحرم والمشاعر اللحظية (Live Map)" %}</strong></span>
-                            <span class="badge bg-light text-dark">{% trans "رصد مباشر" %}</span>
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-map text-primary"></i> <strong>{% if LANGUAGE_CODE == 'ar' %}خريطة الحرم والمشاعر اللحظية (Live Map){% else %}Haram and Holy Sites live map{% endif %}</strong></span>
+                            <span class="badge bg-light text-dark">{% if LANGUAGE_CODE == 'ar' %}رصد مباشر{% else %}Live monitoring{% endif %}</span>
                         </a>
                         <a href="{% url 'safety:operations_dashboard' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
-                            <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-danger"></i> <strong>{% trans "غرفة العمليات والرصد الميداني (Command Ops)" %}</strong></span>
-                            <span class="badge bg-light text-dark">{% trans "قيادة تكتيكية" %}</span>
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-speedometer2 text-danger"></i> <strong>{% if LANGUAGE_CODE == 'ar' %}غرفة العمليات والرصد الميداني (Command Ops){% else %}Field operations and monitoring (Command Ops){% endif %}</strong></span>
+                            <span class="badge bg-light text-dark">{% if LANGUAGE_CODE == 'ar' %}قيادة تكتيكية{% else %}Tactical operations{% endif %}</span>
                         </a>
                         <a href="{% url 'groups:lost_pilgrim' %}" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1">
-                            <span class="d-flex align-items-center gap-2"><i class="bi bi-qr-code text-warning"></i> <strong>{% trans "البحث الفوري عن تائه أو حاج مفقود" %}</strong></span>
-                            <span class="badge bg-light text-dark">{% trans "استجابة ميدانية" %}</span>
+                            <span class="d-flex align-items-center gap-2"><i class="bi bi-qr-code text-warning"></i> <strong>{% if LANGUAGE_CODE == 'ar' %}البحث الفوري عن تائه أو حاج مفقود{% else %}Lost pilgrim lookup{% endif %}</strong></span>
+                            <span class="badge bg-light text-dark">{% if LANGUAGE_CODE == 'ar' %}استجابة ميدانية{% else %}Field response{% endif %}</span>
                         </a>
                     </div>
                 </div>
@@ -620,38 +630,38 @@
                 <div class="modal-header bg-danger text-white border-0 py-3">
                     <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
                         <i class="bi bi-shield-exclamation fs-4"></i>
-                        <span>{% trans "تسجيل طلب مساعدة (SOS)" %}</span>
+                        <span>{% if LANGUAGE_CODE == 'ar' %}تسجيل طلب مساعدة (SOS){% else %}Request emergency support (SOS){% endif %}</span>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
                     <p class="text-muted small mb-4">
-                        {% trans "اختر نوع الحالة. سيُسجّل الطلب لحسابك، ثم يمكنك الاتصال بالطوارئ أو قائد مجموعتك يدويًا." %}
+                        {% if LANGUAGE_CODE == 'ar' %}اختر نوع الحالة. سيُسجّل الطلب لحسابك، ثم يمكنك الاتصال بالطوارئ أو قائد مجموعتك يدويًا.{% else %}Choose the emergency category. The request will be recorded to your account; you can then call emergency services or your group leader manually.{% endif %}
                     </p>
 
                     <div class="row g-3">
                         <div class="col-6">
                             <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('MEDICAL', '997')">
                                 <i class="bi bi-heart-pulse-fill fs-2 d-block mb-1"></i>
-                                {% trans "حالة طبية حرجة" %}<br><small class="text-danger fw-normal">إسعاف (997)</small>
+                                {% if LANGUAGE_CODE == 'ar' %}حالة طبية حرجة{% else %}Critical medical condition{% endif %}<br><small class="text-danger fw-normal">{% if LANGUAGE_CODE == 'ar' %}إسعاف{% else %}Ambulance{% endif %} (997)</small>
                             </button>
                         </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-outline-warning w-100 p-3 rounded-4 fw-bold text-dark shadow-sm" onclick="sendGlobalSos('HEAT', '997')">
                                 <i class="bi bi-thermometer-sun fs-2 d-block mb-1 text-warning"></i>
-                                {% trans "ضربة شمس / إجهاد" %}<br><small class="text-danger fw-normal">إسعاف (997)</small>
+                                {% if LANGUAGE_CODE == 'ar' %}ضربة شمس / إجهاد{% else %}Heatstroke / exhaustion{% endif %}<br><small class="text-danger fw-normal">{% if LANGUAGE_CODE == 'ar' %}إسعاف{% else %}Ambulance{% endif %} (997)</small>
                             </button>
                         </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-outline-danger w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('CRUSH', '998')">
                                 <i class="bi bi-people-fill fs-2 d-block mb-1"></i>
-                                {% trans "تدافع / زحام حرج" %}<br><small class="text-danger fw-normal">إنقاذ (998)</small>
+                                {% if LANGUAGE_CODE == 'ar' %}تدافع / زحام حرج{% else %}Crowding emergency{% endif %}<br><small class="text-danger fw-normal">{% if LANGUAGE_CODE == 'ar' %}إنقاذ{% else %}Rescue{% endif %} (998)</small>
                             </button>
                         </div>
                         <div class="col-6">
                             <button type="button" class="btn btn-outline-primary w-100 p-3 rounded-4 fw-bold shadow-sm" onclick="sendGlobalSos('LOST', '911')">
                                 <i class="bi bi-geo-alt-fill fs-2 d-block mb-1"></i>
-                                {% trans "حاج تائه عن فوجه" %}<br><small class="text-primary fw-normal">أمن (911)</small>
+                                {% if LANGUAGE_CODE == 'ar' %}حاج تائه عن فوجه{% else %}Pilgrim separated from group{% endif %}<br><small class="text-primary fw-normal">{% if LANGUAGE_CODE == 'ar' %}أمن{% else %}Security{% endif %} (911)</small>
                             </button>
                         </div>
                     </div>
@@ -712,7 +722,7 @@
         function sendGlobalSos(category, number) {
             const statusBox = document.getElementById('sos-dispatch-status');
             statusBox.classList.remove('d-none');
-            statusBox.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> {% trans "جاري تحديد إحداثيات GPS وتسجيل طلب المساعدة..." %}';
+            statusBox.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> {% if LANGUAGE_CODE == 'ar' %}جاري تحديد إحداثيات GPS وتسجيل طلب المساعدة...{% else %}Getting GPS coordinates and recording the emergency request...{% endif %}';
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
@@ -743,17 +753,18 @@
             })
             .then(data => {
                 const statusBox = document.getElementById('sos-dispatch-status');
+                const arPage = document.documentElement.lang.startsWith('ar');
                 const leaderLink = data.group_leader_call_url ?
-                    ` <a class="btn btn-sm btn-outline-success ms-2" href="${data.group_leader_call_url}">اتصال بقائد المجموعة</a>` : '';
-                const locationNotice = (!lat || !lng) ? ' لم يتم توفير موقع؛ يرجى ذكره للمجيب.' : '';
-                statusBox.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> تم تسجيل البلاغ برقم #' + data.incident_id +
-                    ' - اختر الاتصال يدويًا بعد التأكيد: ' +
-                    `<button class="btn btn-sm btn-danger ms-2" type="button" onclick="confirmEmergencyCall(${data.incident_id}, '${data.emergency_call_url}')">اتصال بالطوارئ ${data.emergency_number}</button>` + leaderLink +
-                    `<div class="small mt-2">${data.call_disclaimer || 'سيتم فتح شاشة الاتصال في هاتفك، ولا يستطيع HajjGuard التحقق من إجابة المكالمة.'}${locationNotice}</div>`;
+                    ` <a class="btn btn-sm btn-outline-success ms-2" href="${data.group_leader_call_url}">${arPage ? 'اتصال بقائد المجموعة' : 'Call group leader'}</a>` : '';
+                const locationNotice = (!lat || !lng) ? (arPage ? ' لم يتم توفير موقع؛ يرجى ذكره للمجيب.' : ' No location was provided; tell the responder your location.') : '';
+                statusBox.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i> ' + (arPage ? 'تم تسجيل البلاغ برقم #' : 'Request recorded as #') + data.incident_id +
+                    (arPage ? ' - اختر الاتصال يدويًا بعد التأكيد: ' : ' — choose a manual call after confirmation: ') +
+                    `<button class="btn btn-sm btn-danger ms-2" type="button" onclick="confirmEmergencyCall(${data.incident_id}, '${data.emergency_call_url}')">${arPage ? 'اتصال بالطوارئ' : 'Call emergency services'} ${data.emergency_number}</button>` + leaderLink +
+                    `<div class="small mt-2">${data.call_disclaimer || (arPage ? 'سيتم فتح شاشة الاتصال في هاتفك، ولا يستطيع HajjGuard التحقق من إجابة المكالمة.' : 'Your phone call screen will open; Siraaj cannot verify whether the call was answered.')}${locationNotice}</div>`;
             })
             .catch(err => {
                 statusBox.className = 'alert alert-warning mt-4 text-start small fw-bold';
-                statusBox.textContent = 'تعذر الوصول إلى الخادم. لم يتم تسليم الطلب؛ يرجى الاتصال بالطوارئ يدويًا.';
+                statusBox.textContent = document.documentElement.lang.startsWith('ar') ? 'تعذر الوصول إلى الخادم. لم يتم تسليم الطلب؛ يرجى الاتصال بالطوارئ يدويًا.' : 'The server could not be reached. The request was not delivered; call emergency services manually.';
             });
         }
 

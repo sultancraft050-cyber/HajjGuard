@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "Operations Command Center" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}غرفة عمليات سراج{% else %}Operations Command Center{% endif %} | HajjGuard{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -41,9 +41,9 @@
         <div>
             <h4 class="fw-bold mb-0 text-dark">
                 <i class="bi bi-shield-check text-success me-2"></i>
-                <span>{% trans "Central Operations Command Center (غرفة القيادة والسيطرة)" %}</span>
+                <span>{% if LANGUAGE_CODE == 'ar' %}مركز القيادة والسيطرة المركزي{% else %}Central Operations Command Center{% endif %}</span>
             </h4>
-            <small class="text-muted">{% trans "Live Situational Awareness, Multi-Zone Crowd Risk & Emergency Dispatch" %}</small>
+            <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}وعي ميداني مباشر ومخاطر ازدحام متعددة المناطق واستجابة للطوارئ{% else %}Live Situational Awareness, Multi-Zone Crowd Risk & Emergency Dispatch{% endif %}</small>
         </div>
         <div class="d-flex align-items-center gap-2 flex-wrap">
             <div class="px-3 py-1 bg-white border rounded-pill shadow-sm d-flex align-items-center gap-2" id="makkah-clock-badge" title="Makkah local time (Asia/Riyadh, UTC+3)">
@@ -51,10 +51,10 @@
                 <span class="small fw-bold text-dark"><i class="bi bi-clock-fill text-warning me-1"></i><span id="live-makkah-time">{{ weather.makkah_time_12|default:"12:00:00 AM" }}</span> <span class="text-muted">(AST)</span></span>
             </div>
             <a href="{% url 'zones:live_map' %}" class="btn btn-outline-success fw-bold rounded-pill px-3">
-                <i class="bi bi-map-fill me-1"></i> {% trans "Open Full Tactical Map" %}
+                <i class="bi bi-map-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}فتح الخريطة التشغيلية الكاملة{% else %}Open Full Tactical Map{% endif %}
             </a>
             <a href="{% url 'accounts:pilgrim_portal' %}" class="btn btn-outline-dark fw-bold rounded-pill px-3">
-                <i class="bi bi-phone me-1"></i> {% trans "Pilgrim View" %}
+                <i class="bi bi-phone me-1"></i> {% if LANGUAGE_CODE == 'ar' %}واجهة الحاج{% else %}Pilgrim View{% endif %}
             </a>
         </div>
     </div>
@@ -65,9 +65,9 @@
             <div class="card kpi-card p-3 bg-white border-start border-4 border-success">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted small fw-bold">{% trans "MONITORED PILGRIMS" %}</div>
+                        <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}الحجاج تحت المتابعة{% else %}MONITORED PILGRIMS{% endif %}</div>
                         <h3 class="fw-bold mb-0 text-dark">{{ total_pilgrims|default:2 }}</h3>
-                        <small class="text-success fw-bold"><i class="bi bi-broadcast"></i> {% trans "Active Telemetry" %}</small>
+                        <small class="text-success fw-bold"><i class="bi bi-broadcast"></i> {% if LANGUAGE_CODE == 'ar' %}بيانات الموقع النشطة{% else %}Active Telemetry{% endif %}</small>
                     </div>
                     <div class="fs-1 text-success opacity-75"><i class="bi bi-people-fill"></i></div>
                 </div>
@@ -78,9 +78,9 @@
             <div class="card kpi-card p-3 bg-white border-start border-4 border-danger">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted small fw-bold">{% trans "ACTIVE SOS CALLS" %}</div>
+                        <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}بلاغات SOS النشطة{% else %}ACTIVE SOS CALLS{% endif %}</div>
                         <h3 class="fw-bold mb-0 text-danger" id="active-incidents-counter">{{ active_incidents_count }}</h3>
-                        <small class="text-danger fw-bold"><i class="bi bi-bell-fill"></i> {% trans "Emergency Hotlines" %}</small>
+                        <small class="text-danger fw-bold"><i class="bi bi-bell-fill"></i> {% if LANGUAGE_CODE == 'ar' %}خطوط الطوارئ{% else %}Emergency Hotlines{% endif %}</small>
                     </div>
                     <div class="fs-1 text-danger opacity-75"><i class="bi bi-shield-fill-exclamation"></i></div>
                 </div>
@@ -91,11 +91,11 @@
             <div class="card kpi-card p-3 bg-white border-start border-4 border-warning">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted small fw-bold">{% trans "HIGHEST RISK ZONE" %}</div>
+                        <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}أعلى منطقة خطراً{% else %}HIGHEST RISK ZONE{% endif %}</div>
                         <h5 class="fw-bold mb-0 text-dark text-truncate" style="max-width: 170px;">
                             {{ highest_risk_zone.name_en|default:"Jamarat Floor 2" }}
                         </h5>
-                        <small class="text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> {% trans "High Density Flow" %}</small>
+                        <small class="text-warning fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> {% if LANGUAGE_CODE == 'ar' %}تدفق عالي الكثافة{% else %}High Density Flow{% endif %}</small>
                     </div>
                     <div class="fs-1 text-warning opacity-75"><i class="bi bi-speedometer2"></i></div>
                 </div>
@@ -106,7 +106,7 @@
             <div class="card kpi-card p-3 bg-white border-start border-4 border-info">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-muted small fw-bold">{% trans "MAKKAH LIVE WEATHER" %}</div>
+                        <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}طقس مكة الحالي{% else %}MAKKAH LIVE WEATHER{% endif %}</div>
                         <h3 class="fw-bold mb-0 text-dark"><span id="live-makkah-temp">{{ weather.temperature|default:34 }}</span>°C</h3>
                         <small class="text-info fw-bold" id="live-weather-desc">
                             {% if weather.is_day %}
@@ -114,7 +114,7 @@
                             {% else %}
                             <i class="bi bi-moon-stars-fill text-info"></i> {{ weather.condition_en }}
                             {% endif %}
-                            <span class="text-muted fw-normal">({% trans "Feels" %} {{ weather.feels_like|default:36 }}°C)</span>
+                            <span class="text-muted fw-normal">({% if LANGUAGE_CODE == 'ar' %}المحسوس{% else %}Feels{% endif %} {{ weather.feels_like|default:36 }}°C)</span>
                         </small>
                     </div>
                     <div class="fs-1 text-info opacity-75" id="live-weather-icon-box">
@@ -134,21 +134,21 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <div>
                 <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-success rounded-pill px-3 py-1"><i class="bi bi-broadcast me-1"></i> {% trans "REAL-LIFE PRODUCTION FEED" %}</span>
+                    <span class="badge bg-success rounded-pill px-3 py-1"><i class="bi bi-broadcast me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تغذية تشغيلية حقيقية{% else %}REAL-LIFE PRODUCTION FEED{% endif %}</span>
                     <span class="badge bg-dark rounded-pill px-3 py-1"><i class="bi bi-shield-check text-warning me-1"></i> trasul.gph.gov.sa</span>
                 </div>
                 <h5 class="fw-bold text-dark mt-2 mb-0 d-flex align-items-center gap-2">
                     <span>🕋</span>
-                    <span>{% trans "Synthetic Haram telemetry demonstration" %}</span>
+                    <span>{% if LANGUAGE_CODE == 'ar' %}عرض تجريبي لبيانات الحرم الاصطناعية{% else %}Synthetic Haram telemetry demonstration{% endif %}</span>
                 </h5>
-                <small class="text-muted">{% trans "Local synthetic Tawaf duration, entry-gate, and optical-feed demonstration values." %}</small>
+                <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}قيم تجريبية محلية لمدة الطواف وبوابات الدخول والتغذية البصرية.{% else %}Local synthetic Tawaf duration, entry-gate, and optical-feed demonstration values.{% endif %}</small>
             </div>
             <div class="d-flex gap-2 mt-2 mt-md-0">
                 <button class="btn btn-success fw-bold rounded-pill px-3 shadow-sm" id="btn-sync-haramain" onclick="syncHaramainLive()">
-                    <i class="bi bi-cloud-arrow-down-fill me-1"></i> {% trans "Refresh synthetic telemetry" %}
+                    <i class="bi bi-cloud-arrow-down-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تحديث البيانات التجريبية{% else %}Refresh synthetic telemetry{% endif %}
                 </button>
                 <button class="btn btn-outline-dark fw-bold rounded-pill px-3" onclick="toggleKaabaLiveStream()">
-                    <i class="bi bi-camera-video-fill me-1"></i> {% trans "24/7 Kaaba Live Feed" %}
+                    <i class="bi bi-camera-video-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}بث مباشر للكعبة 24/7{% else %}24/7 Kaaba Live Feed{% endif %}
                 </button>
             </div>
         </div>
@@ -157,29 +157,29 @@
         <div class="row g-3" id="haramain-telemetry-cards">
             <div class="col-12 col-md-4">
                 <div class="p-3 border rounded-3 bg-light h-100">
-                    <div class="text-muted small fw-bold">{% trans "TAWAF DURATION (CENTRAL BASIN)" %}</div>
+                    <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}مدة الطواف (صحن المطاف){% else %}TAWAF DURATION (CENTRAL BASIN){% endif %}</div>
                     <div class="d-flex align-items-baseline gap-2 mt-1">
                         <h3 class="fw-bold mb-0 text-success" id="scada-tawaf-time">45</h3>
-                        <span class="text-muted fw-bold">{% trans "minutes / 7 laps" %}</span>
+                        <span class="text-muted fw-bold">{% if LANGUAGE_CODE == 'ar' %}دقائق / 7 أشواط{% else %}minutes / 7 laps{% endif %}</span>
                     </div>
-                    <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i> {% trans "Moderate Flow (Normal Rate)" %}</small>
+                    <small class="text-success"><i class="bi bi-check-circle-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تدفق متوسط (معدل طبيعي){% else %}Moderate Flow (Normal Rate){% endif %}</small>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="p-3 border rounded-3 bg-light h-100">
-                    <div class="text-muted small fw-bold">{% trans "ACTIVE PRIMARY GATES (INFLOW)" %}</div>
+                    <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}البوابات الرئيسية النشطة (الدخول){% else %}ACTIVE PRIMARY GATES (INFLOW){% endif %}</div>
                     <h5 class="fw-bold mb-1 text-dark mt-1" id="scada-active-gates">1, 3, 5, 19, 40, 79</h5>
-                    <small class="text-muted">{% trans "King Abdulaziz, King Fahd, Bab Umrah open" %}</small>
+                    <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}بوابات الملك عبدالعزيز والملك فهد وباب العمرة مفتوحة{% else %}King Abdulaziz, King Fahd, Bab Umrah open{% endif %}</small>
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <div class="p-3 border rounded-3 bg-light h-100">
-                    <div class="text-muted small fw-bold">{% trans "ESTIMATED REAL HEADCOUNT (MATAF)" %}</div>
+                    <div class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}التقدير الفعلي لعدد الموجودين (المطاف){% else %}ESTIMATED REAL HEADCOUNT (MATAF){% endif %}</div>
                     <div class="d-flex align-items-baseline gap-2 mt-1">
                         <h3 class="fw-bold mb-0 text-primary" id="scada-mataf-headcount">9,000</h3>
                         <span class="text-muted">/ 18,000 max safe</span>
                     </div>
-                    <small class="text-primary fw-bold"><i class="bi bi-speedometer me-1"></i> 50.0% {% trans "Safe Basin Capacity" %}</small>
+                    <small class="text-primary fw-bold"><i class="bi bi-speedometer me-1"></i> 50.0% {% if LANGUAGE_CODE == 'ar' %}السعة الآمنة للصحن{% else %}Safe Basin Capacity{% endif %}</small>
                 </div>
             </div>
         </div>
@@ -190,20 +190,20 @@
                 <div>
                     <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                         <i class="bi bi-grid-3x3-gap-fill text-success"></i>
-                        <span>{% trans "Masjid Al-Haram 7-Section 3D Flow & Accurate Headcount Matrix" %}</span>
+                        <span>{% if LANGUAGE_CODE == 'ar' %}مصفوفة التدفق ثلاثية الأبعاد وعدد الموجودين الدقيقة في أقسام المسجد الحرام السبعة{% else %}Masjid Al-Haram 7-Section 3D Flow & Accurate Headcount Matrix{% endif %}</span>
                         <span class="badge bg-warning-subtle text-warning border border-warning small font-monospace">Synthetic estimate — field accuracy not measured</span>
                     </h6>
-                    <small class="text-muted">{% trans "Conservation of crowd flow equation: ΔN = (∑Inflow - ∑Outflow) × Δt across 3 architectural tiers." %}</small>
+                    <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}معادلة حفظ تدفق الحشود: ΔN = (∑الدخول - ∑الخروج) × Δt عبر ثلاثة مستويات معمارية.{% else %}Conservation of crowd flow equation: ΔN = (∑Inflow - ∑Outflow) × Δt across 3 architectural tiers.{% endif %}</small>
                 </div>
                 <div class="d-flex gap-2 mt-2 mt-md-0">
                     <button class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold" onclick="simulateGateSurge('Z-HARAM-MATAF', 1600, 600, 17500)">
-                        <i class="bi bi-lightning-charge-fill me-1"></i> {% trans "Simulate Mataf Influx (+1,000/min)" %}
+                        <i class="bi bi-lightning-charge-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}محاكاة زيادة المطاف (+1000/دقيقة){% else %}Simulate Mataf Influx (+1,000/min){% endif %}
                     </button>
                     <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" onclick="simulateGateSurge('Z-HARAM-MATAF', 600, 1200, 9500)">
-                        <i class="bi bi-arrow-down-circle-fill me-1"></i> {% trans "Drain Mataf (-600/min)" %}
+                        <i class="bi bi-arrow-down-circle-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تصريف المطاف (-600/دقيقة){% else %}Drain Mataf (-600/min){% endif %}
                     </button>
                     <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="loadHaramSectionalMatrix()">
-                        <i class="bi bi-arrow-clockwise me-1"></i> {% trans "Refresh Matrix" %}
+                        <i class="bi bi-arrow-clockwise me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تحديث المصفوفة{% else %}Refresh Matrix{% endif %}
                     </button>
                 </div>
             </div>
@@ -211,7 +211,7 @@
             <!-- Dynamic 7 Sections Grid Container -->
             <div class="row g-2" id="haram-sections-matrix-container">
                 <div class="col-12 text-center py-3 text-muted">
-                    <span class="spinner-border spinner-border-sm me-2"></span>{% trans "Loading 7-section precision telemetry..." %}
+                    <span class="spinner-border spinner-border-sm me-2"></span>{% if LANGUAGE_CODE == 'ar' %}جار تحميل بيانات الأقسام السبعة الدقيقة...{% else %}Loading 7-section precision telemetry...{% endif %}
                 </div>
             </div>
         </div>
@@ -219,7 +219,7 @@
         <!-- Kaaba 24/7 Live Stream Embed (Toggled on demand) -->
         <div id="kaaba-stream-container" class="mt-3 d-none">
             <div class="d-flex justify-content-between align-items-center bg-dark text-white px-3 py-2 rounded-top">
-                <span class="small fw-bold"><i class="bi bi-broadcast text-danger me-2"></i> {% trans "External public Haram broadcast" %}</span>
+                <span class="small fw-bold"><i class="bi bi-broadcast text-danger me-2"></i> {% if LANGUAGE_CODE == 'ar' %}بث الحرم العام الخارجي{% else %}External public Haram broadcast{% endif %}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm" onclick="toggleKaabaLiveStream()"></button>
             </div>
             <div class="ratio ratio-16x9 rounded-bottom overflow-hidden shadow-sm border border-top-0">
@@ -228,7 +228,7 @@
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowfullscreen></iframe>
             </div>
-            <a class="small text-muted d-inline-block mt-2" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% trans "Open broadcast source" %}</a>
+            <a class="small text-muted d-inline-block mt-2" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% if LANGUAGE_CODE == 'ar' %}فتح مصدر البث{% else %}Open broadcast source{% endif %}</a>
         </div>
 
         <!-- Sync Notification Alert -->
@@ -241,19 +241,19 @@
             <div>
                 <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                     <i class="bi bi-cpu-fill text-primary"></i>
-                    <span>{% trans "Crowd Surge Simulation & Dynamic Rerouting Engine (NetworkX)" %}</span>
+                    <span>{% if LANGUAGE_CODE == 'ar' %}محاكاة زيادة الحشود ومحرك إعادة التوجيه الديناميكي (NetworkX){% else %}Crowd Surge Simulation & Dynamic Rerouting Engine (NetworkX){% endif %}</span>
                 </h5>
-                <small class="text-muted">{% trans "Simulate sudden morning rush to Jamarat and test AI congestion-aware detour routing in real time" %}</small>
+                <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}محاكاة ازدحام الصباح إلى الجمرات واختبار التحويل الذكي بعيداً عن الازدحام{% else %}Simulate sudden morning rush to Jamarat and test AI congestion-aware detour routing in real time{% endif %}</small>
             </div>
             <div class="d-flex gap-2 mt-2 mt-md-0">
                 <button class="btn btn-danger fw-bold rounded-pill px-3 shadow-sm" onclick="triggerJamaratSurge()">
-                    <i class="bi bi-lightning-charge-fill me-1"></i> {% trans "Trigger Jamarat Surge (RED)" %}
+                    <i class="bi bi-lightning-charge-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تشغيل ازدحام الجمرات (أحمر){% else %}Trigger Jamarat Surge (RED){% endif %}
                 </button>
                 <button class="btn btn-outline-success fw-bold rounded-pill px-3" onclick="resetCrowdSimulation()">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i> {% trans "Reset Baseline (GREEN)" %}
+                    <i class="bi bi-arrow-counterclockwise me-1"></i> {% if LANGUAGE_CODE == 'ar' %}إعادة خط الأساس (أخضر){% else %}Reset Baseline (GREEN){% endif %}
                 </button>
                 <button class="btn btn-primary fw-bold rounded-pill px-3" onclick="calculateDynamicRoute()">
-                    <i class="bi bi-signpost-split-fill me-1"></i> {% trans "Calculate Route" %}
+                    <i class="bi bi-signpost-split-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}حساب المسار{% else %}Calculate Route{% endif %}
                 </button>
             </div>
         </div>
@@ -261,10 +261,10 @@
         <!-- Simulation Notification Alert -->
         <div id="sim-alert-banner" class="alert alert-secondary py-2 mb-3 d-flex align-items-center justify-content-between">
             <div>
-                <span class="fw-bold" id="sim-status-title">{% trans "Simulation Ready:" %}</span>
-                <span id="sim-status-msg">{% trans "All 12 Holy Sites zones are operating under normal safe capacity." %}</span>
+                <span class="fw-bold" id="sim-status-title">{% if LANGUAGE_CODE == 'ar' %}المحاكاة جاهزة:{% else %}Simulation Ready:{% endif %}</span>
+                <span id="sim-status-msg">{% if LANGUAGE_CODE == 'ar' %}تعمل مناطق المواقع المقدسة الاثنتا عشرة ضمن السعة الآمنة الطبيعية.{% else %}All 12 Holy Sites zones are operating under normal safe capacity.{% endif %}</span>
             </div>
-            <span class="badge bg-success fs-6" id="sim-badge">{% trans "Status: NORMAL (GREEN)" %}</span>
+            <span class="badge bg-success fs-6" id="sim-badge">{% if LANGUAGE_CODE == 'ar' %}الحالة: طبيعية (أخضر){% else %}Status: NORMAL (GREEN){% endif %}</span>
         </div>
 
         <!-- Side-by-Side Dynamic Route Comparison -->
@@ -272,8 +272,8 @@
             <div class="col-12 col-md-6">
                 <div class="p-3 border rounded-3 bg-light h-100" id="baseline-route-card">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-secondary">{% trans "TRADITIONAL APP (NORMAL)" %}</span>
-                        <span class="fw-bold text-muted" id="baseline-time">25.0 {% trans "mins" %}</span>
+                        <span class="badge bg-secondary">{% if LANGUAGE_CODE == 'ar' %}التطبيق التقليدي (طبيعي){% else %}TRADITIONAL APP (NORMAL){% endif %}</span>
+                        <span class="fw-bold text-muted" id="baseline-time">25.0 {% if LANGUAGE_CODE == 'ar' %}دقائق{% else %}mins{% endif %}</span>
                     </div>
                     <h6 class="fw-bold mb-1" id="baseline-title">Mina Sector 3 ➔ King Fahd Way ➔ Jamarat Ground Floor</h6>
                     <p class="small text-muted mb-0" id="baseline-desc">Standard shortest path algorithm without crowd awareness. Directs all pilgrims onto the congested corridor.</p>
@@ -283,8 +283,8 @@
             <div class="col-12 col-md-6">
                 <div class="p-3 border rounded-3 bg-light h-100 border-success" id="aware-route-card">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="badge bg-success" id="aware-badge">{% trans "HAJJGUARD AI DETOUR" %}</span>
-                        <span class="fw-bold text-success" id="aware-time">20.0 {% trans "mins" %}</span>
+                        <span class="badge bg-success" id="aware-badge">{% if LANGUAGE_CODE == 'ar' %}التحويل الذكي من HajjGuard{% else %}HAJJGUARD AI DETOUR{% endif %}</span>
+                        <span class="fw-bold text-success" id="aware-time">20.0 {% if LANGUAGE_CODE == 'ar' %}دقائق{% else %}mins{% endif %}</span>
                     </div>
                     <h6 class="fw-bold mb-1 text-success" id="aware-title">Mina Sector 3 ➔ Al-Muaisem Tunnel ➔ Jamarat 3rd Floor</h6>
                     <p class="small text-dark mb-0" id="aware-desc">NetworkX dynamic weight penalty activated. Bypasses overloaded King Fahd choke point, saving transit time and preventing stampede.</p>
@@ -302,9 +302,9 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-danger">
                         <i class="bi bi-telephone-inbound-fill"></i>
-                        <span>{% trans "Active Distress & SOS Queue" %}</span>
+                        <span>{% if LANGUAGE_CODE == 'ar' %}قائمة بلاغات الاستغاثة وSOS النشطة{% else %}Active Distress & SOS Queue{% endif %}</span>
                     </h5>
-                    <span class="badge bg-danger rounded-pill px-3 py-2">{% trans "Live Feed" %}</span>
+                    <span class="badge bg-danger rounded-pill px-3 py-2">{% if LANGUAGE_CODE == 'ar' %}بث مباشر{% else %}Live Feed{% endif %}</span>
                 </div>
 
                 <div class="table-responsive">
@@ -312,11 +312,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
-                                <th>{% trans "Pilgrim" %}</th>
-                                <th>{% trans "Category" %}</th>
-                                <th>{% trans "Zone" %}</th>
-                                <th>{% trans "Dialed" %}</th>
-                                <th>{% trans "Action" %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الحاج{% else %}Pilgrim{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}التصنيف{% else %}Category{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}المنطقة{% else %}Zone{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}تم الاتصال{% else %}Dialed{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الإجراء{% else %}Action{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody id="incident-tbody">
@@ -337,7 +337,7 @@
                                 <td><span class="badge bg-dark">{{ inc.called_number }}</span></td>
                                 <td>
                                     <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" onclick="resolveIncident({{ inc.id }})">
-                                        <i class="bi bi-check-circle-fill me-1"></i> {% trans "Resolve" %}
+                                        <i class="bi bi-check-circle-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}معالجة{% else %}Resolve{% endif %}
                                     </button>
                                 </td>
                             </tr>
@@ -345,7 +345,7 @@
                             <tr id="no-incidents-row">
                                 <td colspan="6" class="text-center py-4 text-muted">
                                     <i class="bi bi-shield-check fs-2 text-success d-block mb-1"></i>
-                                    {% trans "No open emergencies at this moment. All zones secure." %}
+                                    {% if LANGUAGE_CODE == 'ar' %}لا توجد طوارئ مفتوحة حالياً. جميع المناطق آمنة.{% else %}No open emergencies at this moment. All zones secure.{% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -361,20 +361,20 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
                         <i class="bi bi-bar-chart-steps text-success"></i>
-                        <span>{% trans "Holy Sites Risk & Capacity Board" %}</span>
+                        <span>{% if LANGUAGE_CODE == 'ar' %}لوحة مخاطر وسعة المواقع المقدسة{% else %}Holy Sites Risk & Capacity Board{% endif %}</span>
                     </h5>
-                    <small class="text-muted">{% trans "Auto-ranked by congestion formula" %}</small>
+                    <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}مرتبة تلقائياً حسب معادلة الازدحام{% else %}Auto-ranked by congestion formula{% endif %}</small>
                 </div>
 
                 <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
                     <table class="table table-hover align-middle small">
                         <thead class="table-light sticky-top">
                             <tr>
-                                <th>{% trans "Zone Name" %}</th>
-                                <th>{% trans "Site" %}</th>
-                                <th>{% trans "Headcount / Cap" %}</th>
-                                <th>{% trans "Status" %}</th>
-                                <th>{% trans "Risk Score" %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}اسم المنطقة{% else %}Zone Name{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الموقع{% else %}Site{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}العدد / السعة{% else %}Headcount / Cap{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الحالة{% else %}Status{% endif %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}درجة الخطر{% else %}Risk Score{% endif %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -408,10 +408,10 @@
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
             <h5 class="fw-bold mb-0 d-flex align-items-center gap-2 text-primary">
                 <i class="bi bi-qr-code-scan"></i>
-                <span>{% trans "Lost Pilgrim Instant Identification & Group Recovery" %}</span>
+                <span>{% if LANGUAGE_CODE == 'ar' %}التعرف الفوري على الحاج التائه واستعادة المجموعة{% else %}Lost Pilgrim Instant Identification & Group Recovery{% endif %}</span>
             </h5>
             <button class="btn btn-outline-primary fw-bold rounded-pill px-3" onclick="startQrScanner()">
-                <i class="bi bi-camera-fill me-1"></i> {% trans "Open Camera QR Scanner" %}
+                <i class="bi bi-camera-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}فتح قارئ QR بالكاميرا{% else %}Open Camera QR Scanner{% endif %}
             </button>
         </div>
 
@@ -419,7 +419,7 @@
         <div id="qr-scan-error" class="alert alert-warning py-2 mb-3 d-none"></div>
         <div id="qr-reader-container" class="border rounded-3 p-2 bg-dark mx-auto mb-3" style="width: 100%; max-width: 450px; display: none;">
             <div class="d-flex justify-content-between text-white small mb-2 px-2">
-                <span><i class="bi bi-camera me-1"></i> {% trans "Align Nusuk QR Code within frame" %}</span>
+                <span><i class="bi bi-camera me-1"></i> {% if LANGUAGE_CODE == 'ar' %}ضع رمز QR الخاص بنسك داخل الإطار{% else %}Align Nusuk QR Code within frame{% endif %}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm" onclick="stopQrScanner()"></button>
             </div>
             <div id="qr-reader" style="width: 100%;"></div>
@@ -430,12 +430,12 @@
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
                     <input type="text" id="pilgrim-query-input" class="form-control form-control-lg" 
-                           placeholder="{% trans "Scan QR code text or enter Passport / National ID (e.g. 1082390192)" %}">
+                           placeholder="{% if LANGUAGE_CODE == 'ar' %}امسح نص رمز QR أو أدخل رقم الجواز / الهوية الوطنية (مثال 1082390192){% else %}Scan QR code text or enter Passport / National ID (e.g. 1082390192){% endif %}">
                 </div>
             </div>
             <div class="col-12 col-md-4">
                 <button class="btn btn-primary btn-lg w-100 fw-bold rounded-3" onclick="searchLostPilgrim()">
-                    <i class="bi bi-search me-1"></i> {% trans "Find Group & Leader" %}
+                    <i class="bi bi-search me-1"></i> {% if LANGUAGE_CODE == 'ar' %}البحث عن المجموعة والقائد{% else %}Find Group & Leader{% endif %}
                 </button>
             </div>
         </div>
@@ -524,7 +524,7 @@
         const errorAlert = document.getElementById('qr-scan-error');
         if (errorAlert) {
             errorAlert.classList.remove('d-none');
-            errorAlert.innerHTML = `<i class="bi bi-camera-video-off-fill me-2"></i><span>{% trans "Camera access denied or unavailable over insecure HTTP. Switched to manual National / Border ID lookup." %}</span>`;
+            errorAlert.innerHTML = `<i class="bi bi-camera-video-off-fill me-2"></i><span>{% if LANGUAGE_CODE == 'ar' %}تم رفض الكاميرا أو عدم توفرها عبر HTTP غير الآمن. تم التحويل إلى البحث اليدوي برقم الهوية أو الحدود.{% else %}Camera access denied or unavailable over insecure HTTP. Switched to manual National / Border ID lookup.{% endif %}</span>`;
         }
 
         const input = document.getElementById('pilgrim-query-input');
@@ -672,7 +672,7 @@
         const alertBox = document.getElementById('scada-sync-alert');
         if (btn) {
             btn.disabled = true;
-                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {% trans "Refreshing synthetic telemetry..." %}';
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> {% if LANGUAGE_CODE == 'ar' %}جار تحديث البيانات التجريبية...{% else %}Refreshing synthetic telemetry...{% endif %}';
         }
 
         try {
@@ -695,7 +695,7 @@
                 if (alertBox) {
                     alertBox.classList.remove('d-none');
                     alertBox.className = "alert alert-success py-2 mb-0 mt-3 d-flex align-items-center justify-content-between";
-                    alertBox.innerHTML = `<div><i class="bi bi-check-circle-fill me-2"></i><strong>{% trans "Synthetic refresh complete:" %}</strong> {% trans "Updated local demonstration values. No government or SCADA service was contacted." %}</div>`;
+                    alertBox.innerHTML = `<div><i class="bi bi-check-circle-fill me-2"></i><strong>{% if LANGUAGE_CODE == 'ar' %}اكتمل التحديث التجريبي:{% else %}Synthetic refresh complete:{% endif %}</strong> {% if LANGUAGE_CODE == 'ar' %}تم تحديث القيم التجريبية المحلية. لم يتم الاتصال بأي خدمة حكومية أو SCADA.{% else %}Updated local demonstration values. No government or SCADA service was contacted.{% endif %}</div>`;
                 }
 
                 // Automatically reload table after 1.5 seconds so capacity bars update
@@ -719,7 +719,7 @@
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="bi bi-cloud-arrow-down-fill me-1"></i> {% trans "Refresh synthetic telemetry" %}';
+                btn.innerHTML = '<i class="bi bi-cloud-arrow-down-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}تحديث البيانات التجريبية{% else %}Refresh synthetic telemetry{% endif %}';
             }
         }
     }

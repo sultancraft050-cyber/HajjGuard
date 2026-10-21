@@ -5,7 +5,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from .models import PilgrimGroup, GroupMembership
+from .models import PilgrimGroup, GroupMembership, LocationShareGrant
 from accounts.models import PilgrimProfile, AuditLog
 from zones.models import Zone, LocationPing
 from .services import GroupDriftService
@@ -42,7 +42,21 @@ def my_group_view(request):
                 drift_alert = metrics['drift_alert']
 
         for m in group.members.filter(is_active=True).select_related('pilgrim', 'pilgrim__user'):
-            latest_ping = LocationPing.objects.filter(pilgrim=m.pilgrim).order_by('-timestamp').first()
+            active_grant = LocationShareGrant.objects.filter(
+                pilgrim=m.pilgrim,
+                trip__group=group,
+                trip__status__in=['PLANNED', 'ACTIVE'],
+                trip__starts_at__lte=timezone.now(),
+                trip__ends_at__gt=timezone.now(),
+                enabled=True,
+                consent_given=True,
+                revoked_at__isnull=True,
+                expires_at__gt=timezone.now(),
+            ).first()
+            ping_query = LocationPing.objects.filter(pilgrim=m.pilgrim)
+            if active_grant and active_grant.consent_timestamp:
+                ping_query = ping_query.filter(timestamp__gte=active_grant.consent_timestamp)
+            latest_ping = ping_query.order_by('-timestamp').first() if active_grant else None
             p_dist = 0.0
             if group_centroid and latest_ping:
                 from zones.utils import haversine_distance
@@ -63,6 +77,7 @@ def my_group_view(request):
         'members_data': members_data,
         'group_centroid': group_centroid,
         'drift_alert': drift_alert,
+        'is_group_manager': bool(group and (profile.id == group.leader_id or request.user.is_staff)),
     })
 
 
@@ -149,7 +164,7 @@ def api_join_group(request):
         data = json.loads(request.body)
         code = data.get('code', '').strip().upper()
     except Exception:
-        code = request.POST.get('code', '').strip().upper()
+        code = request.POST.get('code', request.POST.get('group_code', '')).strip().upper()
 
     if not code:
         return JsonResponse({'status': 'error', 'message': _('Please provide a valid group code.')}, status=400)

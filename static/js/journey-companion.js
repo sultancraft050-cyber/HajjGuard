@@ -15,7 +15,8 @@
     const p = document.createElement('p'); p.textContent = value; p.className = className; return p;
   }
   function present(journey, key = journey.preference) {
-    const route = journey.route_alternatives[key];
+    const route = journey.route_alternatives?.[key];
+    if (!route) { result.replaceChildren(paragraph(text('No route is available for this preference.','لا يتوفر مسار لهذا التفضيل.'))); window.SiraajRouteState?.clear(); return; }
     result.replaceChildren();
     if (journey.safety_mode) result.append(paragraph(text('Crowded destination. Consider waiting in a safe area or another route.','الوجهة مزدحمة. انتظر في مكان آمن أو جرّب مساراً آخر.'),'journey-warning'));
     result.append(paragraph(titles[key]));
@@ -40,6 +41,21 @@
       button.setAttribute('aria-pressed', String(alternative===key)); button.addEventListener('click',()=>present(journey,alternative)); alternatives.append(button);
     }
     result.append(alternatives);
+    const state = {
+      version: 1,
+      selectedPreference: key,
+      selectedRoute: {...route, preference: key},
+      alternatives: journey.route_alternatives,
+      originZone: journey.from_zone || null,
+      destinationZone: journey.to_zone || null,
+      routeStatus: route.is_connected ? 'available' : 'unavailable',
+      coverage: route.coverage || (route.is_connected ? 'verified_walking' : 'unavailable'),
+      geometryQuality: route.geometry_quality || 'zone_corridor_planning',
+      provenance: journey.provenance || route.provenance || 'local_corridor_records',
+      freshness: journey.data_timestamp || null,
+      generatedAt: new Date().toISOString(),
+    };
+    if (route.is_connected) window.SiraajRouteState?.publish(state); else window.SiraajRouteState?.clear();
     document.dispatchEvent(new CustomEvent('hajjguard:journey', {detail:{route,alternatives:journey.route_alternatives}}));
   }
   function coordinates() {
@@ -63,9 +79,22 @@
       endpoint(params,'to',destination.value);
       const response=await fetch(`/analytics/api/calculate-route/?${params}`,{credentials:'same-origin',cache:'no-store'});
       const data=await response.json();
+      if (data.status === 'outside_coverage') {
+        if (data.external_directions_url) window.SiraajRouteState?.publish({version:1,routeStatus:'external_directions',coverage:'external_directions',geometryQuality:'none',provenance:'public_destination_record',externalDirectionsUrl:data.external_directions_url,destinationCoordinates:data.destination_coordinates,generatedAt:new Date().toISOString()});
+        else window.SiraajRouteState?.clear();
+        result.replaceChildren(
+          paragraph(text('Walking guidance is unavailable outside verified coverage. Siraaj can show the destination, but it does not provide live traffic or complete driving navigation.','لا تتوفر إرشادات المشي خارج نطاق التغطية الموثقة. يعرض سراج الوجهة، لكنه لا يوفر حركة مرور مباشرة أو ملاحة كاملة للسيارات.')),
+          paragraph(text('Use an external map service for directions.','استخدم خدمة خرائط خارجية للحصول على الاتجاهات.'))
+        );
+        if (typeof data.external_directions_url === 'string' && data.external_directions_url.startsWith('https://www.google.com/maps/dir/')) {
+          const link=document.createElement('a'); link.className='hg-cta secondary'; link.href=data.external_directions_url; link.target='_blank'; link.rel='noopener noreferrer'; link.textContent=text('Open external directions','فتح الاتجاهات الخارجية'); result.append(link);
+        }
+        return;
+      }
       if (!response.ok || data.status!=='success') throw new Error('route');
       present(data.route_comparison.journey);
     } catch(error) {
+      window.SiraajRouteState?.clear();
       result.replaceChildren(paragraph(text('Journey unavailable. Check your location permission, connection and corridor coverage, then try again.','الرحلة غير متاحة. تحقق من إذن الموقع والاتصال وتغطية الممرات، ثم حاول مجدداً.')));
     } finally {submit.disabled=false;}
   });

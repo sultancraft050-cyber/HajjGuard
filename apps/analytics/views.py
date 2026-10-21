@@ -286,12 +286,19 @@ def api_reset_crowd(request):
 def api_calculate_route(request):
     """Public ephemeral journey planning over the existing corridor engine."""
     import math
+    from urllib.parse import quote
     from django.core.exceptions import ValidationError
     from zones.models import SafetyMapFeature
     allowed = {'fastest', 'less_crowded', 'wheelchair', 'less_walking', 'cooler'}
     preference = request.GET.get('preference', 'less_crowded')
     if preference not in allowed:
         return JsonResponse({'status': 'error', 'message': 'Unsupported journey preference.'}, status=400)
+
+    class OutsideCoverageError(ValueError):
+        def __init__(self, prefix, coordinates):
+            super().__init__('This location is outside the verified corridor network. Use external directions.')
+            self.prefix = prefix
+            self.coordinates = coordinates
 
     def endpoint(prefix, default):
         coordinates = None
@@ -319,7 +326,7 @@ def api_calculate_route(request):
             candidates = [z for z in Zone.objects.all() if z.contains_point(*coordinates)]
             zone = min(candidates, key=lambda z: z.distance_to(*coordinates), default=None)
             if not zone:
-                raise ValueError('This location is outside the verified corridor network. Use the geographic map.')
+                raise OutsideCoverageError(prefix, coordinates)
             return zone.code
         code = request.GET.get(prefix, default)
         if not Zone.objects.filter(code=code).exists():
@@ -328,10 +335,33 @@ def api_calculate_route(request):
     try:
         origin = endpoint('from', 'Z-MINA-SEC3')
         destination = endpoint('to', 'Z-JAMARAT-F0')
+    except OutsideCoverageError as exc:
+        # Only public destination coordinates are placed in the external link.
+        # A current device location is never persisted or sent as an origin.
+        destination = exc.coordinates if exc.prefix == 'to' else None
+        external_url = None
+        if destination:
+            encoded = quote(f'{destination[0]},{destination[1]}', safe=',')
+            external_url = f'https://www.google.com/maps/dir/?api=1&destination={encoded}&travelmode=walking'
+        return JsonResponse({
+            'status': 'outside_coverage',
+            'message': 'Walking guidance is unavailable outside verified coverage.',
+            'coverage': 'external_directions',
+            'geometry_quality': 'none',
+            'external_directions_url': external_url,
+            'destination_coordinates': destination,
+        })
     except (ValueError, TypeError, KeyError, ValidationError):
         return JsonResponse({'status': 'error', 'message': 'Invalid or unavailable endpoint. Verify corridor coverage on the geographic map.'}, status=400)
     comparison = RoutingEngine.get_route_comparison(origin, destination)
     alternatives = {key: RoutingEngine.visitor_route(origin, destination, key) for key in allowed}
+    for key, route in alternatives.items():
+        route['coverage'] = 'verified_walking' if route.get('is_connected') else 'unavailable'
+        # The current route geometry is derived from verified zone centres. It is
+        # intentionally labelled as planning geometry until corridor polylines exist.
+        route['geometry_quality'] = 'zone_corridor_planning'
+        route['route_data_version'] = 'v1'
+        route['preference'] = key
     chosen = alternatives[preference]
     target = Zone.objects.get(code=destination)
     record = target.density_records.first()
@@ -340,6 +370,7 @@ def api_calculate_route(request):
     elevated = bool(fresh and (record.status == 'RED' or record.risk_score >= 70))
     comparison['journey'] = {
         'preference': preference, 'route': chosen, 'route_alternatives': alternatives,
+        'from_zone': origin, 'to_zone': destination,
         'crowd': crowd, 'best_departure': None,
         'best_departure_label': 'Not measured; verify conditions before leaving.',
         'safety_mode': elevated,

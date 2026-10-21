@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "تسجيل وتوثيق الحاج الموحد" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}تسجيل وتوثيق الحاج الموحد{% else %}Unified pilgrim registration and verification{% endif %} | HajjGuard{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -12,8 +12,8 @@
                     <div class="brand-logo-container mx-auto mb-2" style="background: #ffffff; color: var(--dga-green-dark);">
                         <i class="bi bi-shield-fill-check"></i>
                     </div>
-                    <h3 class="fw-bold mb-1">HajjGuard | حارس الحج</h3>
-                    <p class="mb-0 text-white-50 small">{% trans "تسجيل ضيف الرحمن وإصدار بطاقة نسك الذكية الموحدة" %}</p>
+                    <h3 class="fw-bold mb-1">{% if LANGUAGE_CODE == 'ar' %}HajjGuard | حارس الحج{% else %}HajjGuard{% endif %}</h3>
+                    <p class="mb-0 text-white-50 small">{% if LANGUAGE_CODE == 'ar' %}تسجيل ضيف الرحمن وإصدار بطاقة نسك الذكية الموحدة{% else %}Register a pilgrim and issue the unified Nusuk smart card{% endif %}</p>
                 </div>
                 <div class="p-4 p-md-5">
                     <form method="POST" action="{% url 'accounts:register' %}">
@@ -21,7 +21,7 @@
 
                         <!-- Basic Information -->
                         <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                            <i class="bi bi-person-fill text-success me-2"></i>{% trans "1. البيانات الشخصية وبيانات الاتصال" %}
+                            <i class="bi bi-person-fill text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}1. البيانات الشخصية وبيانات الاتصال{% else %}1. Personal and contact information{% endif %}
                         </h5>
                         <div class="row g-3 mb-4">
                             <div class="col-12">
@@ -33,35 +33,35 @@
                                 <input type="password" name="password" class="form-control" minlength="12" required autocomplete="new-password">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "الاسم الأول" %} *</label>
-                                <input type="text" name="first_name" class="form-control" required placeholder="مثال: رشيد">
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}الاسم الأول{% else %}First name{% endif %} *</label>
+                                <input type="text" name="first_name" class="form-control" required placeholder="{% if LANGUAGE_CODE == 'ar' %}مثال: رشيد{% else %}Example: Rashid{% endif %}">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "اسم العائلة / اللقب" %} *</label>
-                                <input type="text" name="last_name" class="form-control" required placeholder="مثال: المنصور">
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}اسم العائلة / اللقب{% else %}Family name / surname{% endif %} *</label>
+                                <input type="text" name="last_name" class="form-control" required placeholder="{% if LANGUAGE_CODE == 'ar' %}مثال: المنصور{% else %}Example: Al Mansour{% endif %}">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "رقم الجوال" %} *</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}رقم الجوال{% else %}Mobile number{% endif %} *</label>
                                 <input type="tel" name="phone" class="form-control" required placeholder="+966 5X XXX XXXX">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "الجنسية" %}</label>
-                                <input type="text" name="nationality" class="form-control" value="المملكة العربية السعودية">
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}الجنسية{% else %}Nationality{% endif %}</label>
+                                <input type="text" name="nationality" class="form-control" value="{% if LANGUAGE_CODE == 'ar' %}المملكة العربية السعودية{% else %}Saudi Arabia{% endif %}">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-dark">{% trans "العمر" %} *</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}العمر{% else %}Age{% endif %} *</label>
                                 <input type="number" name="age" class="form-control" min="5" max="110" value="68" required>
-                                <small class="text-muted">{% trans "الأعمار >= 65 تصنف كأولوية رعاية" %}</small>
+                                <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}الأعمار >= 65 تصنف كأولوية رعاية{% else %}Ages 65 and above are care priorities{% endif %}</small>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-dark">{% trans "الجنس" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}الجنس{% else %}Gender{% endif %}</label>
                                 <select name="gender" class="form-select">
-                                    <option value="M">{% trans "ذكر" %}</option>
-                                    <option value="F">{% trans "أنثى" %}</option>
+                                    <option value="M">{% if LANGUAGE_CODE == 'ar' %}ذكر{% else %}Male{% endif %}</option>
+                                    <option value="F">{% if LANGUAGE_CODE == 'ar' %}أنثى{% else %}Female{% endif %}</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold text-dark">{% trans "اللغة المفضلة" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}اللغة المفضلة{% else %}Preferred language{% endif %}</label>
                                 <select name="language" class="form-select">
                                     {% for code, name in language_choices %}
                                         <option value="{{ code }}" {% if code == 'ar' %}selected{% endif %}>{{ name }}</option>
@@ -72,27 +72,27 @@
 
                         <!-- Health & Vulnerability Profile -->
                         <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                            <i class="bi bi-heart-pulse-fill text-danger me-2"></i>{% trans "2. الملف الصحي والإتاحة الحركية" %}
+                            <i class="bi bi-heart-pulse-fill text-danger me-2"></i>{% if LANGUAGE_CODE == 'ar' %}2. الملف الصحي والإتاحة الحركية{% else %}2. Health and accessibility profile{% endif %}
                         </h5>
                         <p class="text-muted small mb-3">
-                            {% trans "تستخدم هذه البيانات حصرياً لسلامتك أثناء موجات الحر الشديد أو الكثافة العالية وتوجيه فرق الإسعاف." %}
+                            {% if LANGUAGE_CODE == 'ar' %}تستخدم هذه البيانات حصرياً لسلامتك أثناء موجات الحر الشديد أو الكثافة العالية وتوجيه فرق الإسعاف.{% else %}This information is used only for safety during extreme heat or high density and for emergency response guidance.{% endif %}
                         </p>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "فصيلة الدم" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}فصيلة الدم{% else %}Blood type{% endif %}</label>
                                 <select name="blood_type" class="form-select font-monospace">
-                                    <option value="O+">O+ (موجب)</option>
-                                    <option value="O-">O- (سالب)</option>
-                                    <option value="A+">A+ (موجب)</option>
-                                    <option value="A-">A- (سالب)</option>
-                                    <option value="B+">B+ (موجب)</option>
-                                    <option value="B-">B- (سالب)</option>
-                                    <option value="AB+">AB+ (موجب)</option>
-                                    <option value="AB-">AB- (سالب)</option>
+                                    <option value="O+">O+ ({% if LANGUAGE_CODE == 'ar' %}موجب{% else %}positive{% endif %})</option>
+                                    <option value="O-">O- ({% if LANGUAGE_CODE == 'ar' %}سالب{% else %}negative{% endif %})</option>
+                                    <option value="A+">A+ ({% if LANGUAGE_CODE == 'ar' %}موجب{% else %}positive{% endif %})</option>
+                                    <option value="A-">A- ({% if LANGUAGE_CODE == 'ar' %}سالب{% else %}negative{% endif %})</option>
+                                    <option value="B+">B+ ({% if LANGUAGE_CODE == 'ar' %}موجب{% else %}positive{% endif %})</option>
+                                    <option value="B-">B- ({% if LANGUAGE_CODE == 'ar' %}سالب{% else %}negative{% endif %})</option>
+                                    <option value="AB+">AB+ ({% if LANGUAGE_CODE == 'ar' %}موجب{% else %}positive{% endif %})</option>
+                                    <option value="AB-">AB- ({% if LANGUAGE_CODE == 'ar' %}سالب{% else %}negative{% endif %})</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "الحالة الصحية المزمنة" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}الحالة الصحية المزمنة{% else %}Chronic health condition{% endif %}</label>
                                 <select name="chronic_condition" class="form-select">
                                     {% for code, name in chronic_choices %}
                                         <option value="{{ code }}">{{ name }}</option>
@@ -103,24 +103,24 @@
                                 <div class="form-check form-switch p-3 bg-light rounded-3 border">
                                     <input class="form-check-input ms-0 me-3" type="checkbox" name="is_wheelchair_user" id="wheelchairCheck">
                                     <label class="form-check-label fw-bold text-dark" for="wheelchairCheck">
-                                        <i class="bi bi-person-wheelchair text-primary me-1"></i>{% trans "أحتاج إلى مسارات كراسي متحركة / إتاحة حركية" %}
+                                        <i class="bi bi-person-wheelchair text-primary me-1"></i>{% if LANGUAGE_CODE == 'ar' %}أحتاج إلى مسارات كراسي متحركة / إتاحة حركية{% else %}I need wheelchair routes / mobility access{% endif %}
                                     </label>
-                                    <small class="text-muted d-block ms-5">{% trans "يقوم محرك التوجيه الذكي بتحويل مسارك تلقائياً للمصاعد والجسور المنبسطة." %}</small>
+                                    <small class="text-muted d-block ms-5">{% if LANGUAGE_CODE == 'ar' %}يقوم محرك التوجيه الذكي بتحويل مسارك تلقائياً للمصاعد والجسور المنبسطة.{% else %}The guidance engine routes you toward elevators and accessible ramps.{% endif %}</small>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Emergency Contact -->
                         <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                            <i class="bi bi-telephone-fill text-primary me-2"></i>{% trans "3. جهة الاتصال في حالات الطوارئ" %}
+                            <i class="bi bi-telephone-fill text-primary me-2"></i>{% if LANGUAGE_CODE == 'ar' %}3. جهة الاتصال في حالات الطوارئ{% else %}3. Emergency contact{% endif %}
                         </h5>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "اسم القريب أو المرافق" %}</label>
-                                <input type="text" name="emergency_contact_name" class="form-control" placeholder="مثال: فيصل المنصور (ابن)">
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}اسم القريب أو المرافق{% else %}Relative or companion name{% endif %}</label>
+                                <input type="text" name="emergency_contact_name" class="form-control" placeholder="{% if LANGUAGE_CODE == 'ar' %}مثال: فيصل المنصور (ابن){% else %}Example: Faisal Al Mansour (son){% endif %}">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "رقم هاتف الطوارئ" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}رقم هاتف الطوارئ{% else %}Emergency phone number{% endif %}</label>
                                 <input type="tel" name="emergency_contact_phone" class="form-control" placeholder="+966 5X XXX XXXX">
                             </div>
                         </div>
@@ -131,9 +131,9 @@
                                 <input class="form-check-input" type="checkbox" name="consent_given" id="consentCheck" required>
                                 <label class="form-check-label small fw-bold text-dark" for="consentCheck">
                                     <i class="bi bi-shield-check text-success me-1"></i>
-                                    {% trans "الموافقة الصريحة وفق نظام حماية البيانات الشخصية بالمملكة (PDPL - المادة 16):" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}الموافقة الصريحة وفق نظام حماية البيانات الشخصية بالمملكة (PDPL - المادة 16):{% else %}Explicit consent under Saudi PDPL Article 16:{% endif %}
                                     <span class="fw-normal text-muted d-block mt-1">
-                                        {% trans "أوافق صراحة على معالجة بيانات الموقع والرصد المكاني حصرياً لأغراض السلامة وإدارة الحشود والتدخل الإسعافي أثناء موسم الحج، مع توثيق كافة العمليات في سجل التدقيق الأمني المعتمد." %}
+                                        {% if LANGUAGE_CODE == 'ar' %}أوافق صراحة على معالجة بيانات الموقع والرصد المكاني حصرياً لأغراض السلامة وإدارة الحشود والتدخل الإسعافي أثناء موسم الحج، مع توثيق كافة العمليات في سجل التدقيق الأمني المعتمد.{% else %}I explicitly consent to location and spatial-monitoring data being processed only for safety, crowd management, and emergency response during Hajj, with all actions recorded in the approved security audit log.{% endif %}
                                     </span>
                                 </label>
                             </div>
@@ -141,7 +141,7 @@
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-dga-primary btn-lg fw-bold shadow-sm">
-                                <i class="bi bi-check-circle-fill me-2"></i>{% trans "إتمام التسجيل وإصدار البطاقة الذكية" %}
+                                <i class="bi bi-check-circle-fill me-2"></i>{% if LANGUAGE_CODE == 'ar' %}إتمام التسجيل وإصدار البطاقة الذكية{% else %}Complete registration and issue smart card{% endif %}
                             </button>
                         </div>
                     </form>

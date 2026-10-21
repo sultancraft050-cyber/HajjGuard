@@ -3,7 +3,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from accounts.models import PilgrimProfile
-from zones.models import Zone, DensityRecord, Corridor
+from zones.models import Zone, DensityRecord, Corridor, SafetyMapFeature
 
 class ZonesLiveMapTestCase(TestCase):
     def setUp(self):
@@ -42,8 +42,10 @@ class ZonesLiveMapTestCase(TestCase):
         response = self.client.get(reverse('zones:live_map'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'hajj-map')
-        self.assertContains(response, 'watchPosition')
-        self.assertContains(response, 'X-CSRFToken')
+        self.assertContains(response, 'getCurrentPosition')
+        self.assertContains(response, 'attraction-search')
+        self.assertContains(response, 'category-strip')
+        self.assertContains(response, '/zones/api/visitor-places/')
         self.assertNotContains(response, 'Demo GPS')
 
     def test_api_zones_status(self):
@@ -81,6 +83,25 @@ class ZonesLiveMapTestCase(TestCase):
         self.assertIn('places', data)
         self.assertNotIn('pilgrim_id', response.content.decode())
         self.assertNotIn('qr_token', response.content.decode())
+        self.assertTrue(any(item['code'] == self.zone.code for item in data['zones']))
+
+    def test_zone_model_rejects_out_of_region_coordinates(self):
+        from django.core.exceptions import ValidationError
+        self.zone.center_lat = 39.87
+        with self.assertRaises(ValidationError):
+            self.zone.full_clean()
+
+    def test_facility_source_url_is_public_evidence_only(self):
+        from django.utils import timezone
+        feature = SafetyMapFeature(
+            name='Verified water point', category='WATER', coordinates=[[21.4225, 39.8262]],
+            source='Public source', source_url='https://example.com/evidence',
+            verified_at=timezone.now(), enabled=True,
+        )
+        feature.full_clean()
+        feature.save()
+        payload = self.client.get(reverse('zones:api_facilities')).json()['features']
+        self.assertEqual(payload[0]['source_url'], 'https://example.com/evidence')
 
     def test_routes_endpoint_returns_corridor_overlay(self):
         response = self.client.get(reverse('zones:api_routes'))
@@ -112,3 +133,53 @@ class ZonesLiveMapTestCase(TestCase):
         )
         self.assertEqual(response.status_code, 400)
 
+
+
+class HaramInventoryTests(TestCase):
+    def record(self, **changes):
+        from zones.models import HaramLocation
+        from django.utils import timezone
+        values = dict(location_id='TEST-GATE', name_ar='بوابة اختبار', name_en='Test gate',
+            available_languages=['ar', 'en'], category='GATE', floor_level=0,
+            latitude=21.4225, longitude=39.8262, local_x=10, local_y=5, local_z=20,
+            source='Test fixture only', verification_date=timezone.localdate(),
+            accuracy_level='APPROXIMATE', enabled=True, notes='Public test note')
+        values.update(changes)
+        return HaramLocation(**values)
+
+    def test_publication_validation(self):
+        from django.core.exceptions import ValidationError
+        for changes in ({'latitude':float('nan')}, {'longitude':181}, {'local_x':float('inf')},
+            {'available_languages':['not a language']}, {'source':''}, {'verification_date':None},
+            {'accuracy_level':'UNVERIFIED'}, {'local_z':None}):
+            with self.subTest(changes=changes), self.assertRaises(ValidationError):
+                self.record(**changes).full_clean()
+
+    def test_draft_can_be_incomplete_and_is_not_public(self):
+        row = self.record(enabled=False, accuracy_level='UNVERIFIED', latitude=None,
+            longitude=None, local_x=None, local_y=None, local_z=None, source='', verification_date=None)
+        row.full_clean(); row.save()
+        self.assertEqual(self.client.get(reverse('zones:api_haram_locations')).json()['haram_locations'], [])
+
+    def test_public_feed_and_twin_agree(self):
+        row=self.record();row.full_clean();row.save()
+        self.record(location_id='HIDDEN',enabled=False).save()
+        data=self.client.get(reverse('zones:api_haram_locations')).json()
+        self.assertEqual(len(data['categories']),13)
+        self.assertEqual(len(data['haram_locations']),1)
+        item=data['haram_locations'][0]
+        self.assertEqual(item['position'],[10,5,20])
+        self.assertEqual(item['accuracy_level'],'APPROXIMATE')
+        self.assertEqual(item['name_ar'],'بوابة اختبار')
+        self.assertEqual(item['source_url'], '')
+        self.assertNotIn('created_at',item)
+        twin=self.client.get(reverse('zones:api_digital_twin')).json()
+        self.assertEqual(twin['haram_locations'],data['haram_locations'])
+
+    def test_duplicate_id_and_categories(self):
+        from zones.models import HaramLocation
+        from django.core.exceptions import ValidationError
+        row=self.record();row.save()
+        with self.assertRaises(ValidationError): self.record().full_clean()
+        for category,_ in HaramLocation.CATEGORY_CHOICES:
+            self.record(location_id=category,category=category).full_clean()

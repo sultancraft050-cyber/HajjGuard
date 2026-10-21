@@ -1,18 +1,18 @@
 {% load i18n static %}
 
 <!-- Floating Nusuk AI Launcher Button -->
-<div id="nusukAiLauncher" style="position: fixed; bottom: 25px; left: 25px; z-index: 1050;">
+<div id="nusukAiLauncher" style="position: fixed; bottom: 25px; right: 25px; left: auto; z-index: 1050;">
     <button onclick="toggleNusukAiDrawer()" class="btn shadow-lg d-flex align-items-center gap-2 px-3 py-2 text-white" 
             style="background: linear-gradient(135deg, var(--dga-green-dark) 0%, var(--dga-green) 100%); border: 2px solid var(--dga-gold); border-radius: var(--dga-radius-pill); font-weight: 700; box-shadow: 0 8px 25px rgba(15, 23, 42, 0.4);">
         <span class="fs-5">🤖</span>
-        <span class="d-none d-sm-inline">{% trans "المساعد الشرعي الذكي" %}</span>
-        <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.65rem;">{% trans "Nusuk AI" %}</span>
+        <span class="d-none d-sm-inline">{% if LANGUAGE_CODE == 'ar' %}المساعد الشرعي الذكي{% else %}Smart ritual assistant{% endif %}</span>
+        <span class="badge bg-warning text-dark px-2 py-1" style="font-size: 0.65rem;">{% if LANGUAGE_CODE == 'ar' %}مساعد نسك الذكي{% else %}Nusuk AI{% endif %}</span>
     </button>
 </div>
 
 <!-- Slide-Over Nusuk AI Chat Drawer -->
 <div id="nusukAiDrawer" class="shadow-lg d-none" 
-     style="position: fixed; bottom: 85px; left: 20px; width: 400px; max-width: calc(100vw - 40px); height: 560px; max-height: 82vh; background: #ffffff; border-radius: 20px; z-index: 1055; border: 2px solid var(--dga-green); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25) !important;">
+     style="position: fixed; bottom: 85px; right: 20px; left: auto; width: 400px; max-width: calc(100vw - 40px); height: 560px; max-height: 82vh; background: #ffffff; border-radius: 20px; z-index: 1055; border: 2px solid var(--dga-green); display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25) !important;">
     
     <!-- Drawer Header -->
     <div class="p-3 text-white d-flex justify-content-between align-items-center" 
@@ -21,10 +21,10 @@
             <span class="fs-4">🕋</span>
             <div>
                 <h6 class="fw-bold mb-0 text-white" style="font-size: 0.95rem;">
-                    {% trans "المساعد الشرعي الذكي (Nusuk AI Copilot)" %}
+                    {% if LANGUAGE_CODE == 'ar' %}المساعد الشرعي الذكي (Nusuk AI Copilot){% else %}Smart ritual assistant (Nusuk AI Copilot){% endif %}
                 </h6>
                 <div style="font-size: 0.68rem; color: #f7d58b;">
-                    <i class="bi bi-info-circle"></i> {% trans "Informational guidance; consult a qualified scholar for personal rulings" %}
+                    <i class="bi bi-info-circle"></i> {% if LANGUAGE_CODE == 'ar' %}إرشاد معلوماتي؛ استشر عالماً مؤهلاً في المسائل الشخصية{% else %}Informational guidance; consult a qualified scholar for personal rulings{% endif %}
                 </div>
             </div>
         </div>
@@ -35,20 +35,20 @@
 
     <!-- Quick Prompt Chips -->
     <div class="p-2 border-bottom bg-light d-flex gap-1 overflow-auto text-nowrap" style="scrollbar-width: thin;">
-        <button onclick="askPromptChip('نسيت هل طفت 3 أو 4 أشواط؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
-            🕋 الشك في الطواف
+        <button onclick="askPromptChip('{% if LANGUAGE_CODE == 'ar' %}نسيت هل طفت 3 أو 4 أشواط؟{% else %}I forgot whether I completed 3 or 4 tawaf rounds{% endif %}')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            🕋 {% if LANGUAGE_CODE == 'ar' %}الشك في الطواف{% else %}Tawaf round doubt{% endif %}
         </button>
-        <button onclick="askPromptChip('هل صحن المطاف مزدحم الآن؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
-            🟢 زحام المطاف الآن
+        <button onclick="askPromptChip('{% if LANGUAGE_CODE == 'ar' %}هل صحن المطاف مزدحم الآن؟{% else %}Is the Mataf crowded now?{% endif %}')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            🟢 {% if LANGUAGE_CODE == 'ar' %}زحام المطاف الآن{% else %}Mataf crowd now{% endif %}
         </button>
-        <button onclick="askPromptChip('قصصت شعري قبل ذبح الهدي فما الحكم؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
-            ✂️ الحلق قبل الهدي
+        <button onclick="askPromptChip('{% if LANGUAGE_CODE == 'ar' %}قصصت شعري قبل ذبح الهدي فما الحكم؟{% else %}What is the ruling on cutting hair before the sacrifice?{% endif %}')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            ✂️ {% if LANGUAGE_CODE == 'ar' %}الحلق قبل الهدي{% else %}Haircut before sacrifice{% endif %}
         </button>
-        <button onclick="askPromptChip('هل يجوز التوكيل في رمي الجمرات لمريض أو كبير سن؟')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
-            ♿ توكيل رمي الجمرات
+        <button onclick="askPromptChip('{% if LANGUAGE_CODE == 'ar' %}هل يجوز التوكيل في رمي الجمرات لمريض أو كبير سن؟{% else %}Can a sick or elderly pilgrim appoint someone for stoning?{% endif %}')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            ♿ {% if LANGUAGE_CODE == 'ar' %}توكيل رمي الجمرات{% else %}Stoning by proxy{% endif %}
         </button>
-        <button onclick="askPromptChip('بدأت السعي من المروة بالخطأ')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
-            ⛰️ البدء بالمروة
+        <button onclick="askPromptChip('{% if LANGUAGE_CODE == 'ar' %}بدأت السعي من المروة بالخطأ{% else %}I accidentally started sa’i from Marwah{% endif %}')" class="btn btn-outline-success btn-sm rounded-pill py-1 px-2" style="font-size: 0.72rem;">
+            ⛰️ {% if LANGUAGE_CODE == 'ar' %}البدء بالمروة{% else %}Starting from Marwah{% endif %}
         </button>
     </div>
 
@@ -61,10 +61,10 @@
             </div>
             <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 85%;">
                 <div class="fw-bold text-success mb-1" style="font-size: 0.78rem;">
-                    {% trans "Nusuk AI Copilot" %}
+                    {% if LANGUAGE_CODE == 'ar' %}مساعد نسك الذكي{% else %}Nusuk AI Copilot{% endif %}
                 </div>
                 <div>
-                    {% trans "السلام عليكم ورحمة الله وبركاته! أنا مساعدك الشرعي الذكي المعتمد من منصة نسك. اسألني عن فتاوى ومناسك الحج والعمرة، الشك في الأشواط، رخص كبار السن، أو حالة كثافة صحن المطاف الآن." %}
+                    {% if LANGUAGE_CODE == 'ar' %}السلام عليكم ورحمة الله وبركاته! أنا مساعدك الشرعي الذكي المعتمد من منصة نسك. اسألني عن فتاوى ومناسك الحج والعمرة، الشك في الأشواط، رخص كبار السن، أو حالة كثافة صحن المطاف الآن.{% else %}Peace be upon you. I can provide informational ritual guidance about Hajj and Umrah, but consult a qualified scholar for personal rulings.{% endif %}
                 </div>
             </div>
         </div>
@@ -73,14 +73,14 @@
     <!-- Typing Indicator -->
     <div id="nusukAiTyping" class="px-3 py-2 bg-light text-muted small d-none" style="font-size: 0.75rem;">
         <span class="spinner-grow spinner-grow-sm text-success" role="status"></span>
-        <span class="ms-1">{% trans "Preparing informational guidance..." %}</span>
+        <span class="ms-1">{% if LANGUAGE_CODE == 'ar' %}جار إعداد الإرشاد المعلوماتي...{% else %}Preparing informational guidance...{% endif %}</span>
     </div>
 
     <!-- Chat Input Form -->
     <div class="p-2 border-top bg-white">
         <form id="nusukAiForm" onsubmit="handleNusukAiSubmit(event)" class="d-flex gap-2">
             <input type="text" id="nusukAiInput" class="form-control form-control-sm rounded-pill px-3" 
-                   placeholder="{% trans 'اكتب سؤالك عن الطواف، السعي، الفدية أو الزحام...' %}" required autocomplete="off">
+                   placeholder="{% if LANGUAGE_CODE == 'ar' %}اكتب سؤالك عن الطواف، السعي، الفدية أو الزحام...{% else %}Ask about tawaf, sa’i, fidyah, or crowd conditions…{% endif %}" required autocomplete="off">
             <button type="submit" class="btn btn-dga-primary btn-sm rounded-circle d-flex align-items-center justify-content-center p-0" style="width: 36px; height: 36px; flex-shrink: 0;">
                 <i class="bi bi-send-fill" style="font-size: 0.85rem;"></i>
             </button>
@@ -142,7 +142,7 @@
             const res = await fetch('/nusuk/api/ai/chat/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: question, language: 'ar' })
+                body: JSON.stringify({ question: question, language: '{{ LANGUAGE_CODE|default:'ar' }}' })
             });
             const data = await res.json();
             typing.classList.add('d-none');
@@ -170,12 +170,12 @@
                 </div>
                 <div class="bg-white p-3 rounded-4 shadow-sm border" style="max-width: 85%;">
                     <div class="fw-bold text-success mb-1" style="font-size: 0.8rem;">
-                        ${escapeHtml(data.title || '{% trans "Informational ritual guidance" %}')}
+                        ${escapeHtml(data.title || '{% if LANGUAGE_CODE == 'ar' %}إرشاد معلوماتي للمناسك{% else %}Informational ritual guidance{% endif %}')}
                     </div>
                     <div style="line-height: 1.6;">${formattedAns}</div>
                     ${actionHtml}
                     <div class="text-muted mt-2 pt-1 border-top" style="font-size: 0.65rem;">
-                        <i class="bi bi-info-circle"></i> ${escapeHtml(data.source || '{% trans "الأمانة العامة لهيئة كبار العلماء" %}')}
+                        <i class="bi bi-info-circle"></i> ${escapeHtml(data.source || '{% if LANGUAGE_CODE == 'ar' %}الأمانة العامة لهيئة كبار العلماء{% else %}General Secretariat of Senior Scholars{% endif %}')}
                     </div>
                 </div>
             `;
@@ -185,7 +185,7 @@
             typing.classList.add('d-none');
             const errMsg = document.createElement('div');
             errMsg.className = 'text-center text-danger small my-2';
-            errMsg.innerText = '{% trans "تعذر استرجاع الفتوى. يرجى التحقق من اتصال الشبكة." %}';
+            errMsg.innerText = '{% if LANGUAGE_CODE == 'ar' %}تعذر استرجاع الفتوى. يرجى التحقق من اتصال الشبكة.{% else %}Unable to retrieve guidance. Please check your network connection.{% endif %}';
             log.appendChild(errMsg);
         }
     }

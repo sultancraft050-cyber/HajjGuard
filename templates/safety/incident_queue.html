@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "إدارة بلاغات واستجابة الطوارئ" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}إدارة بلاغات واستجابة الطوارئ{% else %}Incident and emergency response{% endif %} | HajjGuard{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -11,25 +11,25 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="badge bg-danger bg-opacity-10 text-danger border border-danger fw-bold">
-                    <i class="bi bi-bell-fill"></i> {% trans "غرفة التوجيه والترحيل الميداني" %}
+                    <i class="bi bi-bell-fill"></i> {% if LANGUAGE_CODE == 'ar' %}غرفة التوجيه والترحيل الميداني{% else %}Field dispatch room{% endif %}
                 </span>
             </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-inbox-fill text-danger me-2"></i>{% trans "قائمة بلاغات واستغاثات الطوارئ اللحظية" %}
+                <i class="bi bi-inbox-fill text-danger me-2"></i>{% if LANGUAGE_CODE == 'ar' %}قائمة بلاغات واستغاثات الطوارئ اللحظية{% else %}Live emergency incident queue{% endif %}
             </h2>
             <p class="text-muted small mb-0">
-                {% trans "معالجة نداءات SOS اللحظية، توجيه أقرب الفرق الإسعافية والأمنية، ومتابعة دورة حياة إغلاق التذاكر." %}
+                {% if LANGUAGE_CODE == 'ar' %}معالجة نداءات SOS اللحظية، توجيه أقرب الفرق الإسعافية والأمنية، ومتابعة دورة حياة إغلاق التذاكر.{% else %}Process SOS calls, dispatch nearby medical and security teams, and track ticket closure.{% endif %}
             </p>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-dga-outline" onclick="window.location.reload()">
-                <i class="bi bi-arrow-clockwise me-1"></i>{% trans "تحديث القائمة" %}
+                <i class="bi bi-arrow-clockwise me-1"></i>{% if LANGUAGE_CODE == 'ar' %}تحديث القائمة{% else %}Refresh list{% endif %}
             </button>
             <a href="{% url 'analytics:export_incidents_csv' %}" class="btn btn-dga-outline">
-                <i class="bi bi-file-earmark-excel text-success me-1"></i>{% trans "تصدير البلاغات CSV" %}
+                <i class="bi bi-file-earmark-excel text-success me-1"></i>{% if LANGUAGE_CODE == 'ar' %}تصدير البلاغات CSV{% else %}Export incidents CSV{% endif %}
             </a>
             <a href="{% url 'safety:operations_dashboard' %}" class="btn btn-dga-primary">
-                <i class="bi bi-speedometer2 me-1"></i>{% trans "غرفة العمليات" %}
+                <i class="bi bi-speedometer2 me-1"></i>{% if LANGUAGE_CODE == 'ar' %}غرفة العمليات{% else %}Operations room{% endif %}
             </a>
         </div>
     </div>
@@ -40,7 +40,7 @@
             <div class="dga-card p-3 border-start border-danger border-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="text-muted small fw-bold">{% trans "بلاغات مفتوحة ونشطة" %}</span>
+                        <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}بلاغات مفتوحة ونشطة{% else %}Open and active incidents{% endif %}</span>
                         <h2 class="fw-bold text-danger mb-0 mt-1">{{ open_count }}</h2>
                     </div>
                     <div class="bg-danger bg-opacity-10 p-3 rounded-circle text-danger">
@@ -53,7 +53,7 @@
             <div class="dga-card p-3 border-start border-warning border-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="text-muted small fw-bold">{% trans "فرق في طريقها للموقع" %}</span>
+                        <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}فرق في طريقها للموقع{% else %}Teams en route{% endif %}</span>
                         <h2 class="fw-bold text-warning mb-0 mt-1">{{ responding_count }}</h2>
                     </div>
                     <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning">
@@ -66,7 +66,7 @@
             <div class="dga-card p-3 border-start border-success border-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="text-muted small fw-bold">{% trans "بلاغات تمت معالجتها" %}</span>
+                        <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}بلاغات تمت معالجتها{% else %}Processed incidents{% endif %}</span>
                         <h2 class="fw-bold text-success mb-0 mt-1">{{ resolved_count }}</h2>
                     </div>
                     <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success">
@@ -79,7 +79,7 @@
             <div class="dga-card p-3 border-start border-primary border-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <span class="text-muted small fw-bold">{% trans "الفرق الميدانية الجاهزة" %}</span>
+                        <span class="text-muted small fw-bold">{% if LANGUAGE_CODE == 'ar' %}الفرق الميدانية الجاهزة{% else %}Available field teams{% endif %}</span>
                         <h2 class="fw-bold text-primary mb-0 mt-1">{{ field_units|length }}</h2>
                     </div>
                     <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary">
@@ -96,12 +96,12 @@
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light border-bottom">
                     <tr class="small text-muted fw-bold">
-                        <th class="ps-4">{% trans "رقم البلاغ والتصنيف" %}</th>
-                        <th>{% trans "الحاج المستغيث" %}</th>
-                        <th>{% trans "الموقع الجغرافي / القطاع" %}</th>
-                        <th>{% trans "وقت البلاغ" %}</th>
-                        <th>{% trans "حالة التذكرة" %}</th>
-                        <th class="text-end pe-4">{% trans "الإجراء التشغيلي" %}</th>
+                        <th class="ps-4">{% if LANGUAGE_CODE == 'ar' %}رقم البلاغ والتصنيف{% else %}Incident number and category{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}الحاج المستغيث{% else %}Pilgrim in distress{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}الموقع الجغرافي / القطاع{% else %}Location / zone{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}وقت البلاغ{% else %}Incident time{% endif %}</th>
+                        <th>{% if LANGUAGE_CODE == 'ar' %}حالة التذكرة{% else %}Ticket status{% endif %}</th>
+                        <th class="text-end pe-4">{% if LANGUAGE_CODE == 'ar' %}الإجراء التشغيلي{% else %}Operational action{% endif %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -128,16 +128,16 @@
                             {% endif %}
                         </td>
                         <td>
-                            <span class="text-dark">{{ inc.created_at|timesince }} {% trans "مضت" %}</span>
+                            <span class="text-dark">{{ inc.created_at|timesince }} {% if LANGUAGE_CODE == 'ar' %}مضت{% else %}ago{% endif %}</span>
                             <small class="text-muted d-block">{{ inc.created_at|date:"H:i:s" }}</small>
                         </td>
                         <td>
                             {% if inc.status == 'OPEN' %}
-                                <span class="badge bg-danger rounded-pill px-3 py-1">{% trans "مفتوح - بانتظار فرقة" %}</span>
+                                <span class="badge bg-danger rounded-pill px-3 py-1">{% if LANGUAGE_CODE == 'ar' %}مفتوح - بانتظار فرقة{% else %}Open - waiting for team{% endif %}</span>
                             {% elif inc.status == 'DISPATCHED' %}
-                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">{% trans "تم التوجيه - في الطريق" %}</span>
+                                <span class="badge bg-warning text-dark rounded-pill px-3 py-1">{% if LANGUAGE_CODE == 'ar' %}تم التوجيه - في الطريق{% else %}Dispatched - en route{% endif %}</span>
                             {% elif inc.status == 'RESOLVED' %}
-                                <span class="badge bg-success rounded-pill px-3 py-1">{% trans "تم الإنهاء والمعالجة" %}</span>
+                                <span class="badge bg-success rounded-pill px-3 py-1">{% if LANGUAGE_CODE == 'ar' %}تم الإنهاء والمعالجة{% else %}Completed and handled{% endif %}</span>
                             {% else %}
                                 <span class="badge bg-secondary rounded-pill">{{ inc.get_status_display }}</span>
                             {% endif %}
@@ -145,14 +145,14 @@
                         <td class="text-end pe-4">
                             {% if inc.status == 'OPEN' %}
                                 <button onclick="openDispatchModal('{{ inc.id }}')" class="btn btn-sm btn-dga-primary">
-                                    <i class="bi bi-send-fill me-1"></i>{% trans "توجيه فرقة" %}
+                                    <i class="bi bi-send-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}توجيه فرقة{% else %}Dispatch team{% endif %}
                                 </button>
                             {% elif inc.status == 'DISPATCHED' %}
                                 <button onclick="resolveIncident('{{ inc.id }}')" class="btn btn-sm btn-outline-success">
-                                    <i class="bi bi-check-lg me-1"></i>{% trans "إغلاق التذكرة" %}
+                                    <i class="bi bi-check-lg me-1"></i>{% if LANGUAGE_CODE == 'ar' %}إغلاق التذكرة{% else %}Close ticket{% endif %}
                                 </button>
                             {% else %}
-                                <span class="text-muted small"><i class="bi bi-check2-all text-success"></i> {% trans "مكتمل" %}</span>
+                                <span class="text-muted small"><i class="bi bi-check2-all text-success"></i> {% if LANGUAGE_CODE == 'ar' %}مكتمل{% else %}Completed{% endif %}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -160,8 +160,8 @@
                     <tr>
                         <td colspan="6" class="text-center py-5 text-muted">
                             <i class="bi bi-shield-check text-success fs-1 d-block mb-2"></i>
-                            <h5 class="fw-bold text-dark">{% trans "لا توجد بلاغات طوارئ نشطة حالياً" %}</h5>
-                            <span class="small">{% trans "كافة المشاعر والقطاعات تعمل بانسيابية واستقرار تام." %}</span>
+                            <h5 class="fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}لا توجد بلاغات طوارئ نشطة حالياً{% else %}No active emergency incidents{% endif %}</h5>
+                            <span class="small">{% if LANGUAGE_CODE == 'ar' %}كافة المشاعر والقطاعات تعمل بانسيابية واستقرار تام.{% else %}All Holy Sites and zones are operating smoothly and safely.{% endif %}</span>
                         </td>
                     </tr>
                     {% endfor %}
@@ -178,27 +178,27 @@
         <div class="modal-content rounded-4 border-0 shadow-lg">
             <div class="modal-header bg-success text-white border-0 py-3">
                 <h5 class="modal-title fw-bold">
-                    <i class="bi bi-send-fill me-1"></i>{% trans "توجيه فرقة استجابة ميدانية" %}
+                    <i class="bi bi-send-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}توجيه فرقة استجابة ميدانية{% else %}Dispatch field-response team{% endif %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body p-4">
                 <input type="hidden" id="dispatchIncidentId">
-                <label class="form-label small fw-bold text-dark">{% trans "اختر الفرقة الميدانية المتاحة:" %}</label>
+                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}اختر الفرقة الميدانية المتاحة:{% else %}Select an available field team:{% endif %}</label>
                 <select id="dispatchUnitSelect" class="form-select mb-3">
                     {% for unit in field_units %}
-                        <option value="{{ unit.id }}">{{ unit.name }} ({{ unit.unit_type }}) - {{ unit.current_zone.name_ar|default:"متحرك" }}</option>
+                        <option value="{{ unit.id }}">{{ unit.name }} ({{ unit.unit_type }}) - {{ unit.current_zone.name_ar|default_if_none:"" }}{% if not unit.current_zone %}{% if LANGUAGE_CODE == "ar" %}متحرك{% else %}Mobile{% endif %}{% endif %}</option>
                     {% empty %}
-                        <option value="1">فرقة الهلال الأحمر - محطة منى 12</option>
-                        <option value="2">دورية الدفاع المدني - جسر الجمرات الدور 2</option>
+                        <option value="1">{% if LANGUAGE_CODE == "ar" %}فرقة الهلال الأحمر - محطة منى 12{% else %}Red Crescent team - Mina station 12{% endif %}</option>
+                        <option value="2">{% if LANGUAGE_CODE == "ar" %}دورية الدفاع المدني - جسر الجمرات الدور 2{% else %}Civil Defense patrol - Jamarat Bridge level 2{% endif %}</option>
                     {% endfor %}
                 </select>
-                <label class="form-label small fw-bold text-dark">{% trans "ملاحظات وتوجيهات للفرقة:" %}</label>
-                <textarea id="dispatchNotes" class="form-control" rows="3" placeholder="{% trans 'اكتب أي توجيهات أمنية أو طبية خاصة بالحالة...' %}"></textarea>
+                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}ملاحظات وتوجيهات للفرقة:{% else %}Notes and instructions for the team:{% endif %}</label>
+                <textarea id="dispatchNotes" class="form-control" rows="3" placeholder="{% if LANGUAGE_CODE == 'ar' %}اكتب أي توجيهات أمنية أو طبية خاصة بالحالة...{% else %}Enter case-specific safety or medical instructions…{% endif %}"></textarea>
             </div>
             <div class="modal-footer border-0 p-3">
-                <button type="button" class="btn btn-dga-outline" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
-                <button type="button" onclick="submitDispatch()" class="btn btn-dga-primary">{% trans "إرسال وتوجيه فوري" %}</button>
+                <button type="button" class="btn btn-dga-outline" data-bs-dismiss="modal">{% if LANGUAGE_CODE == 'ar' %}إلغاء{% else %}Cancel{% endif %}</button>
+                <button type="button" onclick="submitDispatch()" class="btn btn-dga-primary">{% if LANGUAGE_CODE == 'ar' %}إرسال وتوجيه فوري{% else %}Send and dispatch now{% endif %}</button>
             </div>
         </div>
     </div>
@@ -242,7 +242,7 @@
     }
 
     async function resolveIncident(id) {
-        if (!confirm("{% trans 'هل أنت متأكد من معالجة وإغلاق هذه التذكرة؟' %}")) return;
+        if (!confirm("{% if LANGUAGE_CODE == 'ar' %}هل أنت متأكد من معالجة وإغلاق هذه التذكرة؟{% else %}Are you sure you want to handle and close this ticket?{% endif %}")) return;
         try {
             const res = await fetch("{% url 'safety:api_resolve_incident' %}", {
                 method: 'POST',

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "بوابة ضيف الرحمن الذكية" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}بوابة ضيف الرحمن الذكية{% else %}Smart pilgrim portal{% endif %} | HajjGuard{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -88,10 +88,10 @@
         <div class="dga-card p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div class="d-flex align-items-center gap-2 small">
                 <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold px-2 py-1">
-                    <i class="bi bi-person-check-fill"></i> {% trans "الحساب النشط" %}
+                    <i class="bi bi-person-check-fill"></i> {% if LANGUAGE_CODE == 'ar' %}الحساب النشط{% else %}Active account{% endif %}
                 </span>
                 <span class="fw-bold text-dark">{{ profile.user.get_full_name|default:profile.user.username }}</span>
-                <span class="text-muted">({{ profile.age }} {% trans "سنة" %})</span>
+                <span class="text-muted">({{ profile.age }} {% if LANGUAGE_CODE == 'ar' %}سنة{% else %}years{% endif %})</span>
             </div>
         </div>
 
@@ -102,17 +102,17 @@
             <div class="d-flex justify-content-between align-items-start border-bottom border-white border-opacity-25 pb-3 mb-3">
                 <div>
                     <span class="badge bg-warning text-dark fw-bold px-2 py-1 mb-2">
-                        <i class="bi bi-exclamation-triangle-fill"></i> {% trans "بطاقة HajjGuard التجريبية — ليست تصريحاً رسمياً" %}
+                        <i class="bi bi-exclamation-triangle-fill"></i> {% if LANGUAGE_CODE == 'ar' %}بطاقة HajjGuard التجريبية — ليست تصريحاً رسمياً{% else %}HajjGuard prototype card — not an official permit{% endif %}
                     </span>
                     <h4 class="fw-bold mb-1">{{ profile.user.get_full_name|default:profile.user.username }}</h4>
                     <div class="small text-white-50">
-                        {% trans "رقم الهوية / الحدود:" %} <strong>{{ card.border_or_national_id|default:"1082390192" }}</strong>
+                        {% if LANGUAGE_CODE == 'ar' %}رقم الهوية / الحدود:{% else %}Identity / border number:{% endif %} <strong>{{ card.border_or_national_id|default:"1082390192" }}</strong>
                     </div>
                 </div>
                 {% if card and card.qr_code_image %}
                 <div class="bg-white p-1 rounded-3 shadow-sm text-center">
                     <img src="{{ card.qr_code_image.url }}" alt="Nusuk QR" style="width: 72px; height: 72px; object-fit: contain;">
-                    <div class="text-dark fw-bold" style="font-size: 0.6rem;">{% trans "رمز التحقق" %}</div>
+                    <div class="text-dark fw-bold" style="font-size: 0.6rem;">{% if LANGUAGE_CODE == 'ar' %}رمز التحقق{% else %}Verification code{% endif %}</div>
                 </div>
                 {% endif %}
             </div>
@@ -120,33 +120,33 @@
             <!-- Campaign & Health Badges -->
             <div class="row g-3 small">
                 <div class="col-sm-6">
-                    <div class="text-white-50">{% trans "شركة الحج والطوافة:" %}</div>
-                    <div class="fw-bold">{{ card.campaign.name_ar|default:card.campaign.name_en|default:"شركة وفادة المشاعر الموحدة" }}</div>
+                    <div class="text-white-50">{% if LANGUAGE_CODE == 'ar' %}شركة الحج والطوافة:{% else %}Hajj and tawaf company:{% endif %}</div>
+                    <div class="fw-bold">{{ card.campaign.name_ar|default:card.campaign.name_en|default_if_none:"" }}{% if not card.campaign.name_ar and not card.campaign.name_en %}{% if LANGUAGE_CODE == 'ar' %}شركة وفادة المشاعر الموحدة{% else %}Unified Holy Sites Pilgrim Company{% endif %}{% endif %}</div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="text-white-50">{% trans "موقع المخيم بمشعر منى:" %}</div>
-                    <div class="fw-bold">{{ card.campaign.assigned_mina_sector|default:"مربع 14" }} ({{ card.campaign.mina_camp_no|default:"مخيم 402" }})</div>
+                    <div class="text-white-50">{% if LANGUAGE_CODE == 'ar' %}موقع المخيم بمشعر منى:{% else %}Mina camp location:{% endif %}</div>
+                    <div class="fw-bold">{{ card.campaign.assigned_mina_sector|default_if_none:"" }}{% if not card.campaign.assigned_mina_sector %}{% if LANGUAGE_CODE == 'ar' %}مربع 14{% else %}Sector 14{% endif %}{% endif %} ({{ card.campaign.mina_camp_no|default_if_none:"" }}{% if not card.campaign.mina_camp_no %}{% if LANGUAGE_CODE == 'ar' %}مخيم 402{% else %}Camp 402{% endif %}{% endif %})</div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="text-white-50">{% trans "دور رمي الجمرات المخصص:" %}</div>
+                    <div class="text-white-50">{% if LANGUAGE_CODE == 'ar' %}دور رمي الجمرات المخصص:{% else %}Assigned stoning level:{% endif %}</div>
                     <div class="fw-bold text-warning">
-                        <i class="bi bi-layers-fill"></i> {% trans "الدور" %} {{ card.assigned_jamarat_floor|default:2 }} ({% trans "المسار الميسر" %})
+                        <i class="bi bi-layers-fill"></i> {% if LANGUAGE_CODE == 'ar' %}الدور{% else %}Level{% endif %} {{ card.assigned_jamarat_floor|default:2 }} ({% if LANGUAGE_CODE == 'ar' %}المسار الميسر{% else %}Accessible route{% endif %})
                     </div>
                 </div>
                 <div class="col-sm-6">
-                    <div class="text-white-50">{% trans "الحالة الصحية والبيانات الطبية:" %}</div>
+                    <div class="text-white-50">{% if LANGUAGE_CODE == 'ar' %}الحالة الصحية والبيانات الطبية:{% else %}Health and medical information:{% endif %}</div>
                     <div class="fw-bold">
                         <span class="badge bg-danger">{{ profile.blood_type }}</span>
-                        {% if profile.is_wheelchair_user %}<span class="badge bg-light text-dark ms-1">♿ {% trans "مستخدم كرسي" %}</span>{% endif %}
+                        {% if profile.is_wheelchair_user %}<span class="badge bg-light text-dark ms-1">♿ {% if LANGUAGE_CODE == 'ar' %}مستخدم كرسي{% else %}Wheelchair user{% endif %}</span>{% endif %}
                         {% if profile.chronic_condition != 'NONE' %}<span class="badge bg-warning text-dark ms-1">❤️ {{ profile.get_chronic_condition_display }}</span>{% endif %}
                     </div>
                 </div>
             </div>
 
             <div class="mt-4 pt-3 border-top border-white border-opacity-25 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <span class="small text-white-50"><i class="bi bi-shield-lock-fill"></i> {% trans "مشفرة بتقنية باركود الليزر وQR الموحد" %}</span>
+                <span class="small text-white-50"><i class="bi bi-shield-lock-fill"></i> {% if LANGUAGE_CODE == 'ar' %}مشفرة بتقنية باركود الليزر وQR الموحد{% else %}Encrypted with laser barcode and unified QR{% endif %}</span>
                 <a href="{% url 'nusuk:digital_card' %}" class="btn btn-warning fw-bold btn-sm rounded-pill px-3 shadow-sm">
-                    <i class="bi bi-person-vcard me-1"></i> {% trans "فتح البطاقة ثلاثية الأبعاد 3D" %}
+                    <i class="bi bi-person-vcard me-1"></i> {% if LANGUAGE_CODE == 'ar' %}فتح البطاقة ثلاثية الأبعاد 3D{% else %}Open 3D card{% endif %}
                 </a>
             </div>
         </div>
@@ -158,12 +158,12 @@
                     <i class="bi bi-chat-quote-fill"></i>
                 </div>
                 <div>
-                    <h6 class="fw-bold mb-1 text-success">{% trans "المساعد الشرعي الذكي (Nusuk AI Copilot)" %}</h6>
-                    <div class="small text-muted">{% trans "إجابات فورية عن شكوك الطواف، رخص الكراسي المتحركة، الفدية، وحالة الزحام اللحظية." %}</div>
+                    <h6 class="fw-bold mb-1 text-success">{% if LANGUAGE_CODE == 'ar' %}المساعد الشرعي الذكي (Nusuk AI Copilot){% else %}Smart ritual assistant (Nusuk AI Copilot){% endif %}</h6>
+                    <div class="small text-muted">{% if LANGUAGE_CODE == 'ar' %}إجابات فورية عن شكوك الطواف، رخص الكراسي المتحركة، الفدية، وحالة الزحام اللحظية.{% else %}Instant answers about tawaf questions, wheelchair allowances, fidyah, and current crowd conditions.{% endif %}</div>
                 </div>
             </div>
             <button onclick="openNusukAiDrawer()" class="btn btn-dga-primary btn-sm px-3 shadow-sm">
-                <i class="bi bi-chat-dots-fill"></i> {% trans "اسأل المساعد" %}
+                <i class="bi bi-chat-dots-fill"></i> {% if LANGUAGE_CODE == 'ar' %}اسأل المساعد{% else %}Ask the assistant{% endif %}
             </button>
         </div>
 
@@ -175,8 +175,8 @@
                         <i class="bi bi-map-fill"></i>
                     </div>
                     <div>
-                        <div class="fw-bold">{% trans "الخريطة المباشرة" %}</div>
-                        <div class="text-muted small">{% trans "رصد كثافة الحرم والمشاعر" %}</div>
+                        <div class="fw-bold">{% if LANGUAGE_CODE == 'ar' %}الخريطة المباشرة{% else %}Live map{% endif %}</div>
+                        <div class="text-muted small">{% if LANGUAGE_CODE == 'ar' %}رصد كثافة الحرم والمشاعر{% else %}Monitor Haram and Holy Sites density{% endif %}</div>
                     </div>
                 </a>
             </div>
@@ -186,8 +186,8 @@
                         <i class="bi bi-people-fill"></i>
                     </div>
                     <div>
-                        <div class="fw-bold">{% trans "فوجي والرادار" %}</div>
-                        <div class="text-muted small">{% trans "موقع المطوف وأعضاء الفوج" %}</div>
+                        <div class="fw-bold">{% if LANGUAGE_CODE == 'ar' %}فوجي والرادار{% else %}My group and radar{% endif %}</div>
+                        <div class="text-muted small">{% if LANGUAGE_CODE == 'ar' %}موقع المطوف وأعضاء الفوج{% else %}Guide and group member locations{% endif %}</div>
                     </div>
                 </a>
             </div>
@@ -197,8 +197,8 @@
                         <i class="bi bi-telephone-outbound-fill"></i>
                     </div>
                     <div>
-                        <div class="fw-bold">{% trans "الاتصال بالمطوف" %}</div>
-                        <div class="text-muted small">{% trans "تواصل مباشر مع قائد الحملة" %}</div>
+                        <div class="fw-bold">{% if LANGUAGE_CODE == 'ar' %}الاتصال بالمطوف{% else %}Contact guide{% endif %}</div>
+                        <div class="text-muted small">{% if LANGUAGE_CODE == 'ar' %}تواصل مباشر مع قائد الحملة{% else %}Direct contact with campaign leader{% endif %}</div>
                     </div>
                 </a>
             </div>
@@ -210,12 +210,12 @@
                 <div class="d-flex align-items-center gap-2">
                     <span class="fs-4">🕋</span>
                     <div>
-                        <h6 class="fw-bold mb-0 text-dark">{% trans "مشاهدة بث الحرم" %}</h6>
-                        <small class="text-muted">{% trans "مشاهدة بصرية عامة؛ لا تُستخدم لقياس الكثافة" %}</small>
+                        <h6 class="fw-bold mb-0 text-dark">{% if LANGUAGE_CODE == 'ar' %}مشاهدة بث الحرم{% else %}View Haram broadcast{% endif %}</h6>
+                        <small class="text-muted">{% if LANGUAGE_CODE == 'ar' %}مشاهدة بصرية عامة؛ لا تُستخدم لقياس الكثافة{% else %}General visual view; not used to measure density{% endif %}</small>
                     </div>
                 </div>
                 <button class="btn btn-dga-outline btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#cctvCollapse" aria-expanded="false">
-                    <i class="bi bi-camera-video-fill text-success me-1"></i> <span id="cctvBtnText">{% trans "مشاهدة البث" %}</span>
+                    <i class="bi bi-camera-video-fill text-success me-1"></i> <span id="cctvBtnText">{% if LANGUAGE_CODE == 'ar' %}مشاهدة البث{% else %}View broadcast{% endif %}</span>
                 </button>
             </div>
 
@@ -223,10 +223,10 @@
                 <!-- Channel Switcher Pills -->
                 <div class="p-2 bg-light border-bottom d-flex justify-content-center gap-2">
                     <button class="btn btn-sm btn-success rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('makkah')">
-                        🕋 {% trans "صحن المطاف (مكة المكرمة)" %}
+                        🕋 {% if LANGUAGE_CODE == 'ar' %}صحن المطاف (مكة المكرمة){% else %}Mataf courtyard (Makkah){% endif %}
                     </button>
                     <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold" onclick="switchHaramCam('madinah')">
-                        🕌 {% trans "المسجد النبوي (المدينة المنورة)" %}
+                        🕌 {% if LANGUAGE_CODE == 'ar' %}المسجد النبوي (المدينة المنورة){% else %}Prophet’s Mosque (Madinah){% endif %}
                     </button>
                 </div>
 
@@ -242,8 +242,8 @@
                 </div>
 
                 <div class="p-3 bg-white small text-muted">
-                    {% trans "This is an external public broadcast. HajjGuard does not operate or verify the camera, and the view may not represent conditions at your destination." %}
-                    <a class="d-block mt-2" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% trans "Open the broadcast source" %}</a>
+                    {% if LANGUAGE_CODE == 'ar' %}This is an external public broadcast. HajjGuard does not operate or verify the camera, and the view may not represent conditions at your destination.{% else %}This is an external public broadcast. Siraaj does not operate or verify the camera, and the view may not represent conditions at your destination.{% endif %}
+                    <a class="d-block mt-2" href="https://services.prh.gov.sa/ordo/enlive.php" target="_blank" rel="noopener">{% if LANGUAGE_CODE == 'ar' %}Open the broadcast source{% else %}Open broadcast source{% endif %}</a>
                 </div>
             </div>
         </div>
@@ -252,9 +252,9 @@
         <div class="mb-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold text-dark mb-0">
-                    <i class="bi bi-calendar2-check text-success me-1"></i> {% trans "مراحل رحلة الحج اللحظية" %}
+                    <i class="bi bi-calendar2-check text-success me-1"></i> {% if LANGUAGE_CODE == 'ar' %}مراحل رحلة الحج اللحظية{% else %}Live Hajj journey stages{% endif %}
                 </h5>
-                <span class="badge bg-success rounded-pill px-3 py-1">{% trans "اليوم 9 (نشط)" %}</span>
+                <span class="badge bg-success rounded-pill px-3 py-1">{% if LANGUAGE_CODE == 'ar' %}اليوم 9 (نشط){% else %}Day 9 (active){% endif %}</span>
             </div>
 
             {% for r in rituals %}
@@ -269,11 +269,11 @@
                         </p>
                     </div>
                     {% if r.status == 'completed' %}
-                    <span class="badge bg-secondary rounded-pill">{% trans "مكتمل" %}</span>
+                    <span class="badge bg-secondary rounded-pill">{% if LANGUAGE_CODE == 'ar' %}مكتمل{% else %}Completed{% endif %}</span>
                     {% elif r.status == 'active' %}
-                    <span class="badge bg-success rounded-pill">{% trans "المرحلة الحالية" %}</span>
+                    <span class="badge bg-success rounded-pill">{% if LANGUAGE_CODE == 'ar' %}المرحلة الحالية{% else %}Current stage{% endif %}</span>
                     {% else %}
-                    <span class="badge bg-light text-muted rounded-pill">{% trans "قادمة" %}</span>
+                    <span class="badge bg-light text-muted rounded-pill">{% if LANGUAGE_CODE == 'ar' %}قادمة{% else %}Upcoming{% endif %}</span>
                     {% endif %}
                 </div>
 
@@ -281,7 +281,7 @@
                 <div class="d-flex align-items-center justify-content-between border-top pt-2 mt-2">
                     <small class="text-muted fst-italic">"{{ r.audio_text }}"</small>
                     <button class="btn btn-sm btn-outline-success rounded-pill px-3" onclick="speakDua('{{ r.audio_text }}')">
-                        <i class="bi bi-volume-up-fill me-1"></i> {% trans "استماع للذكر" %}
+                        <i class="bi bi-volume-up-fill me-1"></i> {% if LANGUAGE_CODE == 'ar' %}استماع للذكر{% else %}Listen to remembrance{% endif %}
                     </button>
                 </div>
             </div>
@@ -304,10 +304,10 @@
             if (!haramCamIframe.src) {
                 haramCamIframe.src = haramCamIframe.getAttribute('data-makkah');
             }
-            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'إخفاء البث' %}";
+            if (cctvBtnText) cctvBtnText.innerText = "{% if LANGUAGE_CODE == 'ar' %}إخفاء البث{% else %}Hide broadcast{% endif %}";
         });
         cctvCollapse.addEventListener('hide.bs.collapse', function () {
-            if (cctvBtnText) cctvBtnText.innerText = "{% trans 'مشاهدة البث' %}";
+            if (cctvBtnText) cctvBtnText.innerText = "{% if LANGUAGE_CODE == 'ar' %}مشاهدة البث{% else %}View broadcast{% endif %}";
         });
     }
 

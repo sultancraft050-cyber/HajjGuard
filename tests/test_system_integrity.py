@@ -14,7 +14,7 @@ from accounts.models import PilgrimProfile
 from nusuk.models import HajjCampaign, NusukCard
 from zones.models import Zone, Corridor, LocationPing, DensityRecord
 from zones.utils import haversine_distance, determine_zone_for_point, haversine_distance_3d, altitude_from_barometric_pressure
-from groups.models import PilgrimGroup, GroupMembership
+from groups.models import PilgrimGroup, GroupMembership, PilgrimTrip, LocationShareGrant
 from groups.services import GroupDriftService
 from safety.models import SosIncident
 from services.prediction import (
@@ -260,6 +260,17 @@ class HajjGuardSystemIntegrityTests(TestCase):
         GroupMembership.objects.create(group=group, pilgrim=profile_silent, role="MEMBER")
 
         now = timezone.now()
+
+        for pilgrim in (leader_profile, profile_safe, profile_drift, profile_silent):
+            trip = PilgrimTrip.objects.create(
+                pilgrim=pilgrim, group=group, starts_at=now - timedelta(hours=1),
+                ends_at=now + timedelta(hours=1), status='ACTIVE'
+            )
+            LocationShareGrant.objects.create(
+                pilgrim=pilgrim, trip=trip, consent_given=True,
+                consent_version='test-consent', consent_timestamp=now - timedelta(hours=1),
+                enabled=True, expires_at=trip.ends_at
+            )
 
         # Leader ping at Kaaba center
         LocationPing.objects.create(pilgrim=leader_profile, lat=21.42250, lng=39.82620, timestamp=now)
@@ -723,6 +734,18 @@ class HajjGuardSystemIntegrityTests(TestCase):
         member_user = User.objects.create_user(username="member_noor", first_name="Fatima")
         member_profile = PilgrimProfile.objects.create(user=member_user, role="pilgrim")
         GroupMembership.objects.create(group=group, pilgrim=member_profile, role="MEMBER")
+
+        now = timezone.now()
+        for pilgrim in (self.profile, member_profile):
+            trip = PilgrimTrip.objects.create(
+                pilgrim=pilgrim, group=group, starts_at=now - timedelta(hours=1),
+                ends_at=now + timedelta(hours=1), status='ACTIVE'
+            )
+            LocationShareGrant.objects.create(
+                pilgrim=pilgrim, trip=trip, consent_given=True,
+                consent_version='test-consent', consent_timestamp=now - timedelta(hours=1),
+                enabled=True, expires_at=trip.ends_at
+            )
 
         LocationPing.objects.create(
             pilgrim=self.profile,

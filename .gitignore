@@ -27,3 +27,6 @@ staticfiles/
 .venv-codex312/
 artifacts/
 
+
+# Private user uploads
+private_uploads/

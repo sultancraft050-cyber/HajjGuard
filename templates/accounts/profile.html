@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "إعدادات الملف الشخصي والخصوصية الموحدة" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}إعدادات الملف الشخصي والخصوصية الموحدة{% else %}Profile and privacy settings{% endif %} | HajjGuard{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -13,16 +13,16 @@
                 <div>
                     <div class="d-flex align-items-center gap-2 mb-1">
                         <a href="{% url 'accounts:pilgrim_portal' %}" class="btn btn-dga-outline btn-sm">
-                            <i class="bi bi-arrow-right"></i> {% trans "العودة لبوابة ضيف الرحمن" %}
+                            <i class="bi bi-arrow-right"></i> {% if LANGUAGE_CODE == 'ar' %}العودة لبوابة ضيف الرحمن{% else %}Back to pilgrim portal{% endif %}
                         </a>
                         <span class="badge bg-success bg-opacity-10 text-success border border-success">
-                            <i class="bi bi-shield-check"></i> {% trans "نظام النفاذ والتحقق الوطني" %}
+                            <i class="bi bi-shield-check"></i> {% if LANGUAGE_CODE == 'ar' %}نظام النفاذ والتحقق الوطني{% else %}National access and verification{% endif %}
                         </span>
                     </div>
                     <h2 class="fw-bold mb-0 text-dark">
-                        <i class="bi bi-person-circle text-success me-2"></i>{% trans "الملف الشخصي وإعدادات الخصوصية (PDPL)" %}
+                        <i class="bi bi-person-circle text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}الملف الشخصي وإعدادات الخصوصية (PDPL){% else %}Profile and privacy settings (PDPL){% endif %}
                     </h2>
-                    <p class="text-muted small mb-0">{% trans "إدارة البيانات الشخصية، إعدادات الإتاحة الحركية، وضوابط معالجة البيانات وفق نظام حماية البيانات الشخصية." %}</p>
+                    <p class="text-muted small mb-0">{% if LANGUAGE_CODE == 'ar' %}إدارة البيانات الشخصية، إعدادات الإتاحة الحركية، وضوابط معالجة البيانات وفق نظام حماية البيانات الشخصية.{% else %}Manage personal data, mobility settings, and processing controls under the Personal Data Protection Law.{% endif %}</p>
                 </div>
             </div>
 
@@ -49,7 +49,7 @@
                         <!-- Settings Form Fields -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "لغة الواجهة المفضلة" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}لغة الواجهة المفضلة{% else %}Preferred interface language{% endif %}</label>
                                 <select name="language" class="form-select">
                                     {% for code, name in language_choices %}
                                         <option value="{{ code }}" {% if code == profile.language %}selected{% endif %}>{{ name }}</option>
@@ -57,15 +57,15 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "رقم الجوال النشط" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}رقم الجوال النشط{% else %}Active mobile number{% endif %}</label>
                                 <input type="tel" name="phone" value="{{ profile.phone }}" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "العمر" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}العمر{% else %}Age{% endif %}</label>
                                 <input type="number" name="age" value="{{ profile.age }}" class="form-control" min="5" max="110">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "الحالة الصحية والمزمنة" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}الحالة الصحية والمزمنة{% else %}Chronic health condition{% endif %}</label>
                                 <select name="chronic_condition" class="form-select">
                                     {% for code, name in chronic_choices %}
                                         <option value="{{ code }}" {% if code == profile.chronic_condition %}selected{% endif %}>{{ name }}</option>
@@ -76,39 +76,39 @@
                                 <div class="form-check form-switch p-3 bg-light rounded-3 border">
                                     <input class="form-check-input ms-0 me-3" type="checkbox" name="is_wheelchair_user" id="wheelchairEdit" {% if profile.is_wheelchair_user %}checked{% endif %}>
                                     <label class="form-check-label fw-bold text-dark" for="wheelchairEdit">
-                                        <i class="bi bi-person-wheelchair text-primary me-1"></i>{% trans "طلب إتاحة وتوجيه مسارات الكراسي المتحركة" %}
+                                        <i class="bi bi-person-wheelchair text-primary me-1"></i>{% if LANGUAGE_CODE == 'ar' %}طلب إتاحة وتوجيه مسارات الكراسي المتحركة{% else %}Request wheelchair access and routing{% endif %}
                                     </label>
-                                    <small class="text-muted d-block ms-5">{% trans "يقوم محرك التوجيه الذكي بتفضيل الجسور المنبسطة، المصاعد الكهربائية وتجنب السلالم الحجرية." %}</small>
+                                    <small class="text-muted d-block ms-5">{% if LANGUAGE_CODE == 'ar' %}يقوم محرك التوجيه الذكي بتفضيل الجسور المنبسطة، المصاعد الكهربائية وتجنب السلالم الحجرية.{% else %}The guidance engine prefers accessible ramps and elevators and avoids stairs.{% endif %}</small>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Emergency Contact -->
                         <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                            <i class="bi bi-telephone-fill text-danger me-2"></i>{% trans "بيانات الاتصال في حالات الطوارئ" %}
+                            <i class="bi bi-telephone-fill text-danger me-2"></i>{% if LANGUAGE_CODE == 'ar' %}بيانات الاتصال في حالات الطوارئ{% else %}Emergency contact details{% endif %}
                         </h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "اسم جهة الاتصال (أحد الأقارب)" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}اسم جهة الاتصال (أحد الأقارب){% else %}Contact name (relative){% endif %}</label>
                                 <input type="text" name="emergency_contact_name" value="{{ profile.emergency_contact_name }}" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label small fw-bold text-dark">{% trans "رقم هاتف الطوارئ" %}</label>
+                                <label class="form-label small fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}رقم هاتف الطوارئ{% else %}Emergency phone number{% endif %}</label>
                                 <input type="tel" name="emergency_contact_phone" value="{{ profile.emergency_contact_phone }}" class="form-control">
                             </div>
                         </div>
 
                         <!-- PDPL Statutory Privacy Controls -->
                         <h6 class="fw-bold text-dark border-bottom pb-2 mb-3">
-                            <i class="bi bi-shield-lock-fill text-success me-2"></i>{% trans "موافقات نظام حماية البيانات الشخصية (PDPL المادة 16)" %}
+                            <i class="bi bi-shield-lock-fill text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}موافقات نظام حماية البيانات الشخصية (PDPL المادة 16){% else %}Personal Data Protection Law consents (PDPL Article 16){% endif %}
                         </h6>
                         <div class="alert alert-light border rounded-3 p-3 mb-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="consent_given" id="consentEdit" {% if profile.consent_given %}checked{% endif %}>
                                 <label class="form-check-label small fw-bold text-dark" for="consentEdit">
-                                    {% trans "الموافقة الصريحة على رصد إحداثيات التواجد لسلامة إدارة الحشود والإنقاذ الميداني" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}الموافقة الصريحة على رصد إحداثيات التواجد لسلامة إدارة الحشود والإنقاذ الميداني{% else %}Explicit consent to location monitoring for crowd safety and field rescue{% endif %}
                                     <span class="fw-normal text-muted d-block mt-1">
-                                        {% trans "وفقاً للمادة 16 من نظام حماية البيانات الشخصية بالمملكة، يتم إتلاف سجلات الرصد تلقائياً بانتهاء موسم الحج، وتوثق كافة عمليات الاستعلام في سجل التدقيق الأمني غير القابل للتعديل." %}
+                                        {% if LANGUAGE_CODE == 'ar' %}وفقاً للمادة 16 من نظام حماية البيانات الشخصية بالمملكة، يتم إتلاف سجلات الرصد تلقائياً بانتهاء موسم الحج، وتوثق كافة عمليات الاستعلام في سجل التدقيق الأمني غير القابل للتعديل.{% else %}Under Saudi PDPL Article 16, monitoring records are automatically deleted after Hajj and all queries are recorded in an immutable security audit log.{% endif %}
                                     </span>
                                 </label>
                             </div>
@@ -116,7 +116,7 @@
 
                         <div class="d-grid">
                             <button type="submit" class="btn btn-dga-primary fw-bold py-2 shadow-sm">
-                                <i class="bi bi-save2-fill me-2"></i>{% trans "حفظ تعديلات الملف الشخصي" %}
+                                <i class="bi bi-save2-fill me-2"></i>{% if LANGUAGE_CODE == 'ar' %}حفظ تعديلات الملف الشخصي{% else %}Save profile changes{% endif %}
                             </button>
                         </div>
                     </form>

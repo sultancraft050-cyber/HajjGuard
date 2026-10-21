@@ -12,6 +12,7 @@ class VisitorPlaceAdmin(admin.ModelAdmin):
 class SafetyMapFeatureAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'source', 'verified_at', 'enabled')
     list_filter = ('category', 'enabled')
+    search_fields = ('name', 'source', 'source_url')
 
 @admin.register(Zone)
 class ZoneAdmin(admin.ModelAdmin):
@@ -38,3 +39,27 @@ class DensityRecordAdmin(admin.ModelAdmin):
 class CameraSnapshotAdmin(admin.ModelAdmin):
     list_display = ('zone', 'people_counted', 'processed', 'source_label', 'taken_at')
     list_filter = ('zone', 'processed')
+
+
+from zones.models import HaramLocation
+from django.contrib import messages
+
+@admin.register(HaramLocation)
+class HaramLocationAdmin(admin.ModelAdmin):
+    list_display = ('location_id', 'name_en', 'category', 'floor_level', 'accuracy_level', 'enabled', 'verification_date')
+    search_fields = ('location_id', 'name_ar', 'name_en', 'source', 'category')
+    list_filter = ('category', 'floor_level', 'accuracy_level', 'enabled', 'verification_date')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Identity', {'fields': ('location_id', 'name_ar', 'name_en', 'available_languages', 'category', 'floor_level')}),
+        ('Geographic position', {'fields': ('latitude', 'longitude')}),
+        ('Haram model position', {'fields': ('local_x', 'local_y', 'local_z'), 'description': 'Coordinates relative to the Haram architecture origin, in model units. Geometry is illustrative.'}),
+        ('Evidence and publication', {'fields': ('source', 'source_url', 'verification_date', 'accuracy_level', 'enabled', 'notes')}),
+        ('History', {'fields': ('created_at', 'updated_at')}),
+    )
+
+    def save_model(self, request, obj, form, change):
+        obj.full_clean()
+        super().save_model(request, obj, form, change)
+        if obj.enabled and obj.accuracy_level == 'APPROXIMATE':
+            self.message_user(request, 'Published as approximate. This location is not confirmed as exact.', level=messages.WARNING)

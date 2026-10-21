@@ -5,6 +5,30 @@ from django.utils.translation import gettext_lazy as _
 from accounts.models import PilgrimProfile
 from zones.utils import haversine_distance
 
+# Public map plausibility bounds. These cover the live Makkah/Holy Site
+# records and every existing test fixture while rejecting swapped coordinates
+# and clearly out-of-region points. They are a review guard, not a navigation
+# boundary.
+MAP_LAT_MIN, MAP_LAT_MAX = 21.30, 21.50
+MAP_LNG_MIN, MAP_LNG_MAX = 39.75, 40.10
+
+
+def validate_public_map_point(latitude, longitude):
+    import math
+    from django.core.exceptions import ValidationError
+
+    if latitude is None or longitude is None:
+        raise ValidationError('Public map records require latitude and longitude.')
+    if any(isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+           for value in (latitude, longitude)):
+        raise ValidationError('Public map coordinates must be finite numbers.')
+    if not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+        raise ValidationError('Coordinates must be within valid latitude/longitude ranges.')
+    if latitude == 0 and longitude == 0:
+        raise ValidationError('The (0,0) coordinate is not a valid public map location.')
+    if not MAP_LAT_MIN <= latitude <= MAP_LAT_MAX or not MAP_LNG_MIN <= longitude <= MAP_LNG_MAX:
+        raise ValidationError('Coordinates are outside the supported Makkah map area.')
+
 class Zone(models.Model):
     SITE_CHOICES = [
         ('HARAM', _('Masjid Al-Haram (Makkah)')),
@@ -41,6 +65,10 @@ class Zone(models.Model):
     )
     
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def clean(self):
+        super().clean()
+        validate_public_map_point(self.center_lat, self.center_lng)
 
     def contains_point(self, lat, lng):
         """Returns True if the lat/lng point is inside the circular zone radius"""
@@ -165,6 +193,7 @@ class SafetyMapFeature(models.Model):
     category = models.CharField(max_length=25, choices=CATEGORIES)
     coordinates = models.JSONField(help_text='One or more [latitude, longitude] pairs. Routes require at least two.')
     source = models.CharField(max_length=250, help_text='Survey or public dataset reference; no personal data.')
+    source_url = models.URLField(blank=True, help_text='Public evidence URL; never include private credentials.')
     verified_at = models.DateTimeField(null=True, blank=True)
     enabled = models.BooleanField(default=False)
 
@@ -178,8 +207,7 @@ class SafetyMapFeature(models.Model):
             for pair in self.coordinates:
                 if len(pair) != 2 or any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in pair):
                     raise ValueError()
-                if not -90 <= pair[0] <= 90 or not -180 <= pair[1] <= 180:
-                    raise ValueError()
+                validate_public_map_point(pair[0], pair[1])
             if self.category == 'WHEELCHAIR_ROUTE' and len(self.coordinates) < 2:
                 raise ValueError()
         except (TypeError, ValueError):
@@ -189,6 +217,81 @@ class SafetyMapFeature(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class HaramLocation(models.Model):
+    """Floor-aware Haram points for the local 3D location explorer.
+
+    Records are disabled until their source and placement have been reviewed.
+    This inventory intentionally stores public places only; it is not a person
+    or telemetry model.
+    """
+    CATEGORY_CHOICES = [
+        ('GATE', 'Gate'), ('MATAF', 'Mataf'), ('MASAA', 'Masaa'),
+        ('WATER', 'Water'), ('TOILET', 'Toilet'), ('MEDICAL', 'Medical'),
+        ('WHEELCHAIR_ACCESS', 'Wheelchair access'), ('ELEVATOR', 'Elevator'),
+        ('ESCALATOR', 'Escalator'), ('STAIRS', 'Stairs'),
+        ('MEETING_POINT', 'Meeting point'), ('EMERGENCY_EXIT', 'Emergency exit'),
+        ('INFORMATION_DESK', 'Information desk'),
+    ]
+    ACCURACY_CHOICES = [('UNVERIFIED', 'Unverified'), ('APPROXIMATE', 'Approximate'), ('VERIFIED', 'Verified')]
+
+    location_id = models.CharField(max_length=80, unique=True, db_index=True)
+    name_ar = models.CharField(max_length=180)
+    name_en = models.CharField(max_length=180)
+    available_languages = models.JSONField(default=list, blank=True)
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES, db_index=True)
+    floor_level = models.IntegerField(default=0, help_text='0 ground, 1 first, 2 roof; use -1 for basement.')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    local_x = models.FloatField(null=True, blank=True)
+    local_y = models.FloatField(null=True, blank=True)
+    local_z = models.FloatField(null=True, blank=True)
+    source = models.CharField(max_length=250, blank=True)
+    source_url = models.URLField(blank=True)
+    verification_date = models.DateField(null=True, blank=True)
+    accuracy_level = models.CharField(max_length=15, choices=ACCURACY_CHOICES, default='UNVERIFIED')
+    enabled = models.BooleanField(default=False, db_index=True)
+    notes = models.TextField(blank=True, help_text='Public location notes only; never include private information.')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['floor_level', 'category', 'name_en']
+        indexes = [models.Index(fields=['enabled', 'floor_level', 'category'])]
+
+    def clean(self):
+        import math
+        from django.core.exceptions import ValidationError
+        super().clean()
+        if not isinstance(self.available_languages, list) or any(not isinstance(value, str) or not value.strip() for value in self.available_languages):
+            raise ValidationError({'available_languages': 'Use a list of available language codes.'})
+        for field_name, value, low, high in (
+            ('latitude', self.latitude, -90, 90), ('longitude', self.longitude, -180, 180),
+        ):
+            if value is not None and (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or not low <= value <= high):
+                raise ValidationError({field_name: 'Use a finite coordinate within the valid range.'})
+        if self.latitude is not None and self.longitude is not None:
+            validate_public_map_point(self.latitude, self.longitude)
+        import re
+        if len(set(self.available_languages)) != len(self.available_languages) or any(not re.fullmatch(r'[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*', v) for v in self.available_languages):
+            raise ValidationError({'available_languages': 'Use unique language codes such as ar, en, ur or id.'})
+        for field in ('local_x', 'local_y', 'local_z'):
+            value = getattr(self, field)
+            if value is not None and (isinstance(value, bool) or not math.isfinite(value)):
+                raise ValidationError({field: 'Use a finite number.'})
+        if self.enabled:
+            if self.accuracy_level == 'UNVERIFIED':
+                raise ValidationError({'accuracy_level': 'Unverified locations must remain disabled.'})
+            if self.latitude is None or self.longitude is None or any(getattr(self, field) is None for field in ('local_x', 'local_y', 'local_z')):
+                raise ValidationError('Enabled Haram locations require geographic and 3D positions.')
+            if not self.source.strip() or self.verification_date is None:
+                raise ValidationError('Enabled Haram locations require a source and verification date.')
+            if self.verification_date > timezone.localdate():
+                raise ValidationError({'verification_date': 'Verification date cannot be in the future.'})
+
+    def __str__(self):
+        return f'{self.location_id} · {self.name_en}'
 
 
 class VisitorPlace(models.Model):
@@ -237,6 +340,10 @@ class VisitorPlace(models.Model):
             )
             if not valid:
                 raise ValidationError({'coordinates': 'Use [latitude, longitude] with finite valid values.'})
+            try:
+                validate_public_map_point(self.coordinates[0], self.coordinates[1])
+            except ValidationError as exc:
+                raise ValidationError({'coordinates': exc.messages})
         if self.enabled:
             if not self.coordinates:
                 raise ValidationError({'coordinates': 'Enabled visitor places require coordinates.'})

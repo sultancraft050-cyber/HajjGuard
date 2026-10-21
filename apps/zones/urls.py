@@ -4,6 +4,7 @@ from . import views
 app_name = 'zones'
 
 urlpatterns = [
+    path('api/haram-locations/', views.api_haram_locations, name='api_haram_locations'),
     path('api/safety-features/', views.api_safety_features, name='api_safety_features'),
     path('api/facilities/', views.api_facilities, name='api_facilities'),
     path('api/map-data/', views.api_map_data, name='api_map_data'),

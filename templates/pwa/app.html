@@ -1,6 +1,6 @@
 {% load i18n static %}
 <!doctype html>
-<html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="{% if LANGUAGE_CODE == 'ar' or LANGUAGE_CODE == 'ur' %}rtl{% else %}ltr{% endif %}">
+<html lang="{{ LANGUAGE_CODE|default:'ar' }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0f172a"><link rel="manifest" href="/manifest.webmanifest">
@@ -22,23 +22,25 @@
 <body>
 <main id="app" aria-live="polite">
   <h1>HajjGuard</h1><p><button id="large-text">A+</button> <button id="high-contrast">Contrast</button> <button id="reduced-motion">Reduce motion</button></p>
-  <p class="muted">{% trans "Safety, group coordination, and essential guidance." %}</p>
-  <section class="card" aria-labelledby="offline-title"><h2 id="offline-title">{% trans "Offline emergency card" %}</h2>
-    <div id="offline-card-details" class="status" aria-live="polite">{% trans "Loading your trip card…" %}</div>
+  <p class="muted">{% if LANGUAGE_CODE == 'ar' %}السلامة وتنسيق المجموعة والإرشادات الأساسية.{% else %}Safety, group coordination, and essential guidance.{% endif %}</p>
+  <section class="card" aria-labelledby="offline-title"><h2 id="offline-title">{% if LANGUAGE_CODE == 'ar' %}بطاقة الطوارئ دون اتصال{% else %}Offline emergency card{% endif %}</h2>
+    <div id="offline-card-details" class="status" aria-live="polite">{% if LANGUAGE_CODE == 'ar' %}جار تحميل بطاقة الرحلة…{% else %}Loading your trip card…{% endif %}</div>
     <img id="offline-qr" alt="HajjGuard safety QR" style="display:none;max-width:150px;margin:.75rem auto">
-    <p>{% trans "Emergency services: 997 medical · 998 rescue · 911 security/general" %}</p>
-    <p><a href="tel:997">997 {% trans "Medical" %}</a> · <a href="tel:998">998 {% trans "Rescue" %}</a> · <a href="tel:911">911 {% trans "Security/general" %}</a></p>
-    <p>{% trans "Your SOS is queued when offline and is marked undelivered until the server confirms receipt." %}</p>
-    <button class="danger" id="sos-button">{% trans "Queue SOS" %}</button>
+    <p>{% if LANGUAGE_CODE == 'ar' %}خدمات الطوارئ: 997 إسعاف · 998 إنقاذ · 911 أمن وعام{% else %}Emergency services: 997 medical · 998 rescue · 911 security/general{% endif %}</p>
+    <p><a href="tel:997">997 {% if LANGUAGE_CODE == 'ar' %}إسعاف{% else %}Medical{% endif %}</a> · <a href="tel:998">998 {% if LANGUAGE_CODE == 'ar' %}إنقاذ{% else %}Rescue{% endif %}</a> · <a href="tel:911">911 {% if LANGUAGE_CODE == 'ar' %}أمن/عام{% else %}Security/general{% endif %}</a></p>
+    <p>{% if LANGUAGE_CODE == 'ar' %}يتم وضع بلاغ الطوارئ في قائمة الانتظار عند عدم الاتصال، ويظهر غير مُسلّم حتى يؤكد الخادم الاستلام.{% else %}Your SOS is queued when offline and is marked undelivered until the server confirms receipt.{% endif %}</p>
+    <button class="danger" id="sos-button">{% if LANGUAGE_CODE == 'ar' %}وضع البلاغ في الانتظار{% else %}Queue SOS{% endif %}</button>
   </section>
-  <section class="card"><h2>{% trans "Trip sharing" %}</h2><p id="sharing-status" class="status">{% trans "Loading…" %}</p>
-    <label><input id="consent" type="checkbox"> {% trans "I explicitly consent to trip-wide location sharing until my trip ends." %}</label>
-    <button class="primary" id="enable-sharing">{% trans "Enable sharing" %}</button>
-    <button id="revoke-sharing">{% trans "Stop sharing" %}</button>
+  <section class="card"><h2>{% if LANGUAGE_CODE == 'ar' %}مشاركة الرحلة{% else %}Trip sharing{% endif %}</h2><p id="sharing-status" class="status">{% if LANGUAGE_CODE == 'ar' %}جار التحميل…{% else %}Loading…{% endif %}</p>
+    <label><input id="consent" type="checkbox"> {% if LANGUAGE_CODE == 'ar' %}أوافق صراحة على مشاركة الموقع طوال الرحلة حتى انتهائها.{% else %}I explicitly consent to trip-wide location sharing until my trip ends.{% endif %}</label>
+    <button class="primary" id="enable-sharing">{% if LANGUAGE_CODE == 'ar' %}تفعيل المشاركة{% else %}Enable sharing{% endif %}</button>
+    <button id="revoke-sharing">{% if LANGUAGE_CODE == 'ar' %}إيقاف المشاركة{% else %}Stop sharing{% endif %}</button>
   </section>
-  <section class="card"><h2>{% trans "Group" %}</h2><div id="members" class="status">{% trans "Group members appear only while they have active consent." %}</div></section>
+  <section class="card"><h2>{% if LANGUAGE_CODE == 'ar' %}المجموعة{% else %}Group{% endif %}</h2><div id="members" class="status">{% if LANGUAGE_CODE == 'ar' %}يظهر أعضاء المجموعة فقط أثناء وجود موافقة فعالة لديهم.{% else %}Group members appear only while they have active consent.{% endif %}</div></section>
 </main>
 <script>
+const isArabic = document.documentElement.lang.startsWith('ar');
+const uiText = isArabic ? {notSharing:'غير مفعّلة', enabledUntil:'مفعّلة حتى', noMembers:'لا يوجد أعضاء وافقوا على المشاركة', explicitConsent:'الموافقة الصريحة مطلوبة.', sosQueued:'تم وضع البلاغ في الانتظار؛ لن يُسلّم حتى تعود الشبكة.', noActiveGroup:'لا توجد مجموعة نشطة', noLeader:'لا يوجد قائد', tripUnavailable:'تفاصيل الرحلة غير متاحة', qrCached:'بطاقة الأمان محفوظة محلياً على هذا الجهاز.'} : {notSharing:'Not sharing', enabledUntil:'Enabled until', noMembers:'No consented members', explicitConsent:'Explicit consent is required.', sosQueued:'SOS queued; it is not delivered until connectivity returns.', noActiveGroup:'No active group', noLeader:'No leader', tripUnavailable:'Trip details unavailable', qrCached:'QR safety card cached privately on this device.'};
 const csrf = document.cookie.split('; ').find(x => x.startsWith('csrftoken='))?.split('=')[1] || '';
 const jsonHeaders = {'Content-Type':'application/json','X-CSRFToken':csrf};
 const vapidPublicKey = '{{ vapid_public_key|escapejs }}';
@@ -57,7 +59,7 @@ function renderOfflineCard(data) {
   if (!data?.name) return;
   localStorage.setItem('hajjguard-offline-card', JSON.stringify(data));
   const t=data.trip||{};
-  document.querySelector('#offline-card-details').innerHTML = `<strong>${data.name||'Pilgrim'}</strong><br>${data.group_name||'No active group'} · ${data.leader_name||'No leader'} <a href="tel:${data.leader_phone||''}">${data.leader_phone||''}</a><br><span class="muted">${t.ends_at ? `Trip ends ${new Date(t.ends_at).toLocaleString()}` : 'Trip details unavailable'}</span>${data.medical ? `<br><span>Accessibility/medical: ${[data.medical.condition,data.medical.wheelchair?'wheelchair access':''].filter(Boolean).join(', ')}</span>` : ''}<br><span class="muted">QR safety card cached privately on this device.</span>`;
+  document.querySelector('#offline-card-details').innerHTML = `<strong>${data.name||'Pilgrim'}</strong><br>${data.group_name||uiText.noActiveGroup} · ${data.leader_name||uiText.noLeader} <a href="tel:${data.leader_phone||''}">${data.leader_phone||''}</a><br><span class="muted">${t.ends_at ? `${isArabic ? 'تنتهي الرحلة' : 'Trip ends'} ${new Date(t.ends_at).toLocaleString()}` : uiText.tripUnavailable}</span>${data.medical ? `<br><span>${isArabic ? 'إتاحة/طبي' : 'Accessibility/medical'}: ${[data.medical.condition,data.medical.wheelchair?(isArabic?'دخول للكراسي المتحركة':'wheelchair access'):''].filter(Boolean).join(', ')}</span>` : ''}<br><span class="muted">${uiText.qrCached}</span>`;
   const qr=document.querySelector('#offline-qr'); if(data.qr_image){qr.src=data.qr_image;qr.style.display='block';}
 }
 function restoreOfflineCard(){ try { const data=JSON.parse(localStorage.getItem('hajjguard-offline-card')||'null'); if(data) renderOfflineCard(data); } catch(e){} }
@@ -65,12 +67,12 @@ async function refresh() {
   const card=await api('/api/offline-card/'); if(card.name) renderOfflineCard(card);
   const t=await api('/api/trip/current');
   const s=await api('/api/trip/location-sharing/status');
-  document.querySelector('#sharing-status').textContent=s.enabled ? `Enabled until ${s.expires_at}` : 'Not sharing';
-  if(t.trip?.group_id){ const m=await api(`/api/groups/${t.trip.group_id}/live-members/`); document.querySelector('#members').textContent = m.members?.map(x=>`${x.name}: ${x.last_seen||'not seen'}`).join(' · ') || 'No consented members'; }
+  document.querySelector('#sharing-status').textContent=s.enabled ? `${uiText.enabledUntil} ${s.expires_at}` : uiText.notSharing;
+  if(t.trip?.group_id){ const m=await api(`/api/groups/${t.trip.group_id}/live-members/`); document.querySelector('#members').textContent = m.members?.map(x=>`${x.name}: ${x.last_seen|| (isArabic?'غير معروف':'not seen')}`).join(' · ') || uiText.noMembers; }
 }
-document.querySelector('#enable-sharing').onclick=async()=>{ if(!document.querySelector('#consent').checked){alert('Explicit consent is required.');return;} await api('/api/trip/location-sharing/enable',{method:'POST',headers:jsonHeaders,body:JSON.stringify({consent_given:true,consent_version:'phase-a-1'})}); refresh(); };
+document.querySelector('#enable-sharing').onclick=async()=>{ if(!document.querySelector('#consent').checked){alert(uiText.explicitConsent);return;} await api('/api/trip/location-sharing/enable',{method:'POST',headers:jsonHeaders,body:JSON.stringify({consent_given:true,consent_version:'phase-a-1'})}); refresh(); };
 document.querySelector('#revoke-sharing').onclick=async()=>{await api('/api/trip/location-sharing/revoke',{method:'POST',headers:jsonHeaders,body:'{}'});refresh();};
-document.querySelector('#sos-button').onclick=async()=>{ const id=crypto.randomUUID(); await queueItem({id,type:'SOS',payload:{category:'GENERAL',idempotency_key:id}}); if(navigator.onLine) flushOutbox(); alert('SOS queued; it is not delivered until connectivity returns.'); };
+document.querySelector('#sos-button').onclick=async()=>{ const id=crypto.randomUUID(); await queueItem({id,type:'SOS',payload:{category:'GENERAL',idempotency_key:id}}); if(navigator.onLine) flushOutbox(); alert(uiText.sosQueued); };
 window.addEventListener('online',flushOutbox); restoreOfflineCard(); if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').then(reg=>{reg.sync?.register('hajjguard-outbox'); registerPush().catch(()=>{});}); navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='flush-outbox') flushOutbox();}); refresh().catch(()=>restoreOfflineCard());
 </script>
 </body></html>

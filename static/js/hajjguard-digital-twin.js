@@ -19,13 +19,20 @@ let frame;
 let contentRoot;
 let walkMode = false;
 const siteGroups = new Map();
+const isArabic = document.documentElement.lang.startsWith('ar');
+const twinCopy = {
+    en: { crowded: 'Crowded', busy: 'Busy', comfortable: 'Comfortable', notMeasured: 'Not measured', verify: 'Verify before visiting', planning: 'Planning information', accessibility: 'Accessibility information available', directory: 'See directory details', keyboard: 'Keyboard zone explorer', safetyMap: 'Check safety map', closeExpanded: 'Close expanded model', expand: 'Expand model', disableWalk: 'Disable walkthrough mode', enableWalk: 'Enable walkthrough mode', walkEnabled: 'Walkthrough mode enabled: use W A S D or arrow keys', showDetails: 'Show details panel', hideDetails: 'Hide details panel', locationUnavailable: 'Location data unavailable', matching: n => `${n} matching locations`, noPublished: 'No reviewed Haram locations published yet. Awaiting approved data.', noMatch: 'No locations match this floor or search', floor: n => `Floor ${n}`, approximate: 'Approximate location — verify on site', reviewed: 'Reviewed location — verify current access', source: 'Source', reviewedAt: 'Reviewed', masjid: 'Masjid al-Haram', sai: 'Sa’i corridor' },
+    ar: { crowded: 'مزدحم', busy: 'مزدحم نسبياً', comfortable: 'مريح', notMeasured: 'غير مقاس', verify: 'تحقق قبل الزيارة', planning: 'معلومات للتخطيط', accessibility: 'معلومات سهولة الوصول متاحة', directory: 'راجع تفاصيل الدليل', keyboard: 'مستكشف المناطق بلوحة المفاتيح', safetyMap: 'راجع خريطة السلامة', closeExpanded: 'إغلاق النموذج الموسع', expand: 'توسيع النموذج', disableWalk: 'تعطيل وضع التجول', enableWalk: 'تفعيل وضع التجول', walkEnabled: 'وضع التجول مفعل: استخدم W A S D أو الأسهم', showDetails: 'إظهار لوحة التفاصيل', hideDetails: 'إخفاء لوحة التفاصيل', locationUnavailable: 'بيانات المواقع غير متاحة', matching: n => `${n} مواقع مطابقة`, noPublished: 'لا توجد مواقع منشورة بعد انتظار البيانات المعتمدة', noMatch: 'لا توجد مواقع مطابقة لهذا الطابق أو البحث', floor: n => `الطابق ${n}`, approximate: 'موقع تقريبي — تحقق في الموقع', reviewed: 'موقع مراجع — تحقق من الوصول الحالي', source: 'المصدر', reviewedAt: 'تمت المراجعة', masjid: 'المسجد الحرام', sai: 'ممر السعي' }
+};
+const tx = key => twinCopy[isArabic ? 'ar' : 'en'][key];
+const localizedName = value => isArabic ? (value.name_ar || value.name_en) : (value.name_en || value.name_ar);
 
 function statusColor(status) {
     return { RED: 0xdc2626, ORANGE: 0xc47b00, GREEN: 0x475569 }[status] || 0x94a3b8;
 }
 
 function statusLabel(status) {
-    return { RED: 'CROWDED', ORANGE: 'BUSY', GREEN: 'COMFORTABLE' }[status] || 'NOT MEASURED';
+    return { RED: tx('crowded'), ORANGE: tx('busy'), GREEN: tx('comfortable') }[status] || tx('notMeasured');
 }
 
 function statusHex(status) {
@@ -115,7 +122,7 @@ function addHolySiteMasses(parent) {
     parent.add(haram);
     siteGroups.set('haram', haram);
     haram.add(buildHaramArchitecture());
-    addSiteLabel(haram, 'Masjid al-Haram', 0, 104, 0);
+    addSiteLabel(haram, tx('masjid'), 0, 104, 0);
     const sai = new THREE.Group();
     sai.position.set(0, 0, 235);
     haram.add(sai);
@@ -125,8 +132,9 @@ function addHolySiteMasses(parent) {
         addBox(sai, i * 24 - 96, 20, -18, 5, 18, 5, 0x64748b);
         addBox(sai, i * 24 - 96, 20, 18, 5, 18, 5, 0x64748b);
     }
-    addSiteLabel(sai, 'Sa’i corridor', 0, 54, 0);
+    addSiteLabel(sai, tx('sai'), 0, 54, 0);
 
+    return; // This explorer now focuses on the Haram only.
     const mina = new THREE.Group();
     mina.position.set(88, 0, -73);
     parent.add(mina);
@@ -346,16 +354,16 @@ function buildScene(data) {
 }
 
 function selectPlace(place) {
-    document.getElementById('hg-panel-title').textContent = place.name_en;
-    document.getElementById('hg-panel-sub').textContent = `${place.name_ar} · ${place.category}`;
-    document.getElementById('hg-status').textContent = place.stale ? 'Verify before visiting' : 'Planning information';
-    document.getElementById('hg-density').textContent = 'Not measured';
-    document.getElementById('hg-prediction').textContent = 'Not measured';
-    document.getElementById('hg-risk').textContent = 'Not measured';
+    document.getElementById('hg-panel-title').textContent = localizedName(place);
+    document.getElementById('hg-panel-sub').textContent = `${isArabic ? (place.name_en || '') : (place.name_ar || '')} · ${place.category}`;
+    document.getElementById('hg-status').textContent = place.stale ? tx('verify') : tx('planning');
+    document.getElementById('hg-density').textContent = tx('notMeasured');
+    document.getElementById('hg-prediction').textContent = tx('notMeasured');
+    document.getElementById('hg-risk').textContent = tx('notMeasured');
     const bestTime = document.getElementById('hg-best-time');
     const facilities = document.getElementById('hg-facilities');
-    if (bestTime) bestTime.textContent = 'Verify locally';
-    if (facilities) facilities.textContent = place.accessibility && Object.keys(place.accessibility).length ? 'Accessibility information available' : 'See directory details';
+    if (bestTime) bestTime.textContent = tx('verify');
+    if (facilities) facilities.textContent = place.accessibility && Object.keys(place.accessibility).length ? tx('accessibility') : tx('directory');
 }
 
 function syncCameraState() {
@@ -383,12 +391,12 @@ function fitCameraToContent() {
 function renderZoneList(items) {
     zoneList.classList.remove('visually-hidden');
     zoneList.className = 'hg-zone-list';
-    zoneList.innerHTML = '<strong>Keyboard zone explorer</strong>';
+    zoneList.innerHTML = `<strong>${tx('keyboard')}</strong>`;
     items.forEach((zone) => {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'hg-zone-list-item';
-        button.textContent = zone.name_en;
+        button.textContent = localizedName(zone);
         button.addEventListener('click', () => selectZone(zone.code));
         button.dataset.code = zone.code;
         zoneList.appendChild(button);
@@ -402,16 +410,16 @@ function selectZone(code) {
     selected = entry;
     if (selected.mesh?.material.emissive) selected.mesh.material.emissive.setHex(0x334155);
     const zone = entry.zone;
-    document.getElementById('hg-panel-title').textContent = zone.name_en;
-    document.getElementById('hg-panel-sub').textContent = zone.name_ar;
+    document.getElementById('hg-panel-title').textContent = localizedName(zone);
+    document.getElementById('hg-panel-sub').textContent = isArabic ? zone.name_en : zone.name_ar;
     document.getElementById('hg-status').textContent = statusLabel(zone.status);
-    document.getElementById('hg-density').textContent = zone.density_per_sqm == null ? 'Not measured' : `${zone.density_per_sqm} people/m²`;
-    document.getElementById('hg-prediction').textContent = zone.predicted_density_20m == null ? 'Not measured' : `${zone.predicted_density_20m} people/m²`;
-    document.getElementById('hg-risk').textContent = zone.risk_score == null ? 'Not measured' : `${zone.risk_score}/100`;
+    document.getElementById('hg-density').textContent = zone.density_per_sqm == null ? tx('notMeasured') : `${zone.density_per_sqm} ${isArabic ? 'شخص/م²' : 'people/m²'}`;
+    document.getElementById('hg-prediction').textContent = zone.predicted_density_20m == null ? tx('notMeasured') : `${zone.predicted_density_20m} ${isArabic ? 'شخص/م²' : 'people/m²'}`;
+    document.getElementById('hg-risk').textContent = zone.risk_score == null ? tx('notMeasured') : `${zone.risk_score}/100`;
     const bestTime = document.getElementById('hg-best-time');
     const facilities = document.getElementById('hg-facilities');
-    if (bestTime) bestTime.textContent = 'Not measured';
-    if (facilities) facilities.textContent = 'Check safety map';
+    if (bestTime) bestTime.textContent = tx('notMeasured');
+    if (facilities) facilities.textContent = tx('safetyMap');
     document.querySelectorAll('.hg-zone-list-item').forEach((item) => item.setAttribute('aria-current', item.dataset.code === code ? 'true' : 'false'));
     if (controls && camera && selected.mesh) {
         const target = selected.mesh.position.clone();
@@ -466,8 +474,8 @@ window.toggleTwinExpanded = () => {
     document.body.classList.toggle('hg-twin-open', expanded);
     const button = document.getElementById('hg-expand-button');
     if (button) {
-        button.setAttribute('aria-label', expanded ? 'Close expanded model' : 'Expand model');
-        button.title = expanded ? 'Close expanded model' : 'Expand model';
+        button.setAttribute('aria-label', expanded ? tx('closeExpanded') : tx('expand'));
+        button.title = expanded ? tx('closeExpanded') : tx('expand');
     }
     resize();
 };
@@ -475,8 +483,8 @@ window.toggleWalkMode = () => {
     walkMode = !walkMode;
     const button = document.getElementById('hg-walk-button');
     if (button) {
-        button.setAttribute('aria-label', walkMode ? 'Disable walkthrough mode' : 'Enable walkthrough mode');
-        button.title = walkMode ? 'Walkthrough mode enabled: use W A S D or arrow keys' : 'Enable walkthrough mode';
+        button.setAttribute('aria-label', walkMode ? tx('disableWalk') : tx('enableWalk'));
+        button.title = walkMode ? tx('walkEnabled') : tx('enableWalk');
         button.classList.toggle('is-active', walkMode);
     }
     if (walkMode) canvas?.focus();
@@ -486,8 +494,8 @@ window.toggleTwinDetails = () => {
     const button = document.getElementById('hg-details-button');
     if (!panel || !button) return;
     const hidden = panel.classList.toggle('is-hidden');
-    button.setAttribute('aria-label', hidden ? 'Show details panel' : 'Hide details panel');
-    button.title = hidden ? 'Show details panel' : 'Hide details panel';
+    button.setAttribute('aria-label', hidden ? tx('showDetails') : tx('hideDetails'));
+    button.title = hidden ? tx('showDetails') : tx('hideDetails');
 };
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && stage?.classList.contains('is-expanded')) window.toggleTwinExpanded();
@@ -497,11 +505,14 @@ window.focusSite = focusSite;
 window.addEventListener('resize', resize);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && renderer && !frame) animate(); });
 new ResizeObserver(resize).observe(stage);
+// Route overlays are postponed in the Haram location explorer.
 
 if (canvas) {
     fetch('/zones/api/digital-twin/', { credentials: 'same-origin' })
         .then((response) => { if (!response.ok) throw new Error('digital twin unavailable'); return response.json(); })
         .then((data) => {
+            initializeHaramInventory(data.haram_locations || []);
+            data.zones = []; data.corridors = []; data.places = [];
             // Keep inspection usable even when this device cannot create a WebGL context.
             data.zones.forEach((zone) => zones.set(zone.code, { zone }));
             renderZoneList(data.zones);
@@ -510,11 +521,59 @@ if (canvas) {
                 if (data.zones.length) selectZone(data.zones[0].code);
                 return;
             }
-            try { buildScene(data); }
+            try { buildScene(data); buildInventoryMarkers(); }
             catch (error) {
                 showFallback();
                 if (data.zones.length) selectZone(data.zones[0].code);
             }
         })
-        .catch(() => showFallback());
+        .catch(() => { showFallback(); document.getElementById('haram-inventory-status').textContent = tx('locationUnavailable'); });
+}
+
+
+let haramInventory = [];
+let inventoryMarkers = [];
+const inventoryCategories = {
+ GATE:['Gate','بوابة',0x475569], MATAF:['Mataf','المطاف',0x111827], MASAA:['Masaa','المسعى',0x64748b],
+ WATER:['Water','مياه',0x0284c7], TOILET:['Toilet','دورات المياه',0x7c3aed], MEDICAL:['Medical','طبي',0xdc2626],
+ WHEELCHAIR_ACCESS:['Wheelchair access','وصول الكراسي',0x2563eb], ELEVATOR:['Elevator','مصعد',0x9333ea],
+ ESCALATOR:['Escalator','سلم متحرك',0xa16207], STAIRS:['Stairs','درج',0x78716c],
+ MEETING_POINT:['Meeting point','نقطة تجمع',0xc2410c], EMERGENCY_EXIT:['Emergency exit','مخرج طوارئ',0xb91c1c],
+ INFORMATION_DESK:['Information desk','معلومات',0x0369a1]
+};
+const inventoryLabel = category => { const value = inventoryCategories[category]; return value ? (isArabic ? value[1] : value[0]) : category; };
+function initializeHaramInventory(items) {
+ haramInventory = items.filter(item => Array.isArray(item.position) && item.position.length===3 && item.position.every(Number.isFinite));
+ const category = document.getElementById('haram-category');
+ if (category?.options[0]) category.options[0].textContent = isArabic ? 'الكل' : 'All';
+ for (const [code] of Object.entries(inventoryCategories)) { const option=document.createElement('option'); option.value=code; option.textContent=inventoryLabel(code); category.append(option); }
+ for(const id of ['haram-floor','haram-search','haram-category']) document.getElementById(id).addEventListener('input',filterHaramInventory);
+ for(const floor of new Set(haramInventory.map(item=>item.floor_level))) if(![...document.getElementById('haram-floor').options].some(option=>Number(option.value)===floor)){const option=document.createElement('option');option.value=floor;option.textContent=tx('floor')(floor);document.getElementById('haram-floor').append(option);}
+ filterHaramInventory();
+}
+function filterHaramInventory() {
+ const floor=Number(document.getElementById('haram-floor').value), category=document.getElementById('haram-category').value;
+ const q=document.getElementById('haram-search').value.trim().toLowerCase();
+ const items=haramInventory.filter(item=>item.floor_level===floor && (!category||item.category===category) && (!q||`${item.location_id} ${item.name_ar} ${item.name_en} ${item.category} ${inventoryLabel(item.category)}`.toLowerCase().includes(q)));
+ const ids=new Set(items.map(item=>item.location_id)); inventoryMarkers.forEach(marker=>marker.visible=ids.has(marker.userData.haramLocation.location_id));
+ const list=document.getElementById('haram-location-list');list.replaceChildren();
+ document.getElementById('haram-location-detail').hidden=true;
+ document.getElementById('haram-inventory-status').textContent=haramInventory.length ? tx('matching')(items.length) : tx('noPublished');
+ if(haramInventory.length&&!items.length) document.getElementById('haram-inventory-status').textContent=tx('noMatch');
+ items.forEach(item=>{const button=document.createElement('button');button.type='button';button.style.cssText='min-height:44px;margin:4px;padding:8px;border:1px solid #cbd5e1;background:white;border-radius:8px';button.textContent=`${localizedName(item)} · ${isArabic ? item.name_en : item.name_ar}`;button.addEventListener('click',()=>inspectHaramLocation(item));list.append(button);});
+}
+function inspectHaramLocation(item) {
+ document.getElementById('haram-location-detail').hidden=false;
+ document.getElementById('haram-location-title').textContent=`${localizedName(item)} · ${isArabic ? item.name_en : item.name_ar}`;
+ document.getElementById('haram-location-info').textContent=`${inventoryLabel(item.category)} · ${tx('floor')(item.floor_level)} · ${item.accuracy_level==='APPROXIMATE'?tx('approximate'):tx('reviewed')}`;
+ document.getElementById('haram-location-evidence').textContent=`${tx('source')}: ${item.source} · ${tx('reviewedAt')} ${item.verification_date}`;
+ document.getElementById('haram-location-notes').textContent=item.notes||'';
+ document.getElementById('haram-location-map').href=`/zones/map/?haram_location=${encodeURIComponent(item.location_id)}`;
+ const group=siteGroups.get('haram'); if(group&&controls){const target=group.localToWorld(new THREE.Vector3(...item.position));controls.target.copy(target);controls.update();}
+}
+function buildInventoryMarkers() {
+ const haram=siteGroups.get('haram'); if(!haram)return;
+ inventoryMarkers=haramInventory.map(item=>{const marker=new THREE.Mesh(new THREE.SphereGeometry(4,12,8),new THREE.MeshStandardMaterial({color:inventoryCategories[item.category]?.[2]||0x64748b}));marker.position.set(...item.position);marker.userData.haramLocation=item;haram.add(marker);return marker;});
+ canvas.addEventListener('click',event=>{if(canvas.dataset.dragging==='true')return;const rect=canvas.getBoundingClientRect();pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(inventoryMarkers.filter(marker=>marker.visible));if(hits[0])inspectHaramLocation(hits[0].object.userData.haramLocation);});
+ filterHaramInventory();
 }

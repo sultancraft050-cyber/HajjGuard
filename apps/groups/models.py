@@ -107,6 +107,7 @@ class GroupMessage(models.Model):
     sender = models.ForeignKey(PilgrimProfile, on_delete=models.PROTECT, related_name='group_messages')
     text = models.TextField(max_length=2000)
     image = models.ImageField(upload_to='group_messages/%Y/%m/', blank=True, null=True)
+    is_announcement = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     deleted_at = models.DateTimeField(null=True, blank=True)
     reported = models.BooleanField(default=False)

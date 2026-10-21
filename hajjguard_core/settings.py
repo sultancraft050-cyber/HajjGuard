@@ -151,12 +151,6 @@ LANGUAGE_CODE = 'ar'
 LANGUAGES = [
     ('ar', _('Arabic')),
     ('en', _('English')),
-    ('ur', _('Urdu')),
-    ('id', _('Indonesian')),
-    ('bn', _('Bengali')),
-    ('tr', _('Turkish')),
-    ('fr', _('French')),
-    ('ms', _('Malay')),
 ]
 
 WEB_PUSH_PUBLIC_KEY = os.environ.get('WEB_PUSH_PUBLIC_KEY', '')

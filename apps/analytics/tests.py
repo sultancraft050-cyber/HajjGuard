@@ -114,3 +114,28 @@ class AnalyticsAndRoutingTestCase(TestCase):
         self.assertIn('baseline', comparison)
         self.assertIn('congestion_aware', comparison)
 
+    def test_public_route_response_has_drawable_metadata(self):
+        response = self.client.get(reverse('analytics:api_calculate_route'), {
+            'from': 'Z-MINA-SEC3', 'to': 'Z-JAMARAT-F0', 'preference': 'fastest',
+        })
+        self.assertEqual(response.status_code, 200)
+        journey = response.json()['route_comparison']['journey']
+        route = journey['route_alternatives']['fastest']
+        self.assertTrue(route['is_connected'])
+        self.assertEqual(route['coverage'], 'verified_walking')
+        self.assertEqual(route['geometry_quality'], 'zone_corridor_planning')
+        self.assertEqual(route['route_data_version'], 'v1')
+        self.assertEqual(len(route['path']), len(route['coordinates']))
+        self.assertEqual(journey['from_zone'], 'Z-MINA-SEC3')
+        self.assertEqual(journey['to_zone'], 'Z-JAMARAT-F0')
+
+    def test_outside_coverage_returns_external_directions_handoff(self):
+        response = self.client.get(reverse('analytics:api_calculate_route'), {
+            'from': 'Z-MINA-SEC3', 'to_lat': '25.0', 'to_lng': '45.0', 'preference': 'fastest',
+        })
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data['status'], 'outside_coverage')
+        self.assertEqual(data['coverage'], 'external_directions')
+        self.assertTrue(data['external_directions_url'].startswith('https://www.google.com/maps/dir/'))
+

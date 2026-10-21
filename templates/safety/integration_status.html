@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% load i18n %}
-{% block title %}{% trans "Integration status" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}حالة التكامل{% else %}Integration status{% endif %} | HajjGuard{% endblock %}
 {% block content %}
 <main class="container py-5" aria-labelledby="integration-title">
-  <h1 id="integration-title" class="h3 mb-2">{% trans "Provider integration status" %}</h1>
-  <p class="text-muted">{% trans "All external providers are disabled until authorization, specifications, sandbox credentials, and privacy approval are recorded." %}</p>
+  <h1 id="integration-title" class="h3 mb-2">{% if LANGUAGE_CODE == 'ar' %}حالة تكامل مزودي الخدمة{% else %}Provider integration status{% endif %}</h1>
+  <p class="text-muted">{% if LANGUAGE_CODE == 'ar' %}جميع مزودي الخدمة الخارجيين معطلون حتى يتم تسجيل التفويض والمواصفات وبيانات الاختبار وموافقة الخصوصية.{% else %}All external providers are disabled until authorization, specifications, sandbox credentials, and privacy approval are recorded.{% endif %}</p>
   <div class="row g-3">
     {% for provider in providers %}
     <div class="col-md-6 col-lg-4">
@@ -13,11 +13,11 @@
           <h2 class="h5">{{ provider.display_name }}</h2>
           <p class="mb-2"><span class="badge text-bg-secondary">{{ provider.get_state_display|default:provider.state }}</span></p>
           <div class="small text-muted">Key: {{ provider.key }}</div>
-          {% if provider.authorization_evidence %}<p class="small mt-2 mb-0">{{ provider.authorization_evidence }}</p>{% else %}<p class="small mt-2 mb-0">{% trans "No authorization evidence recorded." %}</p>{% endif %}
+          {% if provider.authorization_evidence %}<p class="small mt-2 mb-0">{{ provider.authorization_evidence }}</p>{% else %}<p class="small mt-2 mb-0">{% if LANGUAGE_CODE == 'ar' %}لم يتم تسجيل دليل تفويض.{% else %}No authorization evidence recorded.{% endif %}</p>{% endif %}
         </div>
       </article>
     </div>
-    {% empty %}<p>{% trans "No providers registered." %}</p>{% endfor %}
+    {% empty %}<p>{% if LANGUAGE_CODE == 'ar' %}لا يوجد مزودو خدمة مسجلون.{% else %}No providers registered.{% endif %}</p>{% endfor %}
   </div>
 </main>
 {% endblock %}

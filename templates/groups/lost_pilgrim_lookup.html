@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n static %}
 
-{% block title %}{% trans "البحث الفوري عن تائه أو حاج مفقود" %} | HajjGuard{% endblock %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}البحث الفوري عن تائه أو حاج مفقود{% else %}Instant lost-pilgrim lookup{% endif %} | HajjGuard{% endblock %}
 
 {% block content %}
 <div class="container py-4">
@@ -11,19 +11,19 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold">
-                    <i class="bi bi-shield-check"></i> {% trans "نظام إرشاد التائهين الموحد (1966)" %}
+                    <i class="bi bi-shield-check"></i> {% if LANGUAGE_CODE == 'ar' %}نظام إرشاد التائهين الموحد (1966){% else %}Unified lost-pilgrim guidance system (1966){% endif %}
                 </span>
             </div>
             <h2 class="fw-bold mb-1 text-dark">
-                <i class="bi bi-qr-code-scan text-success me-2"></i>{% trans "البحث الفوري والتعرف على الحجاج التائهين" %}
+                <i class="bi bi-qr-code-scan text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}البحث الفوري والتعرف على الحجاج التائهين{% else %}Instantly find and identify lost pilgrims{% endif %}
             </h2>
             <p class="text-muted small mb-0">
-                {% trans "مسح رمز QR أو إدخال رقم الحدود / تصريح نسك / اسم الحاج لإعادة ربطه فوراً بمطوفه ومركزه بمشعر منى." %}
+                {% if LANGUAGE_CODE == 'ar' %}مسح رمز QR أو إدخال رقم الحدود / تصريح نسك / اسم الحاج لإعادة ربطه فوراً بمطوفه ومركزه بمشعر منى.{% else %}Scan a QR code or enter a border number, Nusuk permit, or pilgrim name to reconnect them with their guide and Mina centre.{% endif %}
             </p>
         </div>
         <div>
             <span class="badge bg-light text-muted border px-3 py-2">
-                <i class="bi bi-file-lock-fill text-success me-1"></i>{% trans "متوافق مع المادة 16 من نظام حماية البيانات الشخصية (PDPL)" %}
+                <i class="bi bi-file-lock-fill text-success me-1"></i>{% if LANGUAGE_CODE == 'ar' %}متوافق مع المادة 16 من نظام حماية البيانات الشخصية (PDPL){% else %}Compliant with PDPL Article 16{% endif %}
             </span>
         </div>
     </div>
@@ -33,20 +33,20 @@
         <form method="GET" class="row g-3 align-items-center">
             <div class="col-lg-8">
                 <label class="form-label fw-bold text-dark mb-1">
-                    <i class="bi bi-search me-1 text-success"></i>{% trans "البحث برمز QR، رقم التصريح، الجوال أو اسم الحاج:" %}
+                    <i class="bi bi-search me-1 text-success"></i>{% if LANGUAGE_CODE == 'ar' %}البحث برمز QR، رقم التصريح، الجوال أو اسم الحاج:{% else %}Search by QR, permit number, phone, or pilgrim name:{% endif %}
                 </label>
                 <div class="input-group input-group-lg shadow-sm">
                     <span class="input-group-text bg-light border-end-0">
                         <i class="bi bi-upc-scan text-success fs-4"></i>
                     </span>
-                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="{% trans 'مثال: HAJJGUARD:PRM-2026-9921 أو rashid أو 1087429104' %}" autofocus>
+                    <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="{% if LANGUAGE_CODE == 'ar' %}مثال: HAJJGUARD:PRM-2026-9921 أو rashid أو 1087429104{% else %}Example: HAJJGUARD:PRM-2026-9921, rashid, or 1087429104{% endif %}" autofocus>
                     <button class="btn btn-dga-primary px-4 fw-bold" type="submit">
-                        <i class="bi bi-search me-1"></i>{% trans "استعلام فوري" %}
+                        <i class="bi bi-search me-1"></i>{% if LANGUAGE_CODE == 'ar' %}استعلام فوري{% else %}Instant lookup{% endif %}
                     </button>
                 </div>
             </div>
             <div class="col-lg-4">
-                <label class="form-label text-muted small mb-1">{% trans "نماذج استعلام تجريبية سريعة:" %}</label>
+                <label class="form-label text-muted small mb-1">{% if LANGUAGE_CODE == 'ar' %}نماذج استعلام تجريبية سريعة:{% else %}Quick demo lookup examples:{% endif %}</label>
                 <div class="d-flex flex-wrap gap-2">
                     <a href="?q=HAJJGUARD:PRM-2026-9921" class="btn btn-sm btn-dga-outline">
                         <i class="bi bi-qr-code me-1"></i>QR Payload
@@ -72,7 +72,7 @@
                 <div class="dga-card h-100 overflow-hidden">
                     <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
                         <h5 class="fw-bold mb-0 text-dark">
-                            <i class="bi bi-person-bounding-box text-success me-2"></i>{% trans "بيانات هوية الحاج الموثقة" %}
+                            <i class="bi bi-person-bounding-box text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}بيانات هوية الحاج الموثقة{% else %}Verified pilgrim identity{% endif %}
                         </h5>
                         <span class="badge bg-success font-monospace">
                             ID: #{{ pilgrim.id }}
@@ -91,11 +91,11 @@
 
                         <div class="row g-3 small">
                             <div class="col-12">
-                                <span class="text-muted d-block">{% trans "بيانات التعريف الأساسية فقط:" %}</span>
-                                <span class="fw-bold text-dark">{% trans "تم تقليل البيانات لحماية الخصوصية." %}</span>
+                                <span class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}بيانات التعريف الأساسية فقط:{% else %}Basic identification data only:{% endif %}</span>
+                                <span class="fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}تم تقليل البيانات لحماية الخصوصية.{% else %}Data is minimized for privacy.{% endif %}</span>
                             </div>
                             <div class="col-6">
-                                <span class="text-muted d-block">{% trans "جهة الاتصال العائلية للطوارئ:" %}</span>
+                                <span class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}جهة الاتصال العائلية للطوارئ:{% else %}Emergency family contact:{% endif %}</span>
                                 <span class="fw-bold text-dark">{{ pilgrim.emergency_contact_name|default:"غير محدد" }}</span>
                                 <small class="text-muted d-block">{{ pilgrim.emergency_contact_phone }}</small>
                             </div>
@@ -110,7 +110,7 @@
                 <div class="dga-card h-100 overflow-hidden">
                     <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
                         <h5 class="fw-bold mb-0 text-dark">
-                            <i class="bi bi-building-check text-success me-2"></i>{% trans "بيانات الفوج والحملة المشرفة" %}
+                            <i class="bi bi-building-check text-success me-2"></i>{% if LANGUAGE_CODE == 'ar' %}بيانات الفوج والحملة المشرفة{% else %}Group and campaign details{% endif %}
                         </h5>
                         {% if group %}
                             <span class="badge bg-success font-monospace">{{ group.join_code }}</span>
@@ -119,11 +119,11 @@
                     <div class="p-4">
                         {% if group %}
                             <h4 class="fw-bold text-dark mb-1">{{ group.name }}</h4>
-                            <p class="text-muted small mb-3">{% trans "كود الانضمام:" %} {{ group.join_code }}</p>
+                            <p class="text-muted small mb-3">{% if LANGUAGE_CODE == 'ar' %}كود الانضمام:{% else %}Join code:{% endif %} {{ group.join_code }}</p>
 
                             <div class="p-3 mb-3 rounded-3 bg-light border">
                                 <h6 class="fw-bold text-dark mb-2">
-                                    <i class="bi bi-person-badge-fill text-success me-1"></i>{% trans "المطوف / قائد الفوج المسئول" %}
+                                    <i class="bi bi-person-badge-fill text-success me-1"></i>{% if LANGUAGE_CODE == 'ar' %}المطوف / قائد الفوج المسئول{% else %}Guide / responsible group leader{% endif %}
                                 </h6>
                                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                                     <div>
@@ -131,32 +131,32 @@
                                         <small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ group.leader.phone|default:"+966 50 123 4567" }}</small>
                                     </div>
                                     <a href="tel:{{ group.leader.phone|default:'+966501234567' }}" class="btn btn-dga-primary btn-sm px-3 rounded-pill">
-                                        <i class="bi bi-telephone-fill me-1"></i>{% trans "اتصال فوري بالمطوف" %}
+                                        <i class="bi bi-telephone-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}اتصال فوري بالمطوف{% else %}Call guide now{% endif %}
                                     </a>
                                 </div>
                             </div>
 
                             <div class="row g-3 small">
                                 <div class="col-6">
-                                    <span class="text-muted d-block">{% trans "مخيم مشعر منى المخصص:" %}</span>
+                                    <span class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}مخيم مشعر منى المخصص:{% else %}Assigned Mina camp:{% endif %}</span>
                                     <span class="fw-bold text-dark">قطاع 3، مخيم #44</span>
                                 </div>
                                 <div class="col-6">
-                                    <span class="text-muted d-block">{% trans "سكن مكة المكرمة:" %}</span>
+                                    <span class="text-muted d-block">{% if LANGUAGE_CODE == 'ar' %}سكن مكة المكرمة:{% else %}Makkah accommodation:{% endif %}</span>
                                     <span class="fw-bold text-dark">أبراج العزيزية 2</span>
                                 </div>
                             </div>
 
                             <div class="d-grid mt-4">
                                 <a href="{% url 'groups:my_group' %}" class="btn btn-dga-outline">
-                                    <i class="bi bi-diagram-3-fill me-1"></i>{% trans "فتح رادار الفوج والتوجيه الميداني" %}
+                                    <i class="bi bi-diagram-3-fill me-1"></i>{% if LANGUAGE_CODE == 'ar' %}فتح رادار الفوج والتوجيه الميداني{% else %}Open group radar and field guidance{% endif %}
                                 </a>
                             </div>
                         {% else %}
                             <div class="alert alert-warning border-0 rounded-3 text-center py-4">
                                 <i class="bi bi-exclamation-circle fs-3 d-block mb-2"></i>
-                                <span class="fw-bold">{% trans "لا يوجد فوج نشط مرتبط بهذا الحاج" %}</span>
-                                <p class="small text-muted mb-0">{% trans "لم يتم تعيين هذا الحاج ضمن حملة طوافة مسجلة بالنظام." %}</p>
+                                <span class="fw-bold">{% if LANGUAGE_CODE == 'ar' %}لا يوجد فوج نشط مرتبط بهذا الحاج{% else %}No active group linked to this pilgrim{% endif %}</span>
+                                <p class="small text-muted mb-0">{% if LANGUAGE_CODE == 'ar' %}لم يتم تعيين هذا الحاج ضمن حملة طوافة مسجلة بالنظام.{% else %}This pilgrim is not assigned to a registered campaign.{% endif %}</p>
                             </div>
                         {% endif %}
                     </div>
@@ -168,9 +168,9 @@
         <!-- Not Found Card -->
         <div class="dga-card p-5 text-center mb-4 bg-white">
             <i class="bi bi-person-x text-danger fs-1 mb-3"></i>
-            <h4 class="fw-bold text-dark">{% trans "لم يتم العثور على سجل للحاج" %}</h4>
+            <h4 class="fw-bold text-dark">{% if LANGUAGE_CODE == 'ar' %}لم يتم العثور على سجل للحاج{% else %}No pilgrim record found{% endif %}</h4>
             <p class="text-muted small mb-0">
-                {% trans "تحقق من صحة رمز QR أو رقم الحدود المدخل وحاول مجدداً." %}
+                {% if LANGUAGE_CODE == 'ar' %}تحقق من صحة رمز QR أو رقم الحدود المدخل وحاول مجدداً.{% else %}Check the QR or border number and try again.{% endif %}
             </p>
         </div>
         {% endif %}
